@@ -1,0 +1,37 @@
+name: Vittal CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore Vittal.sln
+
+    - name: Build solution
+      run: dotnet build Vittal.sln --no-restore --configuration Release
+
+    - name: Run unit tests
+      run: dotnet test Vittal.sln --no-build --configuration Release --verbosity normal
+
+  # deploy:
+  #   name: Deploy to Render
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   # Se configurará cuando iniciemos el despliegue a Render
