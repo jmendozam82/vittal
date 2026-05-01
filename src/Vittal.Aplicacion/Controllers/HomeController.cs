@@ -2,8 +2,11 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.Aplicacion.Models;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Vittal.Aplicacion.Controllers;
 
+[Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;

@@ -1,7 +1,41 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login/Auth/Login";
+        options.LogoutPath = "/Login/Auth/Logout";
+        options.AccessDeniedPath = "/Home/Error";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8); // Matches token expiry initially
+    });
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient("VittalApi", client =>
+{
+    var baseUrl = builder.Configuration.GetValue<string>("VittalApi:BaseUrl");
+    if (!string.IsNullOrEmpty(baseUrl))
+    {
+        client.BaseAddress = new Uri(baseUrl);
+    }
+}).ConfigurePrimaryHttpMessageHandler(() =>
+{
+    return new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    };
+});
+
+// Register application helpers
+builder.Services.AddScoped<Vittal.Aplicacion.Helpers.ApiClientHelper>();
 
 var app = builder.Build();
 
@@ -18,7 +52,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

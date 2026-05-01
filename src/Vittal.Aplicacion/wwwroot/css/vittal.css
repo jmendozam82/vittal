@@ -1,0 +1,106 @@
+/* src/Vittal.Aplicacion/wwwroot/css/vittal.css */
+
+/* ── Base ───────────────────────────────────────────────────────── */
+body {
+  font-family: var(--vittal-font);
+  background-color: var(--vittal-bg);
+  color: var(--vittal-text);
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────── */
+.vittal-card {
+  background: var(--vittal-bg-card);
+  border-radius: var(--vittal-radius-lg);
+  border: 1px solid var(--vittal-border);
+  box-shadow: var(--vittal-shadow);
+  padding: 1.5rem;
+}
+
+/* ── Tabla estándar ─────────────────────────────────────────────── */
+.vittal-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.vittal-table thead th {
+  background: var(--vittal-primary-light);
+  color: var(--vittal-primary-dark);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--vittal-primary);
+}
+.vittal-table tbody tr:hover { background: var(--vittal-primary-light); }
+.vittal-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--vittal-border);
+  color: var(--vittal-text);
+  font-size: 0.9rem;
+}
+
+/* ── Badges de estado de citas ─────────────────────────────────── */
+.badge-agendada    { background: var(--estado-agendada);    color: #fff; }
+.badge-en-espera   { background: var(--estado-en-espera);   color: #fff; }
+.badge-en-atencion { background: var(--estado-en-atencion); color: #fff; }
+.badge-atendida    { background: var(--estado-atendida);    color: #fff; }
+.badge-cancelada   { background: var(--estado-cancelada);   color: #fff; }
+
+/* ── Botones de acción ──────────────────────────────────────────── */
+.btn-vittal-primary  { background: var(--vittal-primary);  color: #fff; border: none; }
+.btn-vittal-primary:hover { background: var(--vittal-primary-dark); color: #fff; }
+/* DESACTIVAR — naranja, nunca rojo */
+.btn-vittal-deactivate { background: var(--vittal-warning); color: #fff; border: none; }
+.btn-vittal-deactivate:hover { background: #D68910; color: #fff; }
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+.vittal-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: var(--vittal-sidebar-bg);
+  position: fixed;
+  top: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+.vittal-sidebar .nav-link {
+  color: var(--vittal-sidebar-text);
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  margin: 2px 8px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: background 0.15s;
+}
+.vittal-sidebar .nav-link:hover,
+.vittal-sidebar .nav-link.active {
+  background: var(--vittal-sidebar-active);
+  color: #fff;
+}
+.vittal-content { margin-left: 260px; padding: 2rem; background: var(--vittal-bg); }
+
+/* ── Loading spinner ────────────────────────────────────────────── */
+.vittal-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Formularios ────────────────────────────────────────────────── */
+.form-control:focus, .form-select:focus {
+  border-color: var(--vittal-primary);
+  box-shadow: 0 0 0 0.25rem rgba(26, 111, 168, 0.25);
+}

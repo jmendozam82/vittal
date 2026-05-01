@@ -1,0 +1,36 @@
+/* src/Vittal.Aplicacion/wwwroot/css/vittal-variables.css */
+:root {
+  /* ── Colores de marca ──────────────────────────────────────── */
+  --vittal-primary:        #1A6FA8;   /* Azul médico — acciones principales */
+  --vittal-primary-dark:   #14527D;   /* Hover de primary */
+  --vittal-primary-light:  #E8F3FB;   /* Fondos de cards activas */
+  --vittal-secondary:      #2ECC71;   /* Verde — confirmación, éxito */
+  --vittal-warning:        #F39C12;   /* Naranja — desactivar (no eliminar) */
+  --vittal-danger:         #E74C3C;   /* Rojo — errores críticos */
+  --vittal-info:           #3498DB;   /* Azul claro — información */
+
+  /* ── Neutrales ──────────────────────────────────────────────── */
+  --vittal-bg:             #F5F7FA;   /* Fondo general */
+  --vittal-bg-card:        #FFFFFF;   /* Fondo de cards */
+  --vittal-border:         #DEE2E6;   /* Bordes suaves */
+  --vittal-text:           #2C3E50;   /* Texto principal */
+  --vittal-text-muted:     #7F8C8D;   /* Texto secundario */
+  --vittal-sidebar-bg:     #1A2535;   /* Fondo del sidebar */
+  --vittal-sidebar-text:   #BDC3C7;   /* Texto del sidebar */
+  --vittal-sidebar-active: #1A6FA8;   /* Item activo del sidebar */
+
+  /* ── Estados de citas ───────────────────────────────────────── */
+  --estado-agendada:       #3498DB;
+  --estado-en-espera:      #F39C12;
+  --estado-en-atencion:    #9B59B6;
+  --estado-atendida:       #2ECC71;
+  --estado-cancelada:      #95A5A6;
+
+  /* ── Tipografía ─────────────────────────────────────────────── */
+  --vittal-font:           'Inter', 'Segoe UI', system-ui, sans-serif;
+  --vittal-font-mono:      'JetBrains Mono', 'Consolas', monospace;
+  --vittal-radius:         8px;
+  --vittal-radius-lg:      12px;
+  --vittal-shadow:         0 2px 8px rgba(0,0,0,0.08);
+  --vittal-shadow-lg:      0 4px 20px rgba(0,0,0,0.12);
+}
