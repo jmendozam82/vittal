@@ -23,6 +23,7 @@ appsettings.*.json
 secrets.json
 .env
 .env.*
+*.local.json
 
 # ── Supabase Local ────────────────────────────────────────────
 supabase/.temp/

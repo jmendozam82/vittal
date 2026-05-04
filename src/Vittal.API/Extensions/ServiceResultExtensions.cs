@@ -12,7 +12,7 @@ public static class ServiceResultExtensions
         {
             return new OkObjectResult(new ApiResponse<T>
             {
-                IsSuccess = true,
+                Success = true,
                 Message = result.Message,
                 Data = result.Data
             });
@@ -20,7 +20,7 @@ public static class ServiceResultExtensions
 
         var response = new ApiResponse<T>
         {
-            IsSuccess = false,
+            Success = false,
             Message = result.Message,
             Errors = result.Errors
         };
@@ -42,14 +42,14 @@ public static class ServiceResultExtensions
         {
             return new OkObjectResult(new ApiResponse
             {
-                IsSuccess = true,
+                Success = true,
                 Message = result.Message
             });
         }
 
         var response = new ApiResponse
         {
-            IsSuccess = false,
+            Success = false,
             Message = result.Message,
             Errors = result.Errors
         };

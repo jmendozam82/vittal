@@ -12,20 +12,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/Login/Auth/Logout";
         options.AccessDeniedPath = "/Home/Error";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.None
+            : CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromHours(8); // Matches token expiry initially
     });
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient("VittalApi", client =>
+// HTTP client para comunicar con Vittal.API
+builder.Services.AddHttpClient("VittalApi", (sp, client) =>
 {
-    var baseUrl = builder.Configuration.GetValue<string>("VittalApi:BaseUrl");
-    if (!string.IsNullOrEmpty(baseUrl))
-    {
-        client.BaseAddress = new Uri(baseUrl);
-    }
+    var config = sp.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(config["VittalApi:BaseUrl"] ?? "http://localhost:5089");
 }).ConfigurePrimaryHttpMessageHandler(() =>
 {
     return new HttpClientHandler
@@ -40,14 +40,21 @@ builder.Services.AddScoped<Vittal.Aplicacion.Helpers.ApiClientHelper>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 
 app.UseRouting();

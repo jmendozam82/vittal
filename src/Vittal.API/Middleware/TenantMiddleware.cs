@@ -35,9 +35,8 @@ public class TenantMiddleware
                 {
                     var appIdentity = new ClaimsIdentity(new[]
                     {
-                        new Claim("app_usuario_id", result.Data.Id.ToString()),
+                        new Claim("app_usuario_id", result.Data.UsuarioId.ToString()),
                         new Claim("app_clinica_id", result.Data.ClinicaId.ToString()),
-                        new Claim("app_perfil_id", result.Data.PerfilId.ToString()),
                         new Claim("app_es_admin", result.Data.EsAdmin.ToString())
                     });
 
@@ -47,7 +46,7 @@ public class TenantMiddleware
                 {
                     // Si el usuario no existe en la base de datos interna, cerramos sesión/devolvemos 401
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsJsonAsync(new { IsSuccess = false, Message = "Usuario no autorizado o inactivo en el sistema" });
+                    await context.Response.WriteAsJsonAsync(new { Success = false, Message = "Usuario no autorizado o inactivo en el sistema" });
                     return;
                 }
             }

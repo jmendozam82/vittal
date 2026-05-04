@@ -18,12 +18,14 @@ public class AuthController : ControllerBase
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IUsuarioService _usuarioService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUsuarioService usuarioService)
+    public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUsuarioService usuarioService, ILogger<AuthController> logger)
     {
         _httpClient = httpClientFactory.CreateClient("SupabaseAuth");
         _configuration = configuration;
         _usuarioService = usuarioService;
+        _logger = logger;
     }
 
     [HttpPost("login")]
@@ -48,27 +50,27 @@ public class AuthController : ControllerBase
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return BadRequest(new ApiResponse { IsSuccess = false, Message = "Credenciales inválidas" });
+            return BadRequest(new ApiResponse { Success = false, Message = "Credenciales inválidas" });
         }
 
         var authResponse = await response.Content.ReadFromJsonAsync<SupabaseAuthResponse>();
         if (authResponse == null || string.IsNullOrEmpty(authResponse.AccessToken))
-            return BadRequest(new ApiResponse { IsSuccess = false, Message = "Error al obtener el token" });
+            return BadRequest(new ApiResponse { Success = false, Message = "Error al obtener el token" });
 
-        // Fetch internal user details
+        // Fetch internal user details via DTO
         var authUserId = Guid.Parse(authResponse.User.Id);
+
         var userResult = await _usuarioService.GetByAuthUserIdAsync(authUserId);
 
         if (!userResult.IsSuccess || userResult.Data == null)
-            return Unauthorized(new ApiResponse { IsSuccess = false, Message = "Usuario no registrado en el sistema o inactivo" });
+            return Unauthorized(new ApiResponse { Success = false, Message = userResult.Message });
 
         var loginResponse = new LoginResponseDto
         {
             AccessToken = authResponse.AccessToken,
             RefreshToken = authResponse.RefreshToken,
             ExpiresIn = authResponse.ExpiresIn,
-            UsuarioId = userResult.Data.Id,
+            UsuarioId = userResult.Data.UsuarioId,
             ClinicaId = userResult.Data.ClinicaId,
             Nombres = userResult.Data.Nombres,
             Apellidos = userResult.Data.Apellidos,
@@ -79,7 +81,7 @@ public class AuthController : ControllerBase
 
         return Ok(new ApiResponse<LoginResponseDto>
         {
-            IsSuccess = true,
+            Success = true,
             Message = "Login exitoso",
             Data = loginResponse
         });
@@ -106,16 +108,16 @@ public class AuthController : ControllerBase
 
         if (!response.IsSuccessStatusCode)
         {
-            return BadRequest(new ApiResponse { IsSuccess = false, Message = "Token de refresco inválido o expirado" });
+            return BadRequest(new ApiResponse { Success = false, Message = "Token de refresco inválido o expirado" });
         }
 
         var authResponse = await response.Content.ReadFromJsonAsync<SupabaseAuthResponse>();
         if (authResponse == null || string.IsNullOrEmpty(authResponse.AccessToken))
-            return BadRequest(new ApiResponse { IsSuccess = false, Message = "Error al refrescar el token" });
+            return BadRequest(new ApiResponse { Success = false, Message = "Error al refrescar el token" });
 
         return Ok(new ApiResponse<SupabaseAuthResponse>
         {
-            IsSuccess = true,
+            Success = true,
             Message = "Token refrescado exitosamente",
             Data = authResponse
         });
@@ -125,6 +127,6 @@ public class AuthController : ControllerBase
     public IActionResult Logout()
     {
         // El logout real se hace en cliente eliminando los tokens, o invalidando el refresh token en Supabase
-        return Ok(new ApiResponse { IsSuccess = true, Message = "Sesión cerrada correctamente" });
+        return Ok(new ApiResponse { Success = true, Message = "Sesión cerrada correctamente" });
     }
 }
