@@ -2,6 +2,8 @@
     ViewData["Title"] = "Gesti&oacute;n de Perfiles";
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
                              "<li class='breadcrumb-item active'>Perfiles</li>";
+    var jsonPerfilesUrl = Url.Action("JsonPerfiles");
+    var crearPerfilUrl = Url.Action("Create");
 }
 
 @section HeaderActions {
@@ -58,6 +60,13 @@
 
 @section Scripts {
 <script>
+    // URLs seguras desde el servidor (no hardcodear rutas)
+    const URLS = {
+        listar: '@jsonPerfilesUrl',
+        crear: '@crearPerfilUrl',
+        desactivar: '@Url.Action("JsonDesactivar")'
+    };
+
     let perfiles = [];
     let idSeleccionado = null;
     const modal = new bootstrap.Modal(document.getElementById('modalDesactivar'));
@@ -65,21 +74,42 @@
     document.addEventListener('DOMContentLoaded', cargarPerfiles);
 
     async function cargarPerfiles() {
-        const res = await fetch('/api/Perfiles', {
-            method: 'GET',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        try {
+            const res = await fetch(URLS.listar, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-        if (!res.ok) {
-            document.getElementById('tablaContainer').innerHTML =
-                '<div class="alert alert-danger">Error al cargar los perfiles. Intente nuevamente.</div>';
-            return;
+            if (!res.ok) {
+                mostrarError('No se pudo comunicar con el servidor.');
+                return;
+            }
+
+            const json = await res.json();
+
+            if (!json.success) {
+                mostrarError(json.message || 'Error al cargar los perfiles.');
+                return;
+            }
+
+            perfiles = json.data || [];
+            renderTabla(perfiles);
+        } catch (err) {
+            mostrarError('Error de conexi&oacute;n. Verifique su red e intente nuevamente.');
         }
+    }
 
-        const json = await res.json();
-        perfiles = json.data || [];
-        renderTabla(perfiles);
+    function mostrarError(mensaje) {
+        document.getElementById('tablaContainer').innerHTML = `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarPerfiles()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+                </button>
+            </div>`;
     }
 
     function renderTabla(items) {
@@ -88,7 +118,7 @@
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                     No se encontraron perfiles registrados.
-                    <br><a href="@Url.Action("Create")" class="btn btn-sm btn-primary mt-3">
+                    <br><a href="${URLS.crear}" class="btn btn-sm btn-primary mt-3">
                         <i class="bi bi-plus-lg me-1"></i>Crear primer perfil
                     </a>
                 </div>`;
@@ -109,7 +139,7 @@
                     ${adminBadge}
                     <strong>${escapeHtml(p.nombre)}</strong>
                 </td>
-                <td class="text-muted">${escapeHtml(p.descripcion || '&mdash;')}</td>
+                <td class="text-muted">${escapeHtml(p.descripcion || '\u2014')}</td>
                 <td class="text-center">
                     ${p.cantidadUsuarios > 0
                         ? `<span class="badge bg-light text-dark">${p.cantidadUsuarios} usuario(s)</span>`
@@ -161,24 +191,28 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Desactivando...';
 
-        const res = await fetch(`/api/Perfiles/${idSeleccionado}/desactivar`, {
-            method: 'PATCH',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        try {
+            const res = await fetch(`${URLS.desactivar}?id=${idSeleccionado}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
-        modal.hide();
+            const json = await res.json();
 
-        const json = await res.json();
-        if (res.ok && json.success) {
-            showToast(json.message || 'Perfil desactivado exitosamente.', 'success');
-            await cargarPerfiles();
-        } else {
-            showToast(json.message || 'Error al desactivar el perfil.', 'danger');
+            if (res.ok && json.success) {
+                showToast(json.message || 'Perfil desactivado exitosamente.', 'success');
+                await cargarPerfiles();
+            } else {
+                showToast(json.message || 'Error al desactivar el perfil.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexi&oacute;n al desactivar.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
+            modal.hide();
+            idSeleccionado = null;
         }
-        idSeleccionado = null;
     });
 
     function escapeHtml(text) {

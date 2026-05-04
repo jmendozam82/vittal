@@ -74,9 +74,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         new Claim(ClaimTypes.Name, $"{user.Nombres} {user.Apellidos}"),
                         new Claim(ClaimTypes.Email, user.Email),
                         new Claim("clinica_id", user.ClinicaId.ToString()),
-                        new Claim(ClaimTypes.Role, user.Perfil),
-                        new Claim("access_token", user.AccessToken),
-                        new Claim("refresh_token", user.RefreshToken)
+                        new Claim(ClaimTypes.Role, user.Perfil)
                     };
 
                     if (user.EsAdmin)
@@ -97,7 +95,18 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         new ClaimsPrincipal(claimsIdentity),
                         authProperties);
 
-                    _logger.LogInformation("Usuario {Email} inició sesión correctamente.", user.Email);
+                    // Guardar JWT en cookie HttpOnly separada (evita limite de 4KB de la cookie de auth)
+                    var cookieOptions = new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false, // Development; en Production usar CookieSecurePolicy.Always
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddHours(8),
+                        Path = "/"
+                    };
+                    Response.Cookies.Append("vittal_jwt", user.AccessToken, cookieOptions);
+
+                    _logger.LogInformation("Usuario {Email} inició sesión correctamente. JWT guardado en cookie.", user.Email);
 
                     return RedirectToAction("Index", "Home", new { area = "" });
                 }
@@ -120,6 +129,9 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Limpiar cookie del JWT
+            Response.Cookies.Delete("vittal_jwt");
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }

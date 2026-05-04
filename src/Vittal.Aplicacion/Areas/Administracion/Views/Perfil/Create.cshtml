@@ -4,6 +4,7 @@
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
                              $"<li class='breadcrumb-item'><a href='{perfilIndexUrl}'>Perfiles</a></li>" +
                              "<li class='breadcrumb-item active'>Nuevo</li>";
+    var jsonCrearUrl = Url.Action("JsonCrear");
 }
 
 <div class="row justify-content-center">
@@ -100,9 +101,8 @@
         setLoading(true);
         ocultarError();
 
-        const res = await fetch('/api/Perfiles', {
+        const res = await fetch('@jsonCrearUrl', {
             method: 'POST',
-            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre, descripcion, esAdmin })
         });

@@ -1,9 +1,21 @@
+@using System.Text.Json
 @{
     ViewData["Title"] = "Editar Perfil";
     var perfilIndexUrl = Url.Action("Index");
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
                              $"<li class='breadcrumb-item'><a href='{perfilIndexUrl}'>Perfiles</a></li>" +
                              "<li class='breadcrumb-item active'>Editar</li>";
+    var jsonActualizarUrl = Url.Action("JsonActualizar");
+
+    // Datos del perfil cargados server-side
+    var perfil = ViewBag.Perfil as System.Collections.Generic.IDictionary<string, object>;
+    var perfilId = perfil != null && perfil.ContainsKey("id") ? perfil["id"]?.ToString() : (ViewContext.RouteData.Values["id"]?.ToString() ?? string.Empty);
+    var perfilNombre = perfil != null && perfil.ContainsKey("nombre") ? perfil["nombre"]?.ToString() : string.Empty;
+    var perfilDescripcion = perfil != null && perfil.ContainsKey("descripcion") ? perfil["descripcion"]?.ToString() : string.Empty;
+    var perfilEsAdmin = perfil != null && perfil.ContainsKey("esAdmin") && Convert.ToBoolean(perfil["esAdmin"]);
+    var perfilActivo = perfil == null || !perfil.ContainsKey("activo") || Convert.ToBoolean(perfil["activo"]);
+    var perfilFechaCreacion = perfil != null && perfil.ContainsKey("fechaCreacion") ? perfil["fechaCreacion"]?.ToString() : null;
+    var perfilFechaModificacion = perfil != null && perfil.ContainsKey("fechaModificacion") ? perfil["fechaModificacion"]?.ToString() : null;
 }
 
 <div class="row justify-content-center">
@@ -17,15 +29,8 @@
 
                 <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
 
-                <div id="loadingInfo" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
-                    <p class="text-muted mt-2 mb-0 small">Cargando informaci&oacute;n del perfil...</p>
-                </div>
-
-                <form id="frmPerfil" novalidate class="d-none">
-                    <input type="hidden" id="perfilId" />
+                <form id="frmPerfil" novalidate>
+                    <input type="hidden" id="perfilId" value="@perfilId" />
                     <div class="row g-3">
                         <!-- Nombre -->
                         <div class="col-12">
@@ -33,7 +38,8 @@
                                 Nombre <span class="text-danger">*</span>
                             </label>
                             <input type="text" id="nombre" name="nombre"
-                                   class="form-control" maxlength="100" required />
+                                   class="form-control" maxlength="100"
+                                   value="@perfilNombre" required />
                             <div class="invalid-feedback">El nombre del perfil es obligatorio (m&iacute;nimo 3 caracteres).</div>
                         </div>
 
@@ -43,7 +49,7 @@
                                 Descripci&oacute;n
                             </label>
                             <textarea id="descripcion" name="descripcion"
-                                      class="form-control" rows="3" maxlength="500"></textarea>
+                                      class="form-control" rows="3" maxlength="500">@perfilDescripcion</textarea>
                             <div class="form-text">Opcional. M&aacute;ximo 500 caracteres.</div>
                         </div>
 
@@ -51,7 +57,8 @@
                         <div class="col-12">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
-                                       id="esAdmin" name="esAdmin" />
+                                       id="esAdmin" name="esAdmin"
+                                       @(perfilEsAdmin ? "checked" : "") />
                                 <label class="form-check-label" for="esAdmin">
                                     <i class="bi bi-shield-check me-1"></i>
                                     Perfil de Administrador
@@ -67,11 +74,20 @@
                             <hr class="text-muted" />
                             <dl class="row mb-0 small text-muted">
                                 <dt class="col-sm-5">Estado actual:</dt>
-                                <dd class="col-sm-7" id="infoEstado"></dd>
+                                <dd class="col-sm-7">
+                                    @if (perfilActivo)
+                                    {
+                                        <span class="badge bg-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    }
+                                </dd>
                                 <dt class="col-sm-5">Creado el:</dt>
-                                <dd class="col-sm-7" id="infoFechaCreacion"></dd>
+                                <dd class="col-sm-7">@(perfilFechaCreacion ?? "No disponible")</dd>
                                 <dt class="col-sm-5">&Uacute;ltima modificaci&oacute;n:</dt>
-                                <dd class="col-sm-7" id="infoFechaModificacion">Sin modificaciones</dd>
+                                <dd class="col-sm-7">@(perfilFechaModificacion ?? "Sin modificaciones")</dd>
                             </dl>
                         </div>
 
@@ -95,52 +111,8 @@
 
 @section Scripts {
 <script>
-    const perfilId = '@ViewContext.RouteData.Values["id"]';
-
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!perfilId) {
-            mostrarError('ID de perfil no proporcionado.');
-            return;
-        }
-        cargarPerfil();
-    });
-
-    async function cargarPerfil() {
-        const res = await fetch(`/api/Perfiles/${perfilId}`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!res.ok) {
-            mostrarError('Perfil no encontrado o error al cargar.');
-            return;
-        }
-
-        const json = await res.json();
-        const p = json.data;
-
-        if (!p) {
-            mostrarError('No se encontr&oacute; informaci&oacute;n del perfil.');
-            return;
-        }
-
-        document.getElementById('perfilId').value = p.id;
-        document.getElementById('nombre').value = p.nombre || '';
-        document.getElementById('descripcion').value = p.descripcion || '';
-        document.getElementById('esAdmin').checked = p.esAdmin;
-
-        document.getElementById('infoEstado').innerHTML = p.activo
-            ? '<span class="badge bg-success">Activo</span>'
-            : '<span class="badge bg-secondary">Inactivo</span>';
-        document.getElementById('infoFechaCreacion').textContent = formatDate(p.fechaCreacion);
-        document.getElementById('infoFechaModificacion').textContent = p.fechaModificacion
-            ? formatDate(p.fechaModificacion)
-            : 'Sin modificaciones';
-
-        document.getElementById('loadingInfo').classList.add('d-none');
-        document.getElementById('frmPerfil').classList.remove('d-none');
-    }
+    const perfilId = document.getElementById('perfilId').value;
+    const jsonActualizarUrl = '@jsonActualizarUrl';
 
     document.getElementById('frmPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -162,9 +134,8 @@
         setLoading(true);
         ocultarError();
 
-        const res = await fetch(`/api/Perfiles/${perfilId}`, {
+        const res = await fetch(`${jsonActualizarUrl}?id=${perfilId}`, {
             method: 'PUT',
-            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre, descripcion, esAdmin })
         });
@@ -174,21 +145,12 @@
 
         if (res.ok && json.success) {
             showToast('Perfil actualizado exitosamente.', 'success');
-            setTimeout(() => window.location.href = '@Url.Action("Index")', 1200);
+            setTimeout(() => window.location.href = '@perfilIndexUrl', 1200);
         } else {
             const errs = json.errors || [json.message || 'Error al actualizar el perfil.'];
             mostrarErrores(errs);
         }
     });
-
-    function formatDate(iso) {
-        if (!iso) return '';
-        const d = new Date(iso);
-        return d.toLocaleDateString('es-GT', {
-            year: 'numeric', month: 'long', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-    }
 
     function setLoading(loading) {
         const btn = document.getElementById('btnGuardar');
@@ -204,12 +166,6 @@
         alert.classList.remove('d-none');
         alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
             errores.map(e => `<div>${escapeHtml(e)}</div>`).join('');
-    }
-
-    function mostrarError(msg) {
-        document.getElementById('alertError').textContent = msg;
-        document.getElementById('alertError').classList.remove('d-none');
-        document.getElementById('loadingInfo').classList.add('d-none');
     }
 
     function ocultarError() {

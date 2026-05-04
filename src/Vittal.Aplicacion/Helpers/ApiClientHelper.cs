@@ -32,21 +32,86 @@ namespace Vittal.Aplicacion.Helpers
 
         /// <summary>
         /// Crea un HttpClient con el JWT del usuario actual (si está autenticado).
+        /// Lee primero de la cookie separada "vittal_jwt" (fuente principal),
+        /// con fallback al claim "access_token" por compatibilidad.
+        /// Usa HttpRequestMessage con headers explícitos para evitar problemas
+        /// con el pooling de IHttpClientFactory.
         /// </summary>
         private HttpClient CreateClient()
         {
             var client = _httpClientFactory.CreateClient("VittalApi");
-
-            var jwt = _httpContextAccessor.HttpContext?.User?
-                .FindFirst("access_token")?.Value;
+            var jwt = GetJwtFromCookieOrClaim();
 
             if (!string.IsNullOrEmpty(jwt))
             {
+                // Remove any existing Authorization header first (pooled clients may have stale headers)
+                client.DefaultRequestHeaders.Authorization = null;
                 client.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", jwt);
+
+                _logger.LogInformation("CreateClient - Authorization header set: Bearer {Length} chars",
+                    jwt.Length);
+            }
+            else
+            {
+                _logger.LogWarning("CreateClient - No JWT disponible");
             }
 
             return client;
+        }
+
+        /// <summary>
+        /// Obtiene el JWT de la cookie HttpOnly o del claim como fallback.
+        /// </summary>
+        private string? GetJwtFromCookieOrClaim()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            // Método principal: cookie HttpOnly separada
+            var jwt = httpContext?.Request.Cookies["vittal_jwt"];
+
+            // Fallback: claim (por compatibilidad)
+            if (string.IsNullOrEmpty(jwt))
+            {
+                jwt = httpContext?.User?.FindFirst("access_token")?.Value;
+            }
+
+            return jwt;
+        }
+
+        /// <summary>
+        /// Ejecuta una petición HTTP con el JWT inyectado via HttpRequestMessage.
+        /// Más confiable que DefaultRequestHeaders con IHttpClientFactory.
+        /// </summary>
+        private async Task<HttpResponseMessage> SendAuthenticatedRequestAsync(
+            HttpMethod method,
+            string endpoint,
+            HttpContent? content = null)
+        {
+            var client = _httpClientFactory.CreateClient("VittalApi");
+            var jwt = GetJwtFromCookieOrClaim();
+
+            var request = new HttpRequestMessage(method, endpoint);
+
+            if (!string.IsNullOrEmpty(jwt))
+            {
+                request.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", jwt);
+                _logger.LogInformation("SendAuthenticatedRequest - {Method} {Endpoint} - Bearer {Length} chars",
+                    method, endpoint, jwt.Length);
+            }
+            else
+            {
+                _logger.LogWarning("SendAuthenticatedRequest - No JWT para {Method} {Endpoint}",
+                    method, endpoint);
+            }
+
+            if (content != null)
+            {
+                request.Content = content;
+            }
+
+            return await client.SendAsync(request);
         }
 
         /// <summary>
@@ -96,8 +161,7 @@ namespace Vittal.Aplicacion.Helpers
         {
             try
             {
-                var client = CreateClient();
-                var response = await client.GetAsync(endpoint);
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Get, endpoint);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
@@ -131,11 +195,9 @@ namespace Vittal.Aplicacion.Helpers
         {
             try
             {
-                var client = CreateClient();
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync(endpoint, content);
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Post, endpoint, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
@@ -156,6 +218,78 @@ namespace Vittal.Aplicacion.Helpers
             {
                 _logger.LogError(ex, "Error inesperado al llamar a {Endpoint}", endpoint);
                 return (false, default, "Ocurrió un error inesperado.");
+            }
+        }
+
+        /// <summary>
+        /// PUT autenticado (actualizar recurso).
+        /// </summary>
+        public async Task<(bool Success, T? Data, string? ErrorMessage)> PutAsync<T>(
+            string endpoint,
+            object payload)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Put, endpoint, content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    return (true, result, null);
+                }
+
+                var errorMsg = ExtractErrorMessage(responseBody);
+                return (false, default, errorMsg);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error de conexi\u00f3n al llamar a {Endpoint}", endpoint);
+                return (false, default, "No se pudo conectar con el servidor.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al llamar a {Endpoint}", endpoint);
+                return (false, default, "Ocurri\u00f3 un error inesperado.");
+            }
+        }
+
+        /// <summary>
+        /// PATCH autenticado (actualizaci\u00f3n parcial).
+        /// </summary>
+        public async Task<(bool Success, T? Data, string? ErrorMessage)> PatchAsync<T>(
+            string endpoint,
+            object? payload)
+        {
+            try
+            {
+                var json = payload != null ? JsonSerializer.Serialize(payload) : "{}";
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await SendAuthenticatedRequestAsync(new HttpMethod("PATCH"), endpoint, content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = string.IsNullOrWhiteSpace(responseBody)
+                        ? default
+                        : JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    return (true, result, null);
+                }
+
+                var errorMsg = ExtractErrorMessage(responseBody);
+                return (false, default, errorMsg);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error de conexi\u00f3n al llamar a {Endpoint}", endpoint);
+                return (false, default, "No se pudo conectar con el servidor.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al llamar a {Endpoint}", endpoint);
+                return (false, default, "Ocurri\u00f3 un error inesperado.");
             }
         }
 
