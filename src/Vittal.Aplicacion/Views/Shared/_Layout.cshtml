@@ -31,6 +31,18 @@
         </nav>
     </header>
     <div class="container">
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
+            <h4 class="mb-0">@ViewData["Title"]</h4>
+            @await RenderSectionAsync("HeaderActions", required: false)
+        </div>
+        @if (ViewData["Breadcrumb"] != null)
+        {
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small mb-3">
+                    @Html.Raw(ViewData["Breadcrumb"])
+                </ol>
+            </nav>
+        }
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
