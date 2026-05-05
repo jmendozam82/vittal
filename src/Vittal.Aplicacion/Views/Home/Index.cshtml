@@ -1,8 +1,199 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Panel Principal";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section HeaderActions {
+    <small class="text-muted">
+        <i class="bi bi-calendar3 me-1"></i>@DateTime.Now.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES"))
+    </small>
+}
+
+<!-- Bienvenida -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white border-0 shadow-sm">
+            <div class="card-body py-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="bi bi-heart-pulse" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">Bienvenido al Sistema Vittal</h4>
+                            <p class="mb-0 opacity-75">Sistema de gestion de citas y expedientes medicos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modulos disponibles -->
+<h5 class="mb-3">
+    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Modulos del Sistema
+</h5>
+
+<div class="row g-3 mb-4">
+    <!-- Administracion -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear-wide-connected text-primary me-2"></i>Administracion
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <!-- Perfiles - Activo -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="/Administracion/Perfil" class="module-card d-block p-3 text-decoration-none text-dark">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Perfiles</div>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
+                                </div>
+                            </div>
+                            <div class="text-muted small">Gestion de perfiles y roles del sistema</div>
+                        </a>
+                    </div>
+
+                    <!-- Usuarios - En desarrollo -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="module-card p-3 text-muted">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Usuarios</div>
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">En desarrollo</span>
+                                </div>
+                            </div>
+                            <div class="small">Gestion de usuarios del sistema</div>
+                        </div>
+                    </div>
+
+                    <!-- Permisos - En desarrollo -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="module-card p-3 text-muted">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                    <i class="bi bi-key"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Permisos</div>
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">En desarrollo</span>
+                                </div>
+                            </div>
+                            <div class="small">Configuracion de permisos por modulo</div>
+                        </div>
+                    </div>
+
+                    <!-- Asignar Salas - En desarrollo -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="module-card p-3 text-muted">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                    <i class="bi bi-door-open"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Asignar Salas</div>
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">En desarrollo</span>
+                                </div>
+                            </div>
+                            <div class="small">Asignacion de salas y areas medicas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Proximamente -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-4 text-muted">
+                <i class="bi bi-cone-striped fs-3 d-block mb-2"></i>
+                <p class="mb-0">Los modulos de Catalogos, Expedientes, Agenda y Reportes estaran disponibles proximamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    /* Module card hover effects */
+    .module-card {
+        transition: all 0.2s ease-in-out;
+        border-radius: 0.5rem;
+    }
+
+    .module-card:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+    }
+
+    .module-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Disabled module card */
+    .text-muted .module-card {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .text-muted .module-card:hover {
+        transform: none;
+        box-shadow: none;
+        background-color: transparent;
+    }
+
+    .module-card:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+    }
+
+    .module-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Disabled module card */
+    .text-muted .module-card {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .text-muted .module-card:hover {
+        transform: none;
+        box-shadow: none;
+        background-color: transparent;
+    }
+
+    /* Banner logo watermark */
+    .banner-logo {
+        max-width: 45px;
+        height: auto;
+        opacity: 0.15;
+        filter: brightness(0) invert(1);
+    }
+</style>
+}

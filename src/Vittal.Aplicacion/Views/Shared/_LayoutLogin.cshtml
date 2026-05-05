@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vittal</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="~/images/favicon-96x96.png" />
+    <link rel="shortcut icon" href="~/images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/images/apple-touch-icon.png" />
+    <link rel="manifest" href="~/images/site.webmanifest" />
+    
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,14 +34,21 @@
             max-width: 420px;
             padding: 15px;
         }
-        .login-logo {
-            text-align: center;
-            margin-bottom: 2rem;
+        .login-logo-img {
+            max-width: 220px;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
         }
-        .login-logo h1 {
-            color: var(--vittal-primary);
-            font-weight: 700;
-            letter-spacing: -1px;
+        .login-subtitle {
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-top: 0.5rem;
+            margin-bottom: 0;
         }
         .vittal-card {
             border: none;
@@ -46,8 +60,8 @@
 <body>
     <div class="login-container">
         <div class="login-logo">
-            <h1>VITTAL</h1>
-            <p class="text-muted">Gestión Clínica Inteligente</p>
+            <img src="~/images/vittal-logo.png" alt="Vittal - Gestión Clínica Inteligente" class="login-logo-img" loading="lazy" />
+            <p class="login-subtitle">Gestión Clínica Inteligente</p>
         </div>
         
         <main role="main">
