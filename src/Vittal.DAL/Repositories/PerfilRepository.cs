@@ -112,7 +112,6 @@ public class PerfilRepository : IPerfilRepository
             LEFT JOIN public.usuarios u   ON u.perfil_id  = p.id AND u.clinica_id  = p.clinica_id AND u.activo = true
             WHERE p.id = @Id
               AND p.clinica_id = @ClinicaId
-              AND p.activo = true
             GROUP BY p.id, p.clinica_id, p.nombre, p.descripcion, p.es_admin,
                      p.activo, p.fecha_creacion, p.fecha_modificacion";
 

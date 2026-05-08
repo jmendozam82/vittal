@@ -35,9 +35,11 @@ public class PermisosController : ControllerBase
     /// <summary>
     /// Obtiene todos los permisos de un perfil (un registro por módulo del sistema).
     /// Módulos sin permiso explícito retornan con valores false.
+    /// No requiere permiso especial porque el HomeController lo usa para determinar
+    /// qué módulos mostrar en la interfaz de cada usuario.
+    /// La seguridad está garantizada por el filtro clinica_id del JWT + RLS en BD.
     /// </summary>
     [HttpGet("perfil/{perfilId:guid}")]
-    [RequirePermission("permisos", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<PermisoResponseDto[]>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByPerfil([FromRoute] Guid perfilId)

@@ -76,6 +76,7 @@ public class AuthController : ControllerBase
             Apellidos = userResult.Data.Apellidos,
             Email = userResult.Data.Email,
             Perfil = userResult.Data.PerfilNombre,
+            PerfilId = userResult.Data.PerfilId,
             EsAdmin = userResult.Data.EsAdmin
         };
 

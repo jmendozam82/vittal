@@ -95,8 +95,7 @@ public class SalaRepository : ISalaRepository
                 s.fecha_modificacion AS FechaModificacion
             FROM public.salas s
             WHERE s.id = @Id
-              AND s.clinica_id = @ClinicaId
-              AND s.activo = true";
+              AND s.clinica_id = @ClinicaId";
 
         try
         {

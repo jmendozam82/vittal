@@ -1,5 +1,20 @@
 ﻿@{
     ViewData["Title"] = "Panel Principal";
+
+    // Helper para verificar si el usuario puede ver un módulo
+    bool PuedeVer(string clave)
+    {
+        if (ViewBag.EsAdmin == true) return true;
+        var modulos = ViewBag.ModulosPermitidos as System.Collections.Generic.HashSet<string>;
+        return modulos?.Contains(clave) == true;
+    }
+
+    // Contar módulos visibles por sección para decidir si mostrar el card
+    var adminModulos = new[] { "perfiles", "usuarios", "permisos", "salas" };
+    var catalogosModulos = new[] { "pacientes", "medicamentos", "clinicas", "tipos_cirugia", "cirugias",
+                                   "tipos_dx", "diagnosticos", "tratamientos", "recomendaciones", "examenes" };
+    bool hayAdmin = adminModulos.Any(PuedeVer);
+    bool hayCatalogos = catalogosModulos.Any(PuedeVer);
 }
 
 @section HeaderActions {
@@ -35,6 +50,8 @@
 </h5>
 
 <div class="row g-3 mb-4">
+    @if (hayAdmin)
+    {
     <!-- Administracion -->
     <div class="col-12">
         <div class="card border-0 shadow-sm h-100">
@@ -45,7 +62,9 @@
             </div>
             <div class="card-body p-0">
                 <div class="row g-0">
-                    <!-- Perfiles - Activo -->
+                    @if (PuedeVer("perfiles"))
+                    {
+                    <!-- Perfiles -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Administracion/Perfil" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -60,8 +79,11 @@
                             <div class="text-muted small">Gestion de perfiles y roles del sistema</div>
                         </a>
                     </div>
+                    }
 
-                    <!-- Usuarios - Activo -->
+                    @if (PuedeVer("usuarios"))
+                    {
+                    <!-- Usuarios -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Administracion/Usuario" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -76,8 +98,11 @@
                             <div class="text-muted small">Gestion de usuarios del sistema</div>
                         </a>
                     </div>
+                    }
 
-                    <!-- Permisos - Activo -->
+                    @if (PuedeVer("permisos"))
+                    {
+                    <!-- Permisos -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Administracion/Permiso" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -92,8 +117,11 @@
                             <div class="text-muted small">Configuracion de permisos por modulo</div>
                         </a>
                     </div>
+                    }
 
-                    <!-- Asignar Salas - Activo -->
+                    @if (PuedeVer("salas"))
+                    {
+                    <!-- Asignar Salas -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Administracion/Sala" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -108,12 +136,17 @@
                             <div class="text-muted small">Asignacion de salas y areas medicas</div>
                         </a>
                     </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
+    }
 </div>
 
+@if (hayCatalogos)
+{
+<div class="row g-3 mb-4">
     <!-- Catalogos -->
     <div class="col-12">
         <div class="card border-0 shadow-sm h-100">
@@ -124,7 +157,9 @@
             </div>
             <div class="card-body p-0">
                 <div class="row g-0">
-                    <!-- Pacientes - Activo -->
+                    @if (PuedeVer("pacientes"))
+                    {
+                    <!-- Pacientes -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/Paciente" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -139,8 +174,11 @@
                             <div class="text-muted small">Gestion de pacientes de la clinica</div>
                         </a>
                     </div>
+                    }
 
-                    <!-- Medicamentos - Proximamente -->
+                    @if (ViewBag.EsAdmin == true)
+                    {
+                    <!-- Medicamentos - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -156,7 +194,7 @@
                         </div>
                     </div>
 
-                    <!-- Clinicas - Proximamente -->
+                    <!-- Clinicas - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -172,7 +210,7 @@
                         </div>
                     </div>
 
-                    <!-- Cirugias - Proximamente -->
+                    <!-- Cirugias - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -188,7 +226,7 @@
                         </div>
                     </div>
 
-                    <!-- Diagnosticos - Proximamente -->
+                    <!-- Diagnosticos - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -204,7 +242,7 @@
                         </div>
                     </div>
 
-                    <!-- Tratamientos - Proximamente -->
+                    <!-- Tratamientos - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -220,7 +258,7 @@
                         </div>
                     </div>
 
-                    <!-- Examenes - Proximamente -->
+                    <!-- Examenes - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -236,7 +274,7 @@
                         </div>
                     </div>
 
-                    <!-- Recomendaciones - Proximamente -->
+                    <!-- Recomendaciones - Proximamente (solo admin) -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="module-card p-3 text-muted">
                             <div class="d-flex align-items-center mb-2">
@@ -251,13 +289,17 @@
                             <div class="small">Catalogo de recomendaciones medicas</div>
                         </div>
                     </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+}
 
-<!-- Proximamente: modulos avanzados -->
+@if (ViewBag.EsAdmin == true)
+{
+<!-- Proximamente: modulos avanzados (solo visible para admin) -->
 <div class="row g-3 mt-1">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -268,6 +310,7 @@
         </div>
     </div>
 </div>
+}
 
 @section Scripts {
 <style>
@@ -275,33 +318,6 @@
     .module-card {
         transition: all 0.2s ease-in-out;
         border-radius: 0.5rem;
-    }
-
-    .module-card:hover {
-        background-color: #f8f9fa;
-        transform: translateY(-2px);
-        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
-    }
-
-    .module-icon {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-    }
-
-    /* Disabled module card */
-    .text-muted .module-card {
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-
-    .text-muted .module-card:hover {
-        transform: none;
-        box-shadow: none;
-        background-color: transparent;
     }
 
     .module-card:hover {

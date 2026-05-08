@@ -74,7 +74,9 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         new Claim(ClaimTypes.Name, $"{user.Nombres} {user.Apellidos}"),
                         new Claim(ClaimTypes.Email, user.Email),
                         new Claim("clinica_id", user.ClinicaId.ToString()),
-                        new Claim(ClaimTypes.Role, user.Perfil)
+                        new Claim(ClaimTypes.Role, user.Perfil),
+                        new Claim("app_perfil_id", user.PerfilId.ToString()),
+                        new Claim("app_es_admin", user.EsAdmin.ToString().ToLower())
                     };
 
                     if (user.EsAdmin)
