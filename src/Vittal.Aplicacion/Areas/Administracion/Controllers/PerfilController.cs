@@ -68,9 +68,10 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         /// <summary>Lista todos los perfiles — para fetch() desde la vista Index</summary>
         [HttpGet]
-        public async Task<IActionResult> JsonPerfiles()
+        public async Task<IActionResult> JsonPerfiles([FromQuery] bool inactivos = false)
         {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Perfiles");
+            var url = inactivos ? "api/Perfiles?inactivos=true" : "api/Perfiles";
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
             if (!success)
             {
@@ -146,6 +147,20 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             }
 
             return Ok(new { success = true, message = "Perfil desactivado exitosamente" });
+        }
+
+        /// <summary>Reactiva un perfil -- para fetch() desde la vista Index</summary>
+        [HttpPatch]
+        public async Task<IActionResult> JsonReactivar(Guid id)
+        {
+            var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Perfiles/{id}/reactivar", null);
+
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar perfil" });
+            }
+
+            return Ok(new { success = true, message = "Perfil reactivado exitosamente" });
         }
 
         // ========== Helpers para extraer data de JsonElement ==========

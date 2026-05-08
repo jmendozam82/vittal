@@ -2,7 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vittal.API.Authorization;
 using Vittal.API.Extensions;
+using Vittal.Utility;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
 using Vittal.DTO.Perfil;
@@ -29,19 +31,21 @@ public class PerfilesController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>Obtiene todos los perfiles activos de la clínica.</summary>
+    /// <summary>Obtiene todos los perfiles de la clínica. Por defecto solo activos.</summary>
     [HttpGet]
+    [RequirePermission("perfiles", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<PerfilResponseDto[]>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] bool inactivos = false)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetAllAsync(clinicaId);
+        var result = await _service.GetAllAsync(clinicaId, inactivos);
         return result.ToActionResult();
     }
 
     /// <summary>Obtiene un perfil por su ID.</summary>
     [HttpGet("{id:guid}")]
+    [RequirePermission("perfiles", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<PerfilResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid id)
@@ -53,6 +57,7 @@ public class PerfilesController : ControllerBase
 
     /// <summary>Crea un nuevo perfil en la clínica.</summary>
     [HttpPost]
+    [RequirePermission("perfiles", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<PerfilResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -77,6 +82,7 @@ public class PerfilesController : ControllerBase
 
     /// <summary>Actualiza un perfil existente.</summary>
     [HttpPut("{id:guid}")]
+    [RequirePermission("perfiles", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<PerfilResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -92,6 +98,7 @@ public class PerfilesController : ControllerBase
     /// Falla si el perfil tiene usuarios asignados.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
+    [RequirePermission("perfiles", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -99,6 +106,21 @@ public class PerfilesController : ControllerBase
     {
         var clinicaId = User.GetClinicaId();
         var result = await _service.DeactivateAsync(id, clinicaId);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Reactiva un perfil desactivado (activo = true).
+    /// </summary>
+    [HttpPatch("{id:guid}/reactivar")]
+    [RequirePermission("perfiles", PermissionType.Update)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Reactivar([FromRoute] Guid id)
+    {
+        var clinicaId = User.GetClinicaId();
+        var result = await _service.ReactivateAsync(id, clinicaId);
         return result.ToActionResult();
     }
 

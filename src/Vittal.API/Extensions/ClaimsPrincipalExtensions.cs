@@ -28,4 +28,10 @@ public static class ClaimsPrincipalExtensions
         var claim = user.FindFirst("app_es_admin");
         return claim != null && bool.TryParse(claim.Value, out var isAdmin) && isAdmin;
     }
+
+    public static Guid GetInternalPerfilId(this ClaimsPrincipal user)
+    {
+        var claim = user.FindFirst("app_perfil_id");
+        return claim != null && Guid.TryParse(claim.Value, out var id) ? id : Guid.Empty;
+    }
 }

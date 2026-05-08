@@ -1,0 +1,309 @@
+@{
+    ViewData["Title"] = "Gestión de Permisos";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-shield-lock me-2"></i>@ViewData["Title"]
+        </h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Selector de Perfil -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="perfilSelect" class="form-label fw-semibold">Seleccionar Perfil</label>
+                    <select id="perfilSelect" class="form-select" onchange="cargarPermisos()">
+                        <option value="">-- Seleccione un perfil --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loadingIndicator" class="text-center py-5 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando permisos...</p>
+            </div>
+
+            <!-- Tabla de Permisos -->
+            <div id="permisosContainer" class="d-none">
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>Marque los permisos que desea asignar al perfil seleccionado. Los cambios se guardan al hacer clic en <strong>Guardar Cambios</strong>.</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle" id="permisosTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40%;">Módulo</th>
+                                <th style="width: 20%;" class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkLeerTodo" onchange="toggleAll('leer')">
+                                        <label class="form-check-label fw-semibold" for="checkLeerTodo">Leer</label>
+                                    </div>
+                                </th>
+                                <th style="width: 20%;" class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkCrearTodo" onchange="toggleAll('crear')">
+                                        <label class="form-check-label fw-semibold" for="checkCrearTodo">Crear</label>
+                                    </div>
+                                </th>
+                                <th style="width: 20%;" class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkActualizarTodo" onchange="toggleAll('actualizar')">
+                                        <label class="form-check-label fw-semibold" for="checkActualizarTodo">Actualizar</label>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="permisosBody">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button class="btn btn-primary" onclick="guardarPermisos()" id="btnGuardar">
+                        <i class="bi bi-floppy me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mensaje cuando no hay perfil seleccionado -->
+            <div id="noSelectionMessage" class="text-center py-5 text-muted">
+                <i class="bi bi-arrow-up-circle fs-1 d-block mb-2"></i>
+                <p>Seleccione un perfil para gestionar sus permisos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let permisosActuales = [];
+
+        // Cargar perfiles al iniciar
+        document.addEventListener('DOMContentLoaded', function () {
+            cargarPerfiles();
+        });
+
+        function cargarPerfiles() {
+            fetch('/Administracion/Permiso/JsonPerfiles')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const select = document.getElementById('perfilSelect');
+                        data.data.forEach(p => {
+                            // Extraer id y nombre del objeto JSON
+                            const id = p.id || p.Id || '';
+                            const nombre = p.nombre || p.Nombre || 'Sin nombre';
+                            const option = document.createElement('option');
+                            option.value = id;
+                            option.textContent = nombre;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(err => console.error('Error al cargar perfiles:', err));
+        }
+
+        function cargarPermisos() {
+            const perfilId = document.getElementById('perfilSelect').value;
+            const container = document.getElementById('permisosContainer');
+            const loading = document.getElementById('loadingIndicator');
+            const noSelection = document.getElementById('noSelectionMessage');
+
+            if (!perfilId) {
+                container.classList.add('d-none');
+                loading.classList.add('d-none');
+                noSelection.classList.remove('d-none');
+                return;
+            }
+
+            noSelection.classList.add('d-none');
+            loading.classList.remove('d-none');
+            container.classList.add('d-none');
+
+            fetch(`/Administracion/Permiso/JsonPermisos?perfilId=${perfilId}`)
+                .then(r => r.json())
+                .then(data => {
+                    loading.classList.add('d-none');
+
+                    if (data.success && data.data) {
+                        permisosActuales = data.data;
+                        renderizarTabla(data.data);
+                        container.classList.remove('d-none');
+                    } else {
+                        alert('Error al cargar permisos: ' + (data.message || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    loading.classList.add('d-none');
+                    console.error('Error al cargar permisos:', err);
+                    alert('Error de conexión al cargar permisos.');
+                });
+        }
+
+        function renderizarTabla(permisos) {
+            const tbody = document.getElementById('permisosBody');
+            tbody.innerHTML = '';
+
+            permisos.forEach(p => {
+                const moduloId = p.moduloId || p.ModuloId || '';
+                const moduloNombre = p.moduloNombre || p.ModuloNombre || 'Sin nombre';
+                const moduloDesc = p.moduloDescripcion || p.ModuloDescripcion || '';
+                const puedeLeer = p.puedeLeer || p.PuedeLeer || false;
+                const puedeCrear = p.puedeCrear || p.PuedeCrear || false;
+                const puedeActualizar = p.puedeActualizar || p.PuedeActualizar || false;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <strong>${moduloNombre}</strong>
+                        ${moduloDesc ? `<br><small class="text-muted">${moduloDesc}</small>` : ''}
+                        <input type="hidden" class="modulo-id" value="${moduloId}">
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input permiso-check leer-check" type="checkbox"
+                                data-modulo="${moduloId}" ${puedeLeer ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input permiso-check crear-check" type="checkbox"
+                                data-modulo="${moduloId}" ${puedeCrear ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input permiso-check actualizar-check" type="checkbox"
+                                data-modulo="${moduloId}" ${puedeActualizar ? 'checked' : ''}>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Reset select-all checkboxes
+            document.getElementById('checkLeerTodo').checked = false;
+            document.getElementById('checkCrearTodo').checked = false;
+            document.getElementById('checkActualizarTodo').checked = false;
+        }
+
+        function toggleAll(tipo) {
+            const checked = document.getElementById(`check${capitalize(tipo)}Todo`).checked;
+            let checkClass;
+            if (tipo === 'leer') checkClass = '.leer-check';
+            else if (tipo === 'crear') checkClass = '.crear-check';
+            else if (tipo === 'actualizar') checkClass = '.actualizar-check';
+
+            document.querySelectorAll(checkClass).forEach(cb => cb.checked = checked);
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function guardarPermisos() {
+            const perfilId = document.getElementById('perfilSelect').value;
+            if (!perfilId) return;
+
+            const btn = document.getElementById('btnGuardar');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando...';
+
+            // Colectar permisos de la tabla
+            const rows = document.querySelectorAll('#permisosBody tr');
+            const permisos = [];
+
+            rows.forEach(row => {
+                const moduloId = row.querySelector('.modulo-id').value;
+                const puedeLeer = row.querySelector('.leer-check').checked;
+                const puedeCrear = row.querySelector('.crear-check').checked;
+                const puedeActualizar = row.querySelector('.actualizar-check').checked;
+
+                permisos.push({
+                    moduloId: moduloId,
+                    puedeLeer: puedeLeer,
+                    puedeCrear: puedeCrear,
+                    puedeActualizar: puedeActualizar
+                });
+            });
+
+            // Token anti-forgery (si aplica)
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch(`/Administracion/Permiso/JsonGuardar?perfilId=${perfilId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'RequestVerificationToken': csrfToken } : {})
+                },
+                body: JSON.stringify({ permisos: permisos })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar notificación de éxito
+                    mostrarToast('success', 'Permisos guardados exitosamente');
+                } else {
+                    mostrarToast('danger', 'Error: ' + (data.message || 'Error al guardar'));
+                }
+            })
+            .catch(err => {
+                console.error('Error al guardar permisos:', err);
+                mostrarToast('danger', 'Error de conexión al guardar permisos.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-floppy me-1"></i>Guardar Cambios';
+            });
+        }
+
+        function mostrarToast(tipo, mensaje) {
+            // Crear toast container si no existe
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(container);
+            }
+
+            const toastId = 'toast-' + Date.now();
+            const bgClass = tipo === 'success' ? 'bg-success text-white' :
+                           tipo === 'danger' ? 'bg-danger text-white' :
+                           'bg-info text-white';
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${bgClass}`;
+            toast.id = toastId;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+                <div class="toast-header ${bgClass}">
+                    <strong class="me-auto">
+                        ${tipo === 'success' ? 'Éxito' : tipo === 'danger' ? 'Error' : 'Información'}
+                    </strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                </div>
+                <div class="toast-body">
+                    ${mensaje}
+                </div>
+            `;
+
+            container.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 4000 });
+            bsToast.show();
+
+            // Eliminar del DOM después de ocultarse
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+    </script>
+}

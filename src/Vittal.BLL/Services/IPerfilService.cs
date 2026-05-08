@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vittal.DTO.Perfil;
@@ -13,9 +13,11 @@ namespace Vittal.BLL.Services;
 public interface IPerfilService
 {
     /// <summary>
-    /// Obtiene todos los perfiles activos de la clínica.
+    /// Obtiene todos los perfiles de la clínica.
+    /// Si incluirInactivos = false (default), solo retorna activos.
+    /// Si incluirInactivos = true, retorna todos (activos + inactivos).
     /// </summary>
-    Task<ServiceResult<IEnumerable<PerfilResponseDto>>> GetAllAsync(Guid clinicaId);
+    Task<ServiceResult<IEnumerable<PerfilResponseDto>>> GetAllAsync(Guid clinicaId, bool incluirInactivos = false);
 
     /// <summary>
     /// Obtiene un perfil por su ID.
@@ -36,4 +38,9 @@ public interface IPerfilService
     /// Desactiva un perfil. Falla si tiene usuarios asignados.
     /// </summary>
     Task<ServiceResult<bool>> DeactivateAsync(Guid id, Guid clinicaId);
+
+    /// <summary>
+    /// Reactiva un perfil desactivado (activo = true).
+    /// </summary>
+    Task<ServiceResult<bool>> ReactivateAsync(Guid id, Guid clinicaId);
 }

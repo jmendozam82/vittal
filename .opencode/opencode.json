@@ -1,14 +1,37 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1",
+        "apiKey": "ollama"
+      },
+      "models": {
+        "qwen2.5-coder:3b": {
+          "name": "qwen2.5-coder:3b"
+        }
+      }
+    }
+  },
   "mcp": {
     "supabase": {
       "type": "local",
-      "command": ["npx", "-y", "@supabase/mcp-server-supabase@0.3.1", "--access-token", "{env:SUPABASE_ACCESS_TOKEN}"],
+      "command": [
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@0.3.1",
+        "--access-token",
+        "{env:SUPABASE_ACCESS_TOKEN}"
+      ],
       "enabled": true
     },
     "n8n": {
       "type": "local",
-      "command": ["n8n-mcp"],
+      "command": [
+        "n8n-mcp"
+      ],
       "environment": {
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
@@ -20,7 +43,15 @@
     },
     "github": {
       "type": "local",
-      "command": ["docker", "run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "command": [
+        "docker",
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
       "environment": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PAT}"
       },

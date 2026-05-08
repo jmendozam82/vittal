@@ -25,12 +25,17 @@ public class PerfilService : IPerfilService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<IEnumerable<PerfilResponseDto>>> GetAllAsync(Guid clinicaId)
+    public async Task<ServiceResult<IEnumerable<PerfilResponseDto>>> GetAllAsync(Guid clinicaId, bool incluirInactivos = false)
     {
         try
         {
-            var perfiles = await _perfilRepository.GetAllAsync(clinicaId);
-            var dtos = MapToResponseDto(perfiles);
+            _logger.LogInformation("Obteniendo perfiles de la clínica {ClinicaId} (incluirInactivos: {IncluirInactivos})", clinicaId, incluirInactivos);
+
+            var entities = incluirInactivos
+                ? await _perfilRepository.GetAllIncludingInactiveAsync(clinicaId)
+                : await _perfilRepository.GetAllAsync(clinicaId);
+
+            var dtos = MapToResponseDto(entities);
             return ServiceResult<IEnumerable<PerfilResponseDto>>.Success(dtos);
         }
         catch (Exception ex)
@@ -167,6 +172,38 @@ public class PerfilService : IPerfilService
         {
             _logger.LogError(ex, "Error al desactivar perfil {Id}", id);
             return ServiceResult<bool>.Failure("Error interno al desactivar el perfil.");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> ReactivateAsync(Guid id, Guid clinicaId)
+    {
+        try
+        {
+            _logger.LogInformation("Reactivando perfil {Id} en clinica {ClinicaId}", id, clinicaId);
+
+            var existing = await _perfilRepository.GetByIdAsync(id, clinicaId);
+            if (existing == null)
+            {
+                return ServiceResult<bool>.Failure("Perfil no encontrado", ServiceErrorType.NotFound);
+            }
+
+            if (existing.Activo)
+            {
+                return ServiceResult<bool>.Failure("El perfil ya está activo.", ServiceErrorType.Validation);
+            }
+
+            var reactivated = await _perfilRepository.ReactivateAsync(id, clinicaId);
+            if (!reactivated)
+            {
+                return ServiceResult<bool>.Failure("No se pudo reactivar el perfil.", ServiceErrorType.InternalError);
+            }
+
+            return ServiceResult<bool>.Success(true, "Perfil reactivado exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reactivar perfil {Id}", id);
+            return ServiceResult<bool>.Failure($"Error interno: {ex.Message}");
         }
     }
 

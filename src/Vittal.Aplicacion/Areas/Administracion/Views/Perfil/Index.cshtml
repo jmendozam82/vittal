@@ -35,8 +35,14 @@
                     </button>
                 </div>
             </div>
-            <div class="col-md-6 d-flex align-items-center mt-2 mt-md-0">
+            <div class="col-md-6 d-flex align-items-center justify-content-between mt-2 mt-md-0">
                 <small class="text-muted" id="contadorResultados"></small>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggleInactivos">
+                    <label class="form-check-label small" for="toggleInactivos">
+                        Mostrar inactivos
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -84,24 +90,60 @@
     </div>
 </div>
 
+<!-- Modal de confirmacion de reactivar -->
+<div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Confirmar reactivacion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    &iquest;Esta seguro que desea reactivar el perfil
+                    <strong id="nombrePerfilReactivar"></strong>?
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnConfirmarReactivar">
+                    <i class="bi bi-check-lg me-1"></i> Reactivar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     // URLs seguras desde el servidor (no hardcodear rutas)
     const URLS = {
         listar: '@jsonPerfilesUrl',
         crear: '@crearPerfilUrl',
-        desactivar: '@Url.Action("JsonDesactivar")'
+        desactivar: '@Url.Action("JsonDesactivar")',
+        reactivar: '@Url.Action("JsonReactivar")'
     };
 
     let perfiles = [];
     let idSeleccionado = null;
     let terminoBusqueda = '';
+    let mostrarInactivos = false;
     let debounceTimer = null;
-    const modal = new bootstrap.Modal(document.getElementById('modalDesactivar'));
+    const modalDesactivar = new bootstrap.Modal(document.getElementById('modalDesactivar'));
+    const modalReactivar = new bootstrap.Modal(document.getElementById('modalReactivar'));
 
     document.addEventListener('DOMContentLoaded', function() {
         cargarPerfiles();
         inicializarBuscador();
+
+        // Toggle para mostrar/ocultar inactivos
+        document.getElementById('toggleInactivos').addEventListener('change', function() {
+            mostrarInactivos = this.checked;
+            cargarPerfiles();
+        });
     });
 
     function inicializarBuscador() {
@@ -164,7 +206,8 @@
 
     async function cargarPerfiles() {
         try {
-            const res = await fetch(URLS.listar, {
+            const url = mostrarInactivos ? `${URLS.listar}?inactivos=true` : URLS.listar;
+            const res = await fetch(url, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -227,8 +270,10 @@
                 ? '<span class="badge bg-success">Activo</span>'
                 : '<span class="badge bg-secondary">Inactivo</span>';
 
+            const rowClass = p.activo ? '' : 'opacity-75';
+
             return `
-            <tr>
+            <tr class="${rowClass}">
                 <td>
                     ${adminBadge}
                     <strong>${escapeHtml(p.nombre)}</strong>
@@ -250,7 +295,12 @@
                             onclick="confirmarDesactivar('${p.id}', '${escapeHtml(p.nombre)}')"
                             title="Desactivar">
                         <i class="bi bi-slash-circle"></i>
-                    </button>` : ''}
+                    </button>` : `
+                    <button class="btn btn-outline-success btn-sm"
+                            onclick="confirmarReactivar('${p.id}', '${escapeHtml(p.nombre)}')"
+                            title="Reactivar">
+                        <i class="bi bi-check-circle"></i>
+                    </button>`}
                 </td>
             </tr>`;
         }).join('');
@@ -275,7 +325,13 @@
     function confirmarDesactivar(id, nombre) {
         idSeleccionado = id;
         document.getElementById('nombrePerfilDesactivar').textContent = nombre;
-        modal.show();
+        modalDesactivar.show();
+    }
+
+    function confirmarReactivar(id, nombre) {
+        idSeleccionado = id;
+        document.getElementById('nombrePerfilReactivar').textContent = nombre;
+        modalReactivar.show();
     }
 
     document.getElementById('btnConfirmarDesactivar').addEventListener('click', async () => {
@@ -304,7 +360,38 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
-            modal.hide();
+            modalDesactivar.hide();
+            idSeleccionado = null;
+        }
+    });
+
+    document.getElementById('btnConfirmarReactivar').addEventListener('click', async () => {
+        if (!idSeleccionado) return;
+
+        const btn = document.getElementById('btnConfirmarReactivar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Reactivando...';
+
+        try {
+            const res = await fetch(`${URLS.reactivar}?id=${idSeleccionado}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast(json.message || 'Perfil reactivado exitosamente.', 'success');
+                await cargarPerfiles();
+            } else {
+                showToast(json.message || 'Error al reactivar el perfil.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión al reactivar.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';
+            modalReactivar.hide();
             idSeleccionado = null;
         }
     });

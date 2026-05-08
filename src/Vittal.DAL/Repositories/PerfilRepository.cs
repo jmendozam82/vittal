@@ -59,6 +59,40 @@ public class PerfilRepository : IPerfilRepository
         }
     }
 
+    public async Task<IEnumerable<Perfil>> GetAllIncludingInactiveAsync(Guid clinicaId)
+    {
+        const string sql = @"
+            SELECT
+                p.id              AS Id,
+                p.clinica_id      AS ClinicaId,
+                p.nombre          AS Nombre,
+                p.descripcion     AS Descripcion,
+                p.es_admin        AS EsAdmin,
+                p.activo          AS Activo,
+                p.fecha_creacion  AS FechaCreacion,
+                p.fecha_modificacion AS FechaModificacion,
+                COUNT(DISTINCT pm.id) AS CantidadPermisos,
+                COUNT(DISTINCT u.id)  AS CantidadUsuarios
+            FROM public.perfiles p
+            LEFT JOIN public.permisos pm ON pm.perfil_id = p.id AND pm.clinica_id = p.clinica_id
+            LEFT JOIN public.usuarios u   ON u.perfil_id  = p.id AND u.clinica_id  = p.clinica_id AND u.activo = true
+            WHERE p.clinica_id = @ClinicaId
+            GROUP BY p.id, p.clinica_id, p.nombre, p.descripcion, p.es_admin,
+                     p.activo, p.fecha_creacion, p.fecha_modificacion
+            ORDER BY p.activo DESC, p.nombre ASC";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Perfil>(sql, new { ClinicaId = clinicaId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener perfiles (incluyendo inactivos) de la clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
     public async Task<Perfil?> GetByIdAsync(Guid id, Guid clinicaId)
     {
         const string sql = @"
@@ -187,6 +221,26 @@ public class PerfilRepository : IPerfilRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al desactivar perfil {Id}", id);
+            throw;
+        }
+    }
+
+    public async Task<bool> ReactivateAsync(Guid id, Guid clinicaId)
+    {
+        const string sql = @"
+            UPDATE public.perfiles
+            SET activo = true, fecha_modificacion = NOW()
+            WHERE id = @Id AND clinica_id = @ClinicaId;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, ClinicaId = clinicaId });
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reactivar perfil {Id}", id);
             throw;
         }
     }

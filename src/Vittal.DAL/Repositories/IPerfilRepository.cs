@@ -39,6 +39,16 @@ public interface IPerfilRepository
     Task<bool> DeactivateAsync(Guid id, Guid clinicaId);
 
     /// <summary>
+    /// Reactiva un perfil (activo = true).
+    /// </summary>
+    Task<bool> ReactivateAsync(Guid id, Guid clinicaId);
+
+    /// <summary>
+    /// Obtiene TODOS los perfiles (activos + inactivos) de la clínica. Ordena activos primero.
+    /// </summary>
+    Task<IEnumerable<Perfil>> GetAllIncludingInactiveAsync(Guid clinicaId);
+
+    /// <summary>
     /// Verifica si existe un perfil con ese nombre en la clínica.
     /// </summary>
     Task<bool> ExistsByNameAsync(Guid clinicaId, string nombre, Guid? excludeId = null);

@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <ProjectReference Include="..\Vittal.DAL\Vittal.DAL.csproj" />
     <ProjectReference Include="..\Vittal.DTO\Vittal.DTO.csproj" />
     <ProjectReference Include="..\Vittal.Entity\Vittal.Entity.csproj" />
