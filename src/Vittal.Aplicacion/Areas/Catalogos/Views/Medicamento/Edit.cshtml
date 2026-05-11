@@ -17,7 +17,7 @@
 
             <!-- Datos del medicamento -->
             <h6 class="text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-info-circle me-2"></i>Informaci\u00f3n del Medicamento
+                <i class="bi bi-info-circle me-2"></i>Información del Medicamento
             </h6>
 
             <div class="row g-3 mb-3">
@@ -28,7 +28,7 @@
                     <div class="invalid-feedback">El nombre del medicamento es obligatorio.</div>
                 </div>
                 <div class="col-md-3">
-                    <label for="concentracion" class="form-label fw-semibold">Concentraci\u00f3n</label>
+                    <label for="concentracion" class="form-label fw-semibold">Concentración</label>
                     <input type="text" class="form-control" id="concentracion" name="concentracion"
                            maxlength="100" placeholder="Ej: 500mg">
                 </div>
@@ -42,13 +42,13 @@
                         <option value="ml">ml (mililitro)</option>
                         <option value="UI">UI (unidad internacional)</option>
                         <option value="tableta">Tableta</option>
-                        <option value="cápsula">C\u00e1psula</option>
+                        <option value="cÃ¡psula">Cápsula</option>
                         <option value="ampolla">Ampolla</option>
                         <option value="frasco">Frasco</option>
                         <option value="crema">Crema</option>
                         <option value="gotas">Gotas</option>
                         <option value="parche">Parche</option>
-                        <option value="inhalación">Inhalaci\u00f3n</option>
+                        <option value="inhalaciÃ³n">Inhalación</option>
                         <option value="otro">Otro</option>
                     </select>
                 </div>
@@ -56,9 +56,9 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-12">
-                    <label for="descripcion" class="form-label fw-semibold">Descripci\u00f3n</label>
+                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
                     <textarea class="form-control" id="descripcion" name="descripcion"
-                              rows="3" placeholder="Descripci\u00f3n del medicamento, indicaciones o notas (opcional)"></textarea>
+                              rows="3" placeholder="Descripción del medicamento, indicaciones o notas (opcional)"></textarea>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
             document.getElementById('unidadMedida').value = m.unidadMedida;
         }
 
-        // Nombre completo en el t\u00edtulo
+        // Nombre completo en el título
         const nombreCompleto = m.nombreCompleto || m.nombre || '';
         document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando: ${escapeHtml(nombreCompleto)}`;
     }
@@ -149,7 +149,7 @@
                 btn.innerHTML = textoOriginal;
             }
         } catch (err) {
-            showToast('danger', 'Error de conexi\u00f3n al guardar.');
+            showToast('danger', 'Error de conexión al guardar.');
             btn.disabled = false;
             btn.innerHTML = textoOriginal;
         }

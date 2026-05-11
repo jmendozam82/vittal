@@ -60,15 +60,15 @@
 
             <!-- Contacto -->
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-                <i class="bi bi-envelope me-2"></i>Informaci\u00f3n de Contacto
+                <i class="bi bi-envelope me-2"></i>Información de Contacto
             </h6>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label for="email" class="form-label fw-semibold">Correo Electr\u00f3nico</label>
+                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
                     <input type="email" class="form-control" id="email" name="email"
                            maxlength="255" placeholder="paciente@ejemplo.com">
-                    <div class="invalid-feedback">Ingrese un correo electr\u00f3nico v\u00e1lido.</div>
+                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
                 </div>
                 <div class="col-md-4">
                     <label for="celular" class="form-label fw-semibold">Celular</label>
@@ -86,9 +86,9 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-12">
-                    <label for="direccion" class="form-label fw-semibold">Direcci\u00f3n</label>
+                    <label for="direccion" class="form-label fw-semibold">Dirección</label>
                     <textarea class="form-control" id="direccion" name="direccion"
-                              rows="2" placeholder="Direcci\u00f3n del paciente (opcional)"></textarea>
+                              rows="2" placeholder="Dirección del paciente (opcional)"></textarea>
                 </div>
             </div>
 
@@ -155,7 +155,7 @@
     document.getElementById('formPaciente').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Validaci\u00f3n del lado cliente
+        // Validación del lado cliente
         const form = this;
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
@@ -201,7 +201,7 @@
                 btn.innerHTML = textoOriginal;
             }
         } catch (err) {
-            showToast('danger', 'Error de conexi\u00f3n al guardar.');
+            showToast('danger', 'Error de conexión al guardar.');
             btn.disabled = false;
             btn.innerHTML = textoOriginal;
         }

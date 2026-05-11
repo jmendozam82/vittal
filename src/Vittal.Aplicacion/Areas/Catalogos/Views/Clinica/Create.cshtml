@@ -1,14 +1,14 @@
 @{
-    ViewData["Title"] = "Nueva Cl\u00ednica";
+    ViewData["Title"] = "Nueva Clínica";
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Clinica'>Cl\u00ednicas</a></li>" +
-                             "<li class='breadcrumb-item active'>Nueva Cl\u00ednica</li>";
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Clinica'>Clínicas</a></li>" +
+                             "<li class='breadcrumb-item active'>Nueva Clínica</li>";
 }
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0">
-            <i class="bi bi-building me-2 text-primary"></i>Registrar Nueva Cl\u00ednica
+            <i class="bi bi-building me-2 text-primary"></i>Registrar Nueva Clínica
         </h5>
     </div>
     <div class="card-body">
@@ -20,11 +20,11 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-8">
-                    <label for="nombre" class="form-label fw-semibold">Nombre de la Cl\u00ednica <span class="text-danger">*</span></label>
+                    <label for="nombre" class="form-label fw-semibold">Nombre de la Clínica <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="nombre" name="nombre"
                            required maxlength="255" minlength="3"
-                           placeholder="Ingrese el nombre de la cl\u00ednica">
-                    <div class="invalid-feedback">El nombre es obligatorio (m\u00ednimo 3 caracteres).</div>
+                           placeholder="Ingrese el nombre de la clínica">
+                    <div class="invalid-feedback">El nombre es obligatorio (mínimo 3 caracteres).</div>
                 </div>
                 <div class="col-md-4">
                     <label for="tiempoEsperaMinutos" class="form-label fw-semibold">Tiempo Espera (min) <span class="text-danger">*</span></label>
@@ -36,34 +36,34 @@
 
             <!-- Contacto -->
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-                <i class="bi bi-telephone me-2"></i>Informaci\u00f3n de Contacto
+                <i class="bi bi-telephone me-2"></i>Información de Contacto
             </h6>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label for="telefono" class="form-label fw-semibold">Tel\u00e9fono</label>
+                    <label for="telefono" class="form-label fw-semibold">Teléfono</label>
                     <input type="tel" class="form-control" id="telefono" name="telefono"
                            maxlength="20" placeholder="+505 2222-2222">
                 </div>
                 <div class="col-md-8">
-                    <label for="email" class="form-label fw-semibold">Correo Electr\u00f3nico</label>
+                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
                     <input type="email" class="form-control" id="email" name="email"
                            maxlength="255" placeholder="contacto@clinia.com">
-                    <div class="invalid-feedback">Ingrese un correo electr\u00f3nico v\u00e1lido.</div>
+                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-12">
-                    <label for="direccion" class="form-label fw-semibold">Direcci\u00f3n</label>
+                    <label for="direccion" class="form-label fw-semibold">Dirección</label>
                     <textarea class="form-control" id="direccion" name="direccion"
-                              rows="2" placeholder="Direcci\u00f3n completa de la cl\u00ednica (opcional)"></textarea>
+                              rows="2" placeholder="Dirección completa de la clínica (opcional)"></textarea>
                 </div>
             </div>
 
             <!-- Imagen y Config -->
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-                <i class="bi bi-image me-2"></i>Logo e Integraci\u00f3n
+                <i class="bi bi-image me-2"></i>Logo e Integración
             </h6>
 
             <div class="row g-3 mb-3">
@@ -71,13 +71,13 @@
                     <label for="logoUrl" class="form-label fw-semibold">URL del Logo</label>
                     <input type="url" class="form-control" id="logoUrl" name="logoUrl"
                            placeholder="https://ejemplo.com/logo.png">
-                    <div class="form-text small">URL p\u00fablica de la imagen del logo de la cl\u00ednica</div>
+                    <div class="form-text small">URL pública de la imagen del logo de la clínica</div>
                 </div>
             </div>
 
             <!-- Bases de datos externas (opcional) -->
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-                <i class="bi bi-database me-2"></i>Integraci\u00f3n con BD Externas <span class="text-muted small fw-normal">(Opcional)</span>
+                <i class="bi bi-database me-2"></i>Integración con BD Externas <span class="text-muted small fw-normal">(Opcional)</span>
             </h6>
 
             <div class="row g-3 mb-3">
@@ -95,7 +95,7 @@
 
             <div class="alert alert-info small" role="alert">
                 <i class="bi bi-info-circle me-2"></i>
-                Los campos de bases de datos externas son para integraci\u00f3n con sistemas legacy existentes.
+                Los campos de bases de datos externas son para integración con sistemas legacy existentes.
             </div>
 
             <!-- Botones -->
@@ -104,7 +104,7 @@
                     <i class="bi bi-x-lg me-1"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
-                    <i class="bi bi-floppy me-1"></i> Guardar Cl\u00ednica
+                    <i class="bi bi-floppy me-1"></i> Guardar Clínica
                 </button>
             </div>
         </form>
@@ -117,7 +117,7 @@
     document.getElementById('formClinica').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Validaci\u00f3n del lado cliente
+        // Validación del lado cliente
         const form = this;
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
@@ -153,17 +153,17 @@
             const json = await res.json();
 
             if (res.ok && json.success) {
-                showToast('success', json.message || 'Cl\u00ednica creada exitosamente.');
+                showToast('success', json.message || 'Clínica creada exitosamente.');
                 setTimeout(() => {
                     window.location.href = '/Catalogos/Clinica';
                 }, 1000);
             } else {
-                showToast('danger', json.message || 'Error al crear la cl\u00ednica.');
+                showToast('danger', json.message || 'Error al crear la clínica.');
                 btn.disabled = false;
                 btn.innerHTML = textoOriginal;
             }
         } catch (err) {
-            showToast('danger', 'Error de conexi\u00f3n al guardar.');
+            showToast('danger', 'Error de conexión al guardar.');
             btn.disabled = false;
             btn.innerHTML = textoOriginal;
         }

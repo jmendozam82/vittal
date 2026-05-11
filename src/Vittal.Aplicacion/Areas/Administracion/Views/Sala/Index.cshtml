@@ -226,7 +226,7 @@
             salas = json.data || [];
             renderTabla(salas);
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
         }
     }
 
@@ -247,7 +247,7 @@
         if (items.length === 0) {
             const hayDatos = salas.length > 0;
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b\u00fasqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
                 : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron salas registradas.';
             const accion = hayDatos
                 ? ''
@@ -273,7 +273,7 @@
                 <td>
                     <strong>${escapeHtml(s.nombre)}</strong>
                 </td>
-                <td class="text-muted">${escapeHtml(s.descripcion || '\u2014')}</td>
+                <td class="text-muted">${escapeHtml(s.descripcion || '—')}</td>
                 <td class="text-center">${estadoBadge}</td>
                 <td class="text-end">
                     <a href="/Administracion/Sala/Edit/${s.id}"
@@ -345,7 +345,7 @@
                 showToast(json.message || 'Error al desactivar la sala.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al desactivar.', 'danger');
+            showToast('Error de conexión al desactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
@@ -376,7 +376,7 @@
                 showToast(json.message || 'Error al reactivar la sala.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al reactivar.', 'danger');
+            showToast('Error de conexión al reactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';

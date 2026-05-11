@@ -1,7 +1,7 @@
 @{
-    ViewData["Title"] = "Gesti\u00f3n de Medicamentos";
+    ViewData["Title"] = "Gestión de Medicamentos";
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'>Cat\u00e1logos</li>" +
+                             "<li class='breadcrumb-item'>Catálogos</li>" +
                              "<li class='breadcrumb-item active'>Medicamentos</li>";
     var jsonMedicamentosUrl = Url.Action("JsonMedicamentos");
     var jsonBuscarUrl = Url.Action("JsonBuscar");
@@ -26,13 +26,13 @@
                     <input type="text"
                            id="buscarMedicamento"
                            class="form-control"
-                           placeholder="Buscar por nombre, concentraci\u00f3n o descripci\u00f3n..."
+                           placeholder="Buscar por nombre, concentración o descripción..."
                            autocomplete="off" />
                     <button type="button"
                             class="btn btn-outline-secondary"
                             id="btnLimpiarBusqueda"
                             style="display: none;"
-                            title="Limpiar b\u00fasqueda">
+                            title="Limpiar búsqueda">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -199,7 +199,7 @@
             renderTabla(medicamentos);
             actualizarContador(medicamentos.length, medicamentos.length, true);
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n.');
+            mostrarError('Error de conexión.');
         }
     }
 
@@ -236,7 +236,7 @@
             medicamentos = json.data || [];
             renderTabla(medicamentos);
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
         }
     }
 
@@ -257,7 +257,7 @@
         if (items.length === 0) {
             const hayDatos = medicamentos.length > 0;
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b\u00fasqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
                 : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron medicamentos registrados.';
             const accion = hayDatos
                 ? ''
@@ -273,9 +273,9 @@
 
         const filas = items.map(m => {
             const nombreCompleto = m.nombreCompleto || m.nombre || '';
-            const descripcion = m.descripcion || '\u2014';
-            const concentracion = m.concentracion || '\u2014';
-            const unidadMedida = m.unidadMedida || '\u2014';
+            const descripcion = m.descripcion || '—';
+            const concentracion = m.concentracion || '—';
+            const unidadMedida = m.unidadMedida || '—';
             const estadoBadge = m.activo
                 ? '<span class="badge bg-success">Activo</span>'
                 : '<span class="badge bg-secondary">Inactivo</span>';
@@ -318,9 +318,9 @@
                     <thead class="table-light">
                         <tr>
                             <th>Nombre Completo</th>
-                            <th>Concentraci\u00f3n</th>
+                            <th>Concentración</th>
                             <th>Unidad de Medida</th>
-                            <th>Descripci\u00f3n</th>
+                            <th>Descripción</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -364,7 +364,7 @@
                 showToast(json.message || 'Error al desactivar el medicamento.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al desactivar.', 'danger');
+            showToast('Error de conexión al desactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
@@ -395,7 +395,7 @@
                 showToast(json.message || 'Error al reactivar el medicamento.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al reactivar.', 'danger');
+            showToast('Error de conexión al reactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';

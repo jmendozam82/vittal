@@ -1,7 +1,7 @@
 @{
-    ViewData["Title"] = "Gesti\u00f3n de Pacientes";
+    ViewData["Title"] = "Gestión de Pacientes";
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'>Cat\u00e1logos</li>" +
+                             "<li class='breadcrumb-item'>Catálogos</li>" +
                              "<li class='breadcrumb-item active'>Pacientes</li>";
     var jsonPacientesUrl = Url.Action("JsonPacientes");
     var jsonBuscarUrl = Url.Action("JsonBuscar");
@@ -32,7 +32,7 @@
                             class="btn btn-outline-secondary"
                             id="btnLimpiarBusqueda"
                             style="display: none;"
-                            title="Limpiar b\u00fasqueda">
+                            title="Limpiar búsqueda">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -199,7 +199,7 @@
             renderTabla(pacientes);
             actualizarContador(pacientes.length, pacientes.length, true);
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n.');
+            mostrarError('Error de conexión.');
         }
     }
 
@@ -236,7 +236,7 @@
             pacientes = json.data || [];
             renderTabla(pacientes);
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
         }
     }
 
@@ -257,7 +257,7 @@
         if (items.length === 0) {
             const hayDatos = pacientes.length > 0;
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b\u00fasqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
                 : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron pacientes registrados.';
             const accion = hayDatos
                 ? ''
@@ -274,9 +274,9 @@
         const filas = items.map(p => {
             const nombreCompleto = p.nombreCompleto || (p.primerNombre || '') + ' ' + (p.primerApellido || '');
             const doctorNombre = p.doctorNombre || '';
-            const email = p.email || '\u2014';
-            const celular = p.celular || '\u2014';
-            const sexoLabel = p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : '\u2014';
+            const email = p.email || '—';
+            const celular = p.celular || '—';
+            const sexoLabel = p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : '—';
             const estadoBadge = p.activo
                 ? '<span class="badge bg-success">Activo</span>'
                 : '<span class="badge bg-secondary">Inactivo</span>';
@@ -367,7 +367,7 @@
                 showToast(json.message || 'Error al desactivar el paciente.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al desactivar.', 'danger');
+            showToast('Error de conexión al desactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
@@ -398,7 +398,7 @@
                 showToast(json.message || 'Error al reactivar el paciente.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al reactivar.', 'danger');
+            showToast('Error de conexión al reactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';

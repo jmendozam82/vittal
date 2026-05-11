@@ -1,15 +1,15 @@
 @{
-    ViewData["Title"] = "Gesti\u00f3n de Cl\u00ednicas";
+    ViewData["Title"] = "Gestión de Clínicas";
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'>Cat\u00e1logos</li>" +
-                             "<li class='breadcrumb-item active'>Cl\u00ednicas</li>";
+                             "<li class='breadcrumb-item'>Catálogos</li>" +
+                             "<li class='breadcrumb-item active'>Clínicas</li>";
     var jsonClinicasUrl = Url.Action("JsonClinicas");
     var crearClinicaUrl = Url.Action("Create");
 }
 
 @section HeaderActions {
     <a asp-action="Create" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i> Nueva Cl\u00ednica
+        <i class="bi bi-plus-lg me-1"></i> Nueva Clínica
     </a>
 }
 
@@ -25,13 +25,13 @@
                     <input type="text"
                            id="buscarClinica"
                            class="form-control"
-                           placeholder="Buscar por nombre, email o tel\u00e9fono..."
+                           placeholder="Buscar por nombre, email o teléfono..."
                            autocomplete="off" />
                     <button type="button"
                             class="btn btn-outline-secondary"
                             id="btnLimpiarBusqueda"
                             style="display: none;"
-                            title="Limpiar b\u00fasqueda">
+                            title="Limpiar búsqueda">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -58,24 +58,24 @@
     </div>
 </div>
 
-<!-- Modal de confirmaci\u00f3n de desactivar -->
+<!-- Modal de confirmación de desactivar -->
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title">
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-                    Confirmar desactivaci\u00f3n
+                    Confirmar desactivación
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-0">
-                    &iquest;Est&aacute; seguro que desea desactivar la cl\u00ednica
+                    &iquest;Est&aacute; seguro que desea desactivar la clínica
                     <strong id="nombreClinicaDesactivar"></strong>?
                     <br><small class="text-muted">
-                        Los usuarios de esta cl\u00ednica no podr\u00e1n iniciar sesi\u00f3n.
-                        El registro no ser\u00e1 eliminado, solo quedar\u00e1 inactivo.
+                        Los usuarios de esta clínica no podrán iniciar sesión.
+                        El registro no será eliminado, solo quedará inactivo.
                     </small>
                 </p>
             </div>
@@ -98,13 +98,13 @@
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title">
                     <i class="bi bi-check-circle text-success me-2"></i>
-                    Confirmar reactivaci\u00f3n
+                    Confirmar reactivación
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-0">
-                    &iquest;Est&aacute; seguro que desea reactivar la cl\u00ednica
+                    &iquest;Est&aacute; seguro que desea reactivar la clínica
                     <strong id="nombreClinicaReactivar"></strong>?
                 </p>
             </div>
@@ -199,9 +199,9 @@
         if (!el) return;
 
         if (esBusqueda && terminoBusqueda) {
-            el.textContent = mostrados + ' de ' + total + ' cl\u00ednicas encontradas';
+            el.textContent = mostrados + ' de ' + total + ' clínicas encontradas';
         } else {
-            el.textContent = total + ' cl\u00ednica' + (total !== 1 ? 's' : '');
+            el.textContent = total + ' clínica' + (total !== 1 ? 's' : '');
         }
     }
 
@@ -220,7 +220,7 @@
             const json = await res.json();
 
             if (!json.success) {
-                mostrarError(json.message || 'Error al cargar las cl\u00ednicas.');
+                mostrarError(json.message || 'Error al cargar las clínicas.');
                 return;
             }
 
@@ -228,7 +228,7 @@
             clinicasFiltradas = [...clinicas];
             aplicarFiltros();
         } catch (err) {
-            mostrarError('Error de conexi\u00f3n. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
         }
     }
 
@@ -249,11 +249,11 @@
         if (items.length === 0) {
             const hayDatos = clinicas.length > 0;
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b\u00fasqueda.'
-                : '<i class="bi bi-building fs-1 d-block mb-2"></i>No se encontraron cl\u00ednicas registradas.';
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+                : '<i class="bi bi-building fs-1 d-block mb-2"></i>No se encontraron clínicas registradas.';
             const accion = hayDatos
                 ? ''
-                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera cl\u00ednica</a>';
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera clínica</a>';
 
             document.getElementById('tablaContainer').innerHTML = `
                 <div class="text-center py-5 text-muted">
@@ -312,7 +312,7 @@
                         <tr>
                             <th>Nombre</th>
                             <th>Email</th>
-                            <th>Tel\u00e9fono</th>
+                            <th>Teléfono</th>
                             <th class="text-center">T. Espera</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
@@ -351,13 +351,13 @@
             const json = await res.json();
 
             if (res.ok && json.success) {
-                showToast(json.message || 'Cl\u00ednica desactivada exitosamente.', 'success');
+                showToast(json.message || 'Clínica desactivada exitosamente.', 'success');
                 await cargarClinicas();
             } else {
-                showToast(json.message || 'Error al desactivar la cl\u00ednica.', 'danger');
+                showToast(json.message || 'Error al desactivar la clínica.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al desactivar.', 'danger');
+            showToast('Error de conexión al desactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
@@ -382,13 +382,13 @@
             const json = await res.json();
 
             if (res.ok && json.success) {
-                showToast(json.message || 'Cl\u00ednica reactivada exitosamente.', 'success');
+                showToast(json.message || 'Clínica reactivada exitosamente.', 'success');
                 await cargarClinicas();
             } else {
-                showToast(json.message || 'Error al reactivar la cl\u00ednica.', 'danger');
+                showToast(json.message || 'Error al reactivar la clínica.', 'danger');
             }
         } catch (err) {
-            showToast('Error de conexi\u00f3n al reactivar.', 'danger');
+            showToast('Error de conexión al reactivar.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';
