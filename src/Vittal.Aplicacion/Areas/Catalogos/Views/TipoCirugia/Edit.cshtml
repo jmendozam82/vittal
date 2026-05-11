@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "Editar Tipo de Cirugía";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoCirugia'>Tipos de Cirugía</a></li>" +
+                             "<li class='breadcrumb-item active'>Editar Tipo de Cirugía</li>";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Tipo de Cirugía
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="formTipoCirugia" novalidate>
+            <input type="hidden" id="tipoCirugiaId" value="" />
+
+            <!-- Datos del tipo de cirugía -->
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-info-circle me-2"></i>Información del Tipo de Cirugía
+            </h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+                           required maxlength="255" placeholder="Ingrese el nombre del tipo de cirugía">
+                    <div class="invalid-feedback">El nombre del tipo de cirugía es obligatorio.</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion"
+                              rows="3" placeholder="Descripción del tipo de cirugía (opcional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/Catalogos/TipoCirugia" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnGuardar">
+                    <i class="bi bi-floppy me-1"></i> Actualizar Tipo de Cirugía
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Cargar datos del tipo de cirugía al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarDatosTipoCirugia();
+    });
+
+    function cargarDatosTipoCirugia() {
+        // Los datos vienen del servidor en ViewBag.TipoCirugia
+        const t = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TipoCirugia, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        if (!t) {
+            showToast('danger', 'Error: No se encontraron datos del tipo de cirugía.');
+            return;
+        }
+
+        document.getElementById('tipoCirugiaId').value = t.id || '';
+        document.getElementById('nombre').value = t.nombre || '';
+        document.getElementById('descripcion').value = t.descripcion || '';
+
+        // Nombre completo en el título
+        const nombreCompleto = t.nombre || '';
+        document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando: ${escapeHtml(nombreCompleto)}`;
+    }
+
+    // Submit del formulario
+    document.getElementById('formTipoCirugia').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const form = this;
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardar');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const id = document.getElementById('tipoCirugiaId').value;
+
+        const data = {
+            nombre: document.getElementById('nombre').value.trim(),
+            descripcion: document.getElementById('descripcion').value.trim() || null
+        };
+
+        try {
+            const res = await fetch(`@Url.Action("JsonActualizar")?id=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Tipo de cirugía actualizado exitosamente.');
+                setTimeout(() => {
+                    window.location.href = '/Catalogos/TipoCirugia';
+                }, 1000);
+            } else {
+                showToast('danger', json.message || 'Error al actualizar el tipo de cirugía.');
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(type, message) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

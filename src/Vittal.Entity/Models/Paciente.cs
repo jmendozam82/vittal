@@ -23,7 +23,7 @@ public class Paciente
 
     /// <summary>'M' = Masculino, 'F' = Femenino</summary>
     public string? Sexo { get; set; }
-    public DateTime? FechaNacimiento { get; set; }
+    public DateOnly? FechaNacimiento { get; set; }
     public string? FotoUrl { get; set; }
     public string? Observaciones { get; set; }
 

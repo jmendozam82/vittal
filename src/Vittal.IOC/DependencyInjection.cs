@@ -19,6 +19,15 @@ public static class DependencyInjection
         services.AddScoped<IPermisoRepository, PermisoRepository>();
         services.AddScoped<IPacienteRepository, PacienteRepository>();
         services.AddScoped<ISalaRepository, SalaRepository>();
+        services.AddScoped<IMedicamentoRepository, MedicamentoRepository>();
+        services.AddScoped<IClinicaRepository, ClinicaRepository>();
+        services.AddScoped<ITipoCirugiaRepository, TipoCirugiaRepository>();
+        services.AddScoped<ICirugiaRepository, CirugiaRepository>();
+        services.AddScoped<ITipoDiagnosticoRepository, TipoDiagnosticoRepository>();
+        services.AddScoped<IDiagnosticoRepository, DiagnosticoRepository>();
+        services.AddScoped<IExamenRepository, ExamenRepository>();
+        services.AddScoped<IRecomendacionRepository, RecomendacionRepository>();
+        services.AddScoped<ITratamientoRepository, TratamientoRepository>();
 
         // Services
         services.AddScoped<IUsuarioService, UsuarioService>();
@@ -26,6 +35,15 @@ public static class DependencyInjection
         services.AddScoped<IPermisoService, PermisoService>();
         services.AddScoped<IPacienteService, PacienteService>();
         services.AddScoped<ISalaService, SalaService>();
+        services.AddScoped<IMedicamentoService, MedicamentoService>();
+        services.AddScoped<IClinicaService, ClinicaService>();
+        services.AddScoped<ITipoCirugiaService, TipoCirugiaService>();
+        services.AddScoped<ICirugiaService, CirugiaService>();
+        services.AddScoped<ITipoDiagnosticoService, TipoDiagnosticoService>();
+        services.AddScoped<IDiagnosticoService, DiagnosticoService>();
+        services.AddScoped<IExamenService, ExamenService>();
+        services.AddScoped<IRecomendacionService, RecomendacionService>();
+        services.AddScoped<ITratamientoService, TratamientoService>();
         
         return services;
     }

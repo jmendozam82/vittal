@@ -40,7 +40,7 @@ public class PacienteRequestDto
     /// <summary>M = Masculino, F = Femenino</summary>
     public string? Sexo { get; set; }
 
-    public DateTime? FechaNacimiento { get; set; }
+    public DateOnly? FechaNacimiento { get; set; }
 
     /// <summary>URL de la foto del paciente (Supabase Storage).</summary>
     public string? FotoUrl { get; set; }

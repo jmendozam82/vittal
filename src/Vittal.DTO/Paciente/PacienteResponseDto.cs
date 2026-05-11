@@ -22,7 +22,7 @@ public class PacienteResponseDto
     public string? Celular { get; set; }
     public string? Direccion { get; set; }
     public string? Sexo { get; set; }
-    public DateTime? FechaNacimiento { get; set; }
+    public DateOnly? FechaNacimiento { get; set; }
     public string? FotoUrl { get; set; }
     public string? Observaciones { get; set; }
 

@@ -1,0 +1,158 @@
+@{
+    ViewData["Title"] = "Nuevo Diagnóstico";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Diagnostico'>Diagnósticos</a></li>" +
+                             "<li class='breadcrumb-item active'>Nuevo Diagnóstico</li>";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nuevo Diagnóstico
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="formDiagnostico" novalidate>
+            <!-- Datos del diagnóstico -->
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-info-circle me-2"></i>Datos del Diagnóstico
+            </h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="citaId" class="form-label fw-semibold">Cita <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="citaId" name="citaId"
+                           required placeholder="ID de la cita (UUID)">
+                    <div class="invalid-feedback">El ID de la cita es obligatorio.</div>
+                    <div class="form-text">Ingrese el UUID de la cita a la que pertenece este diagnóstico.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="tipoDiagnosticoId" class="form-label fw-semibold">Tipo de Diagnóstico <span class="text-danger">*</span></label>
+                    <select class="form-select" id="tipoDiagnosticoId" name="tipoDiagnosticoId" required>
+                        <option value="">-- Seleccione un tipo de diagnóstico --</option>
+                    </select>
+                    <div class="invalid-feedback">Debe seleccionar un tipo de diagnóstico.</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion"
+                              rows="3" placeholder="Descripción detallada del diagnóstico (opcional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/Catalogos/Diagnostico" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnGuardar">
+                    <i class="bi bi-floppy me-1"></i> Guardar Diagnóstico
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Cargar tipos de diagnóstico al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarTiposDiagnostico();
+    });
+
+    async function cargarTiposDiagnostico() {
+        try {
+            const res = await fetch('@Url.Action("JsonTiposDiagnostico")', {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!res.ok) {
+                console.error('Error al cargar tipos de diagnóstico');
+                return;
+            }
+
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const select = document.getElementById('tipoDiagnosticoId');
+                json.data.forEach(t => {
+                    const op = document.createElement('option');
+                    op.value = t.id || '';
+                    op.textContent = t.nombre || '(sin nombre)';
+                    select.appendChild(op);
+                });
+            }
+        } catch (err) {
+            console.error('Error al cargar tipos de diagnóstico:', err);
+        }
+    }
+
+    // Submit del formulario
+    document.getElementById('formDiagnostico').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validación del lado cliente
+        const form = this;
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardar');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const data = {
+            citaId: document.getElementById('citaId').value.trim(),
+            tipoDiagnosticoId: document.getElementById('tipoDiagnosticoId').value,
+            descripcion: document.getElementById('descripcion').value.trim() || null
+        };
+
+        try {
+            const res = await fetch('@Url.Action("JsonCrear")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Diagnóstico creado exitosamente.');
+                setTimeout(() => {
+                    window.location.href = '/Catalogos/Diagnostico';
+                }, 1000);
+            } else {
+                showToast('danger', json.message || 'Error al crear el diagnóstico.');
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+
+    function showToast(type, message) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

@@ -1,0 +1,157 @@
+@{
+    ViewData["Title"] = "Nueva Cirugía";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Cirugia'>Cirugías</a></li>" +
+                             "<li class='breadcrumb-item active'>Nueva Cirugía</li>";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nueva Cirugía
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="formCirugia" novalidate>
+            <!-- Datos de la cirugía -->
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-info-circle me-2"></i>Datos de la Cirugía
+            </h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="tipoCirugiaId" class="form-label fw-semibold">Tipo de Cirugía <span class="text-danger">*</span></label>
+                    <select class="form-select" id="tipoCirugiaId" name="tipoCirugiaId" required>
+                        <option value="">-- Seleccione un tipo de cirugía --</option>
+                    </select>
+                    <div class="invalid-feedback">Debe seleccionar un tipo de cirugía.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+                           required maxlength="255" placeholder="Ingrese el nombre de la cirugía">
+                    <div class="invalid-feedback">El nombre de la cirugía es obligatorio.</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion"
+                              rows="3" placeholder="Descripción de la cirugía (opcional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/Catalogos/Cirugia" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnGuardar">
+                    <i class="bi bi-floppy me-1"></i> Guardar Cirugía
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Cargar tipos de cirugía al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarTiposCirugia();
+    });
+
+    async function cargarTiposCirugia() {
+        try {
+            const res = await fetch('@Url.Action("JsonTiposCirugia")', {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!res.ok) {
+                console.error('Error al cargar tipos de cirugía');
+                return;
+            }
+
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const select = document.getElementById('tipoCirugiaId');
+                json.data.forEach(t => {
+                    const op = document.createElement('option');
+                    op.value = t.id || '';
+                    op.textContent = t.nombre || '(sin nombre)';
+                    select.appendChild(op);
+                });
+            }
+        } catch (err) {
+            console.error('Error al cargar tipos de cirugía:', err);
+        }
+    }
+
+    // Submit del formulario
+    document.getElementById('formCirugia').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validación del lado cliente
+        const form = this;
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardar');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const data = {
+            tipoCirugiaId: document.getElementById('tipoCirugiaId').value,
+            nombre: document.getElementById('nombre').value.trim(),
+            descripcion: document.getElementById('descripcion').value.trim() || null
+        };
+
+        try {
+            const res = await fetch('@Url.Action("JsonCrear")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Cirugía creada exitosamente.');
+                setTimeout(() => {
+                    window.location.href = '/Catalogos/Cirugia';
+                }, 1000);
+            } else {
+                showToast('danger', json.message || 'Error al crear la cirugía.');
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+
+    function showToast(type, message) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

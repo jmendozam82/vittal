@@ -176,119 +176,176 @@
                     </div>
                     }
 
-                    @if (ViewBag.EsAdmin == true)
+                    @if (PuedeVer("medicamentos"))
                     {
-                    <!-- Medicamentos - Proximamente (solo admin) -->
+                    <!-- Medicamentos -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/Medicamento" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-capsule"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Medicamentos</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Catalogo de medicamentos</div>
-                        </div>
+                            <div class="text-muted small">Catalogo de medicamentos</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Clinicas - Proximamente (solo admin) -->
+                    @if (PuedeVer("clinicas"))
+                    {
+                    <!-- Clinicas -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/Clinica" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-building"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Clinicas</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Gestion de clinicas y sucursales</div>
-                        </div>
+                            <div class="text-muted small">Gestion de clinicas y sucursales</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Cirugias - Proximamente (solo admin) -->
+                    @if (PuedeVer("tipos_cirugia"))
+                    {
+                    <!-- Tipos de Cirugia -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/TipoCirugia" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
+                                    <i class="bi bi-scissors"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Tipos de Cirugia</div>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
+                                </div>
+                            </div>
+                            <div class="text-muted small">Catalogo de tipos de cirugias</div>
+                        </a>
+                    </div>
+                    }
+
+                    @if (PuedeVer("cirugias"))
+                    {
+                    <!-- Cirugias -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="/Catalogos/Cirugia" class="module-card d-block p-3 text-decoration-none text-dark">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-scissors"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Cirugias</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Tipos de cirugias y procedimientos</div>
-                        </div>
+                            <div class="text-muted small">Cirugias especificas por tipo</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Diagnosticos - Proximamente (solo admin) -->
+                    @if (PuedeVer("tipos_diagnostico"))
+                    {
+                    <!-- Tipos de Diagnostico -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/TipoDiagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-clipboard2-pulse"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Diagnosticos</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <div class="fw-semibold small">Tipos de Diagnostico</div>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Tipos de diagnosticos y diagnosticos</div>
-                        </div>
+                            <div class="text-muted small">Catalogo de tipos de diagnostico</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Tratamientos - Proximamente (solo admin) -->
+                    @if (PuedeVer("diagnosticos"))
+                    {
+                    <!-- Diagnosticos -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/Diagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
+                                    <i class="bi bi-clipboard2-plus"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Diagnosticos</div>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
+                                </div>
+                            </div>
+                            <div class="text-muted small">Diagnosticos asignados a citas medicas</div>
+                        </a>
+                    </div>
+                    }
+
+                    @if (PuedeVer("tratamientos"))
+                    {
+                    <!-- Tratamientos -->
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="/Catalogos/Tratamiento" class="module-card d-block p-3 text-decoration-none text-dark">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-heart-pulse"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Tratamientos</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Catalogo de tratamientos medicos</div>
-                        </div>
+                            <div class="text-muted small">Catalogo de tratamientos medicos</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Examenes - Proximamente (solo admin) -->
+                    @if (PuedeVer("examenes"))
+                    {
+                    <!-- Examenes -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/Examen" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-eyedropper"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Examenes</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Catalogo de examenes medicos</div>
-                        </div>
+                            <div class="text-muted small">Catalogo de examenes medicos</div>
+                        </a>
                     </div>
+                    }
 
-                    <!-- Recomendaciones - Proximamente (solo admin) -->
+                    @if (PuedeVer("recomendaciones"))
+                    {
+                    <!-- Recomendaciones -->
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="module-card p-3 text-muted">
+                        <a href="/Catalogos/Recomendacion" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-2">
+                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
                                     <i class="bi bi-chat-square-text"></i>
                                 </div>
                                 <div>
                                     <div class="fw-semibold small">Recomendaciones</div>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Proximamente</span>
+                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="small">Catalogo de recomendaciones medicas</div>
-                        </div>
+                            <div class="text-muted small">Catalogo de recomendaciones medicas</div>
+                        </a>
                     </div>
+                    }
                     }
                 </div>
             </div>
@@ -303,9 +360,26 @@
 <div class="row g-3 mt-1">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-4 text-muted">
-                <i class="bi bi-cone-striped fs-3 d-block mb-2"></i>
-                <p class="mb-0">Los modulos de Expedientes, Agenda, Cola de Espera, Dashboard y Reportes estaran disponibles proximamente.</p>
+            <div class="card-body py-4">
+                <div class="row g-2">
+                    <div class="col-md-8">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-cone-striped me-2"></i>Modulos en construccion
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Agenda</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Cola de Espera</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Expedientes</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Linea de Tiempo</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Dashboard</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Reportes</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Alertas</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end text-muted small align-self-center">
+                        <i class="bi bi-info-circle me-1"></i>BD lista, codigo en desarrollo
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -444,7 +444,7 @@ public class UsuarioService : IUsuarioService
         var jsonBody = JsonSerializer.Serialize(body);
         var content = new StringContent(jsonBody, System.Text.Encoding.UTF8, "application/json");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{supabaseUrl}/admin/v1/users")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{supabaseUrl}/auth/v1/admin/users")
         {
             Content = content
         };
@@ -539,7 +539,7 @@ public class UsuarioService : IUsuarioService
             System.Text.Encoding.UTF8,
             "application/json");
 
-        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/admin/v1/users/{authUserId}")
+        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/auth/v1/admin/users/{authUserId}")
         {
             Content = content
         };
@@ -569,7 +569,7 @@ public class UsuarioService : IUsuarioService
             System.Text.Encoding.UTF8,
             "application/json");
 
-        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/admin/v1/users/{authUserId}")
+        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/auth/v1/admin/users/{authUserId}")
         {
             Content = content
         };
@@ -600,7 +600,7 @@ public class UsuarioService : IUsuarioService
             System.Text.Encoding.UTF8,
             "application/json");
 
-        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/admin/v1/users/{authUserId}")
+        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/auth/v1/admin/users/{authUserId}")
         {
             Content = content
         };
@@ -624,7 +624,7 @@ public class UsuarioService : IUsuarioService
         client.DefaultRequestHeaders.Add("apikey", serviceRoleKey);
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {serviceRoleKey}");
 
-        var response = await client.DeleteAsync($"{supabaseUrl}/admin/v1/users/{authUserId}");
+        var response = await client.DeleteAsync($"{supabaseUrl}/auth/v1/admin/users/{authUserId}");
 
         if (!response.IsSuccessStatusCode)
         {
