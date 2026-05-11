@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.DTO.Auth;
 
 namespace Vittal.API.Controllers;

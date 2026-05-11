@@ -7,6 +7,7 @@ using Vittal.API.Extensions;
 using Vittal.Utility;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.DTO.Clinica;
 
 namespace Vittal.API.Controllers;

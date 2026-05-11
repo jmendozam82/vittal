@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Vittal.DTO.Sala;
 using Vittal.Utility.Results;
 
-namespace Vittal.BLL.Services;
+namespace Vittal.BLL.Interfaces;
 
 /// <summary>
 /// Contrato de lógica de negocio para la entidad Sala.

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Vittal.API.Extensions;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 
 namespace Vittal.API.Middleware;
 

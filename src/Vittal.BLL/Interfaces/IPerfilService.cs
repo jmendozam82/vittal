@@ -1,19 +1,19 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vittal.DTO.Perfil;
 using Vittal.Utility.Results;
 
-namespace Vittal.BLL.Services;
+namespace Vittal.BLL.Interfaces;
 
 /// <summary>
-/// Contrato de lÃ³gica de negocio para la entidad Perfil.
-/// Historia de Usuario: HU03 â€” GestiÃ³n de Perfiles
+/// Contrato de lógica de negocio para la entidad Perfil.
+/// Historia de Usuario: HU03 — Gestión de Perfiles
 /// </summary>
 public interface IPerfilService
 {
     /// <summary>
-    /// Obtiene todos los perfiles de la clÃ­nica.
+    /// Obtiene todos los perfiles de la clínica.
     /// Si incluirInactivos = false (default), solo retorna activos.
     /// Si incluirInactivos = true, retorna todos (activos + inactivos).
     /// </summary>
@@ -25,7 +25,7 @@ public interface IPerfilService
     Task<ServiceResult<PerfilResponseDto>> GetByIdAsync(Guid id, Guid clinicaId);
 
     /// <summary>
-    /// Crea un nuevo perfil despuÃ©s de validar duplicados.
+    /// Crea un nuevo perfil después de validar duplicados.
     /// </summary>
     Task<ServiceResult<PerfilResponseDto>> CreateAsync(PerfilRequestDto dto, Guid clinicaId);
 

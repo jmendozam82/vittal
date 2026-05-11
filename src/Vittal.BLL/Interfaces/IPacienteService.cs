@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Vittal.DTO.Paciente;
 using Vittal.Utility.Results;
 
-namespace Vittal.BLL.Services;
+namespace Vittal.BLL.Interfaces;
 
 /// <summary>
 /// Interface para servicio de pacientes.

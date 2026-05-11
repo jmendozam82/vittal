@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Vittal.API.Extensions;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.Utility;
 
 namespace Vittal.API.Authorization;

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.DAL.Context;
 using Vittal.DAL.Repositories;
 

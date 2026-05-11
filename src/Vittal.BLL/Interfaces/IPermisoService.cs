@@ -5,7 +5,7 @@ using Vittal.DTO.Permiso;
 using Vittal.Utility;
 using Vittal.Utility.Results;
 
-namespace Vittal.BLL.Services;
+namespace Vittal.BLL.Interfaces;
 
 /// <summary>
 /// Servicio para verificación y gestión de permisos de perfiles sobre módulos del sistema.

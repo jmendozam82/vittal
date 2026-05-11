@@ -6,6 +6,7 @@ using Vittal.API.Authorization;
 using Vittal.API.Extensions;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.DTO.Permiso;
 using Vittal.Utility;
 

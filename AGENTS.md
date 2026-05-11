@@ -68,8 +68,8 @@ Use MCP (Model Context Protocol) servers for enhanced capabilities:
 src/
 ├── Vittal.Aplicacion/   ← Frontend MVC (Areas/)
 ├── Vittal.API/           ← Backend Web API
-├── Vittal.BLL/           ← Business Logic Layer
-├── Vittal.DAL/           ← Data Access Layer (Dapper)
+├── Vittal.BLL/           ← Business Logic Layer (Interfaces/ & Services/)
+├── Vittal.DAL/           ← Data Access Layer (Interfaces/ & Repositories/)
 ├── Vittal.Entity/         ← Domain Entities
 ├── Vittal.DTO/           ← Data Transfer Objects
 ├── Vittal.IOC/           ← Dependency Injection
@@ -91,7 +91,7 @@ Before marking task complete, verify:
 - [ ] Entity in `Vittal.Entity/`
 - [ ] DTOs (Request/Response) in `Vittal.DTO/`
 - [ ] Repository + Interface in `Vittal.DAL/`
-- [ ] Service + Interface in `Vittal.BLL/`
+- [ ] Interface in `Vittal.BLL/Interfaces/` and Service in `Vittal.BLL/Services/`
 - [ ] API Controller with Swagger in `Vittal.API/`
 - [ ] Registration in `Vittal.IOC/DependencyInjection.cs`
 - [ ] Razor Views in `Vittal.Aplicacion/Areas/`

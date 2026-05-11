@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Services;
+using Vittal.BLL.Interfaces;
 using Vittal.DAL.Repositories;
 using Vittal.DTO.Usuario;
 using Vittal.Entity.Models;
