@@ -1,279 +1,557 @@
-@{
+﻿@{
+
     ViewData["Title"] = "Editar Clínica";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Clinica'>Clínicas</a></li>" +
+
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Clínica'>Clínicas</a></li>" +
+
                              "<li class='breadcrumb-item active'>Editar Clínica</li>";
+
 }
 
+
+
 <div class="card shadow-sm border-0">
+
     <div class="card-header bg-white py-3">
+
         <h5 class="mb-0">
+
             <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Clínica
+
         </h5>
+
     </div>
+
     <div class="card-body">
+
         <form id="formClinica" novalidate>
+
             <input type="hidden" id="clinicaId" value="" />
 
+
+
             <!-- Datos principales -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3">
+
                 <i class="bi bi-info-circle me-2"></i>Datos Principales
+
             </h6>
 
+
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-8">
+
                     <label for="nombre" class="form-label fw-semibold">Nombre de la Clínica <span class="text-danger">*</span></label>
+
                     <input type="text" class="form-control" id="nombre" name="nombre"
+
                            required maxlength="255" minlength="3"
+
                            placeholder="Ingrese el nombre de la clínica">
+
                     <div class="invalid-feedback">El nombre es obligatorio (mínimo 3 caracteres).</div>
+
                 </div>
+
                 <div class="col-md-4">
+
                     <label for="tiempoEsperaMinutos" class="form-label fw-semibold">Tiempo Espera (min) <span class="text-danger">*</span></label>
+
                     <input type="number" class="form-control" id="tiempoEsperaMinutos" name="tiempoEsperaMinutos"
+
                            required min="1" max="480" value="30">
+
                     <div class="form-text small">Tiempo de espera promedio para alertas</div>
+
                 </div>
+
             </div>
+
+
 
             <!-- Estado (solo lectura para visualización) -->
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-3">
+
                     <label class="form-label fw-semibold">Estado Actual</label>
+
                     <div id="estadoBadge"></div>
+
                 </div>
+
             </div>
+
+
 
             <!-- Contacto -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
                 <i class="bi bi-telephone me-2"></i>Información de Contacto
+
             </h6>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label for="telefono" class="form-label fw-semibold">Teléfono</label>
-                    <input type="tel" class="form-control" id="telefono" name="telefono"
-                           maxlength="20" placeholder="+505 2222-2222">
-                </div>
-                <div class="col-md-8">
-                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
-                    <input type="email" class="form-control" id="email" name="email"
-                           maxlength="255" placeholder="contacto@clinia.com">
-                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
-                </div>
-            </div>
+
 
             <div class="row g-3 mb-3">
-                <div class="col-md-12">
-                    <label for="direccion" class="form-label fw-semibold">Dirección</label>
-                    <textarea class="form-control" id="direccion" name="direccion"
-                              rows="2" placeholder="Dirección completa de la clínica (opcional)"></textarea>
+
+                <div class="col-md-4">
+
+                    <label for="teléfono" class="form-label fw-semibold">Teléfono</label>
+
+                    <input type="tel" class="form-control" id="Telefono" name="Telefono"
+
+                           maxlength="20" placeholder="+505 2222-2222">
+
                 </div>
+
+                <div class="col-md-8">
+
+                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
+
+                    <input type="email" class="form-control" id="email" name="email"
+
+                           maxlength="255" placeholder="contacto@clinia.com">
+
+                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
+
+                </div>
+
             </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-12">
+
+                    <label for="dirección" class="form-label fw-semibold">Dirección</label>
+
+                    <textarea class="form-control" id="direccion" name="direccion"
+
+                              rows="2" placeholder="Dirección completa de la clínica (opcional)"></textarea>
+
+                </div>
+
+            </div>
+
+
 
             <!-- Imagen y Config -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
                 <i class="bi bi-image me-2"></i>Logo e Integración
+
             </h6>
 
+
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-12">
+
                     <label for="logoUrl" class="form-label fw-semibold">URL del Logo</label>
+
                     <input type="url" class="form-control" id="logoUrl" name="logoUrl"
+
                            placeholder="https://ejemplo.com/logo.png">
+
                     <div class="form-text small">URL pública de la imagen del logo de la clínica</div>
+
                 </div>
+
             </div>
+
+
 
             <!-- Bases de datos externas (opcional) -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
                 <i class="bi bi-database me-2"></i>Integración con BD Externas <span class="text-muted small fw-normal">(Opcional)</span>
+
             </h6>
 
+
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-6">
+
                     <label for="bdExterna1" class="form-label fw-semibold">Base de Datos Externa 1</label>
+
                     <input type="text" class="form-control" id="bdExterna1" name="bdExterna1"
+
                            placeholder="Connection string o identificador">
+
                 </div>
+
                 <div class="col-md-6">
+
                     <label for="bdExterna2" class="form-label fw-semibold">Base de Datos Externa 2</label>
+
                     <input type="text" class="form-control" id="bdExterna2" name="bdExterna2"
+
                            placeholder="Connection string o identificador">
+
                 </div>
+
             </div>
+
+
 
             <!-- Auditorín -->
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-6">
+
                     <small class="text-muted">
+
                         <i class="bi bi-calendar3 me-1"></i>
+
                         Creada: <span id="fechaCreacion" class="fw-semibold"></span>
+
                     </small>
+
                 </div>
+
                 <div class="col-md-6 text-md-end">
+
                     <small class="text-muted" id="fechaModificacionContainer" style="display:none;">
+
                         <i class="bi bi-pencil me-1"></i>
+
                         Última modificación: <span id="fechaModificacion" class="fw-semibold"></span>
+
                     </small>
+
                 </div>
+
             </div>
+
+
 
             <!-- Botones -->
+
             <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                <a href="/Catalogos/Clinica" class="btn btn-outline-secondary">
+
+                <a href="/Catalogos/Clínica" class="btn btn-outline-secondary">
+
                     <i class="bi bi-x-lg me-1"></i> Cancelar
+
                 </a>
+
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
+
                     <i class="bi bi-floppy me-1"></i> Actualizar Clínica
+
                 </button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
 
+
+
 @section Scripts {
+
 <script>
+
     // Cargar datos de la clínica al iniciar
+
     document.addEventListener('DOMContentLoaded', function() {
+
         cargarDatosClinica();
+
     });
 
+
+
     function cargarDatosClinica() {
+
         // Los datos vienen del servidor en ViewBag.Clinica
+
         const c = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Clinica, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
 
+
+
         if (!c) {
+
             showToast('danger', 'Error: No se encontraron datos de la clínica.');
+
             return;
+
         }
+
+
 
         document.getElementById('clinicaId').value = c.id || '';
+
         document.getElementById('nombre').value = c.nombre || '';
+
         document.getElementById('direccion').value = c.direccion || '';
+
         document.getElementById('telefono').value = c.telefono || '';
+
         document.getElementById('email').value = c.email || '';
+
         document.getElementById('logoUrl').value = c.logoUrl || '';
+
         document.getElementById('tiempoEsperaMinutos').value = c.tiempoEsperaMinutos || 30;
+
         document.getElementById('bdExterna1').value = c.bdExterna1 || '';
+
         document.getElementById('bdExterna2').value = c.bdExterna2 || '';
 
+
+
         // Mostrar estado
+
         const esActivo = c.activo;
+
         const estadoBadge = document.getElementById('estadoBadge');
+
         if (estadoBadge) {
+
             estadoBadge.innerHTML = esActivo
+
                 ? '<span class="badge bg-success">Activa</span>'
+
                 : '<span class="badge bg-secondary">Inactiva</span>';
+
         }
+
+
 
         // Fechas
+
         if (c.fechaCreacion) {
+
             const fechaCre = new Date(c.fechaCreacion);
+
             document.getElementById('fechaCreacion').textContent = fechaCre.toLocaleDateString('es-ES', {
+
                 year: 'numeric',
+
                 month: 'long',
+
                 day: 'numeric',
+
                 hour: '2-digit',
+
                 minute: '2-digit'
+
             });
+
         }
+
+
 
         if (c.fechaModificacion) {
+
             const fechaMod = new Date(c.fechaModificacion);
+
             document.getElementById('fechaModificacion').textContent = fechaMod.toLocaleDateString('es-ES', {
+
                 year: 'numeric',
+
                 month: 'long',
+
                 day: 'numeric',
+
                 hour: '2-digit',
+
                 minute: '2-digit'
+
             });
+
             document.getElementById('fechaModificacionContainer').style.display = 'inline';
+
         }
+
+
 
         // Nombre en el título
+
         const nombreClinica = c.nombre || 'Sin nombre';
+
         document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando: ${escapeHtml(nombreClinica)}`;
+
     }
 
+
+
     // Submit del formulario
+
     document.getElementById('formClinica').addEventListener('submit', async function(e) {
+
         e.preventDefault();
 
+
+
         const form = this;
+
         if (!form.checkValidity()) {
+
             form.classList.add('was-validated');
+
             return;
+
         }
 
+
+
         const btn = document.getElementById('btnGuardar');
+
         const textoOriginal = btn.innerHTML;
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
 
+
+
         const id = document.getElementById('clinicaId').value;
+
         const tiempoEsperaValue = document.getElementById('tiempoEsperaMinutos').value;
+
         const tiempoEspera = parseInt(tiempoEsperaValue) || 30;
 
+
+
         const data = {
+
             nombre: document.getElementById('nombre').value.trim(),
+
             direccion: document.getElementById('direccion').value.trim() || null,
+
             telefono: document.getElementById('telefono').value.trim() || null,
+
             email: document.getElementById('email').value.trim() || null,
+
             logoUrl: document.getElementById('logoUrl').value.trim() || null,
+
             tiempoEsperaMinutos: tiempoEspera,
+
             bdExterna1: document.getElementById('bdExterna1').value.trim() || null,
+
             bdExterna2: document.getElementById('bdExterna2').value.trim() || null
+
         };
 
+
+
         try {
+
             const res = await fetch(`@Url.Action("JsonActualizar")?id=${id}`, {
+
                 method: 'PUT',
+
                 headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify(data)
+
             });
+
+
 
             const json = await res.json();
 
+
+
             if (res.ok && json.success) {
+
                 showToast('success', json.message || 'Clínica actualizada exitosamente.');
+
                 setTimeout(() => {
-                    window.location.href = '/Catalogos/Clinica';
+
+                    window.location.href = '/Catalogos/Clínica';
+
                 }, 1000);
+
             } else {
+
                 showToast('danger', json.message || 'Error al actualizar la clínica.');
+
                 btn.disabled = false;
+
                 btn.innerHTML = textoOriginal;
+
             }
+
         } catch (err) {
+
             showToast('danger', 'Error de conexión al guardar.');
+
             btn.disabled = false;
+
             btn.innerHTML = textoOriginal;
+
         }
+
     });
 
+
+
     function escapeHtml(text) {
+
         if (!text) return '';
+
         const div = document.createElement('div');
+
         div.textContent = text;
+
         return div.innerHTML;
+
     }
+
+
 
     function showToast(type, message) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

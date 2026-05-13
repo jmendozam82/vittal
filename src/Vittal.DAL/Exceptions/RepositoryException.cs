@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Vittal.DAL.Exceptions;
 
@@ -13,7 +13,7 @@ public class RepositoryException : Exception
 }
 
 /// <summary>
-/// Se lanza cuando una operación CREATE viola una restricción UNIQUE.
+/// Se lanza cuando una operacion CREATE viola una restricción UNIQUE.
 /// El BLL la captura y retorna un error de validación al usuario.
 /// </summary>
 public class DuplicateEntityException : RepositoryException

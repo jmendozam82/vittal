@@ -1,425 +1,801 @@
 @{
-    ViewData["Title"] = "GestiÃ³n de Tipos de DiagnÃ³stico";
+
+    ViewData["Title"] = "Gestión de Tipos de Diagnóstico";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'>CatÃ¡logos</li>" +
-                             "<li class='breadcrumb-item active'>Tipos de DiagnÃ³stico</li>";
+
+                             "<li class='breadcrumb-item'>Catálogos</li>" +
+
+                             "<li class='breadcrumb-item active'>Tipos de Diagnóstico</li>";
+
     var jsonListarUrl = Url.Action("JsonListar");
+
     var jsonBuscarUrl = Url.Action("JsonBuscar");
+
     var crearTipoDiagnosticoUrl = Url.Action("Create");
+
 }
+
 
 @section HeaderActions {
+
     <a asp-action="Create" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i> Nuevo Tipo de DiagnÃ³stico
+
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Tipo de Diagnóstico
+
     </a>
+
 }
 
+
 <div class="card shadow-sm border-0">
+
     <div class="card-body">
+
         <!-- Buscador -->
+
         <div class="row mb-3">
+
             <div class="col-md-6">
+
                 <div class="input-group">
+
                     <span class="input-group-text bg-white">
+
                         <i class="bi bi-search text-muted"></i>
+
                     </span>
+
                     <input type="text"
+
                            id="buscarTipoDiagnostico"
+
                            class="form-control"
-                           placeholder="Buscar por nombre o descripciÃ³n..."
+
+                           placeholder="Buscar por nombre o descripción..."
+
                            autocomplete="off" />
+
                     <button type="button"
+
                             class="btn btn-outline-secondary"
+
                             id="btnLimpiarBusqueda"
+
                             style="display: none;"
-                            title="Limpiar bÃºsqueda">
+
+                            title="Limpiar búsqueda">
+
                         <i class="bi bi-x-lg"></i>
+
                     </button>
+
                 </div>
+
             </div>
+
             <div class="col-md-6 d-flex align-items-center justify-content-between mt-2 mt-md-0">
+
                 <small class="text-muted" id="contadorResultados"></small>
+
                 <div class="form-check form-switch">
+
                     <input class="form-check-input" type="checkbox" id="toggleInactivos">
+
                     <label class="form-check-label small" for="toggleInactivos">
+
                         Mostrar inactivos
+
                     </label>
+
                 </div>
+
             </div>
+
         </div>
+
 
         <!-- Tabla de datos -->
+
         <div id="tablaContainer">
+
             <div class="d-flex justify-content-center p-4">
+
                 <div class="spinner-border text-primary" role="status">
+
                     <span class="visually-hidden">Cargando...</span>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- Modal de confirmaciÃ³n de desactivar -->
+
+<!-- Modal de confirmación de desactivar -->
+
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
+
             <div class="modal-header border-0 pb-0">
+
                 <h5 class="modal-title">
+
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-                    Confirmar desactivaciÃ³n
+
+                    Confirmar desactivación
+
                 </h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
             </div>
+
             <div class="modal-body">
+
                 <p class="mb-0">
-                    Â¿EstÃ¡ seguro que desea desactivar el tipo de diagnÃ³stico
+
+                    ¿Está seguro que desea desactivar el tipo de diagnóstico
+
                     <strong id="nombreTipoDiagnosticoDesactivar"></strong>?
+
                     <br><small class="text-muted">
-                        El registro no serÃ¡ eliminado, solo quedarÃ¡ inactivo.
+
+                        El registro no será eliminado, solo quedará inactivo.
+
                     </small>
+
                 </p>
+
             </div>
+
             <div class="modal-footer border-0">
+
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+
                     Cancelar
+
                 </button>
+
                 <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarDesactivar">
+
                     <i class="bi bi-slash-circle me-1"></i> Desactivar
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- Modal de confirmacion de reactivar -->
+
+<!-- Modal de confirmación de reactivar -->
+
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
+
             <div class="modal-header border-0 pb-0">
+
                 <h5 class="modal-title">
+
                     <i class="bi bi-check-circle text-success me-2"></i>
-                    Confirmar reactivaciÃ³n
+
+                    Confirmar reactivación
+
                 </h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
             </div>
+
             <div class="modal-body">
+
                 <p class="mb-0">
-                    Â¿EstÃ¡ seguro que desea reactivar el tipo de diagnÃ³stico
+
+                    ¿Está seguro que desea reactivar el tipo de diagnóstico
+
                     <strong id="nombreTipoDiagnosticoReactivar"></strong>?
+
                 </p>
+
             </div>
+
             <div class="modal-footer border-0">
+
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+
                 <button type="button" class="btn btn-success btn-sm" id="btnConfirmarReactivar">
+
                     <i class="bi bi-check-lg me-1"></i> Reactivar
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
 
 @section Scripts {
+
 <script>
+
     // URLs seguras desde el servidor
+
     const URLS = {
+
         listar: '@jsonListarUrl',
+
         buscar: '@jsonBuscarUrl',
+
         crear: '@crearTipoDiagnosticoUrl',
+
         desactivar: '@Url.Action("JsonDesactivar")',
+
         reactivar: '@Url.Action("JsonReactivar")'
+
     };
 
+
     let tiposDiagnostico = [];
+
     let idSeleccionado = null;
+
     let terminoBusqueda = '';
+
     let mostrarInactivos = false;
+
     let debounceTimer = null;
+
     const modalDesactivar = new bootstrap.Modal(document.getElementById('modalDesactivar'));
+
     const modalReactivar = new bootstrap.Modal(document.getElementById('modalReactivar'));
 
+
     document.addEventListener('DOMContentLoaded', function() {
+
         cargarTiposDiagnostico();
+
         inicializarBuscador();
 
+
         document.getElementById('toggleInactivos').addEventListener('change', function() {
+
             mostrarInactivos = this.checked;
+
             cargarTiposDiagnostico();
+
         });
+
     });
 
+
     function inicializarBuscador() {
+
         const input = document.getElementById('buscarTipoDiagnostico');
+
         const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+
 
         if (!input) return;
 
+
         input.addEventListener('input', function() {
+
             const valor = this.value.trim();
+
             btnLimpiar.style.display = valor ? 'inline-block' : 'none';
 
+
             clearTimeout(debounceTimer);
+
             debounceTimer = setTimeout(function() {
+
                 terminoBusqueda = valor.toLowerCase();
+
                 if (terminoBusqueda.length >= 2) {
+
                     buscarEnAPI(terminoBusqueda);
+
                 } else if (terminoBusqueda.length === 0) {
+
                     cargarTiposDiagnostico();
+
                 }
+
             }, 300);
+
         });
+
 
         btnLimpiar.addEventListener('click', function() {
+
             input.value = '';
+
             this.style.display = 'none';
+
             terminoBusqueda = '';
+
             cargarTiposDiagnostico();
+
             input.focus();
+
         });
+
     }
+
 
     async function buscarEnAPI(termino) {
+
         try {
+
             const res = await fetch(`${URLS.buscar}?q=${encodeURIComponent(termino)}`, {
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
 
+
             if (!res.ok) {
-                mostrarError('Error al buscar tipos de diagnÃ³stico.');
+
+                mostrarError('Error al buscar tipos de diagnóstico.');
+
                 return;
+
             }
+
 
             const json = await res.json();
 
+
             if (!json.success) {
+
                 mostrarError(json.message || 'Error al buscar.');
+
                 return;
+
             }
 
+
             tiposDiagnostico = json.data || [];
+
             renderTabla(tiposDiagnostico);
+
             actualizarContador(tiposDiagnostico.length, tiposDiagnostico.length, true);
+
         } catch (err) {
-            mostrarError('Error de conexiÃ³n.');
+
+            mostrarError('Error de conexión.');
+
         }
+
     }
+
 
     function actualizarContador(mostrados, total, esBusqueda) {
+
         const el = document.getElementById('contadorResultados');
+
         if (!el) return;
 
+
         if (esBusqueda && terminoBusqueda) {
-            el.textContent = mostrados + ' de ' + total + ' tipos de diagnÃ³stico encontrados';
+
+            el.textContent = mostrados + ' de ' + total + ' tipos de diagnóstico encontrados';
+
         } else {
+
             el.textContent = '';
+
         }
+
     }
 
+
     async function cargarTiposDiagnostico() {
+
         try {
+
             const url = mostrarInactivos ? `${URLS.listar}?inactivos=true` : URLS.listar;
+
             const res = await fetch(url, {
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
 
+
             if (!res.ok) {
+
                 mostrarError('No se pudo conectar con el servidor.');
+
                 return;
+
             }
+
 
             const json = await res.json();
 
+
             if (!json.success) {
-                mostrarError(json.message || 'Error al cargar los tipos de diagnÃ³stico.');
+
+                mostrarError(json.message || 'Error al cargar los tipos de diagnóstico.');
+
                 return;
+
             }
 
+
             tiposDiagnostico = json.data || [];
+
             renderTabla(tiposDiagnostico);
+
         } catch (err) {
-            mostrarError('Error de conexiÃ³n. Verifique su red e intente nuevamente.');
+
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+
         }
+
     }
+
 
     function mostrarError(mensaje) {
+
         document.getElementById('tablaContainer').innerHTML = `
+
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
+
                 <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
             </div>
+
             <div class="text-center mt-3">
+
                 <button class="btn btn-outline-primary btn-sm" onclick="cargarTiposDiagnostico()">
+
                     <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+
                 </button>
+
             </div>`;
+
     }
 
+
     function renderTabla(items) {
+
         if (items.length === 0) {
+
             const hayDatos = tiposDiagnostico.length > 0;
+
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la bÃºsqueda.'
-                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron tipos de diagnÃ³stico registrados.';
+
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron tipos de diagnóstico registrados.';
+
             const accion = hayDatos
+
                 ? ''
-                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primer tipo de diagnÃ³stico</a>';
+
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primer tipo de diagnóstico</a>';
+
 
             document.getElementById('tablaContainer').innerHTML = `
+
                 <div class="text-center py-5 text-muted">
+
                     ${mensaje}
+
                     ${accion}
+
                 </div>`;
+
             return;
+
         }
 
+
         const filas = items.map(m => {
+
             const nombre = m.nombre || '';
-            const descripcion = m.descripcion || '\u2014';
+
+            const descripcion = m.descripcion || '—';
+
             const estadoBadge = m.activo
+
                 ? '<span class="badge bg-success">Activo</span>'
+
                 : '<span class="badge bg-secondary">Inactivo</span>';
+
 
             const rowClass = m.activo ? '' : 'opacity-75';
 
+
             return `
+
             <tr class="${rowClass}">
+
                 <td>
+
                     <strong>${escapeHtml(nombre)}</strong>
+
                     ${m.id ? '<br><small class="text-muted" style="font-size:0.7rem;">' + m.id.substring(0, 8) + '...</small>' : ''}
+
                 </td>
+
                 <td class="text-muted small">${escapeHtml(descripcion)}</td>
+
                 <td class="text-center">${estadoBadge}</td>
+
                 <td class="text-end">
+
                     <a href="/Catalogos/TipoDiagnostico/Edit/${m.id}"
+
                        class="btn btn-outline-primary btn-sm me-1" title="Editar">
+
                         <i class="bi bi-pencil"></i>
+
                     </a>
+
                     ${m.activo ? `
+
                     <button class="btn btn-outline-warning btn-sm"
+
                             onclick="confirmarDesactivar('${m.id}', '${escapeHtml(nombre)}')"
+
                             title="Desactivar">
+
                         <i class="bi bi-slash-circle"></i>
+
                     </button>` : `
+
                     <button class="btn btn-outline-success btn-sm"
+
                             onclick="confirmarReactivar('${m.id}', '${escapeHtml(nombre)}')"
+
                             title="Reactivar">
+
                         <i class="bi bi-check-circle"></i>
+
                     </button>`}
+
                 </td>
+
             </tr>`;
+
         }).join('');
 
+
         document.getElementById('tablaContainer').innerHTML = `
+
             <div class="table-responsive">
+
                 <table class="table table-hover align-middle mb-0">
+
                     <thead class="table-light">
+
                         <tr>
+
                             <th>Nombre</th>
-                            <th>DescripciÃ³n</th>
+
+                            <th>Descripción</th>
+
                             <th class="text-center">Estado</th>
+
                             <th class="text-end">Acciones</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>${filas}</tbody>
+
                 </table>
+
             </div>`;
+
     }
+
 
     function confirmarDesactivar(id, nombre) {
+
         idSeleccionado = id;
+
         document.getElementById('nombreTipoDiagnosticoDesactivar').textContent = nombre;
+
         modalDesactivar.show();
+
     }
+
 
     function confirmarReactivar(id, nombre) {
+
         idSeleccionado = id;
+
         document.getElementById('nombreTipoDiagnosticoReactivar').textContent = nombre;
+
         modalReactivar.show();
+
     }
+
 
     document.getElementById('btnConfirmarDesactivar').addEventListener('click', async () => {
+
         if (!idSeleccionado) return;
+
 
         const btn = document.getElementById('btnConfirmarDesactivar');
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Desactivando...';
 
+
         try {
+
             const res = await fetch(`${URLS.desactivar}?id=${idSeleccionado}`, {
+
                 method: 'PATCH',
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
+
 
             const json = await res.json();
 
+
             if (res.ok && json.success) {
-                showToast(json.message || 'Tipo de diagnÃ³stico desactivado exitosamente.', 'success');
+
+                showToast(json.message || 'Tipo de diagnóstico desactivado exitosamente.', 'success');
+
                 await cargarTiposDiagnostico();
+
             } else {
-                showToast(json.message || 'Error al desactivar el tipo de diagnÃ³stico.', 'danger');
+
+                showToast(json.message || 'Error al desactivar el tipo de diagnóstico.', 'danger');
+
             }
+
         } catch (err) {
-            showToast('Error de conexiÃ³n al desactivar.', 'danger');
+
+            showToast('Error de conexión al desactivar.', 'danger');
+
         } finally {
+
             btn.disabled = false;
+
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
+
             modalDesactivar.hide();
+
             idSeleccionado = null;
+
         }
+
     });
+
 
     document.getElementById('btnConfirmarReactivar').addEventListener('click', async () => {
+
         if (!idSeleccionado) return;
 
+
         const btn = document.getElementById('btnConfirmarReactivar');
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Reactivando...';
 
+
         try {
+
             const res = await fetch(`${URLS.reactivar}?id=${idSeleccionado}`, {
+
                 method: 'PATCH',
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
+
 
             const json = await res.json();
 
+
             if (res.ok && json.success) {
-                showToast(json.message || 'Tipo de diagnÃ³stico reactivado exitosamente.', 'success');
+
+                showToast(json.message || 'Tipo de diagnóstico reactivado exitosamente.', 'success');
+
                 await cargarTiposDiagnostico();
+
             } else {
-                showToast(json.message || 'Error al reactivar el tipo de diagnÃ³stico.', 'danger');
+
+                showToast(json.message || 'Error al reactivar el tipo de diagnóstico.', 'danger');
+
             }
+
         } catch (err) {
-            showToast('Error de conexiÃ³n al reactivar.', 'danger');
+
+            showToast('Error de conexión al reactivar.', 'danger');
+
         } finally {
+
             btn.disabled = false;
+
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';
+
             modalReactivar.hide();
+
             idSeleccionado = null;
+
         }
+
     });
 
+
     function escapeHtml(text) {
+
         if (!text) return '';
+
         const div = document.createElement('div');
+
         div.textContent = text;
+
         return div.innerHTML;
+
     }
+
 
     function showToast(message, type) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

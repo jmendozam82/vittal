@@ -109,6 +109,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Vittal API", Version = "v1" });
+    
+    // Resolve conflict for nested DTOs with same names (e.g. Request, Response)
+    c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.",

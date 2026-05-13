@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Vittal.DTO.Clinica;
 
@@ -10,7 +10,7 @@ public class ClinicaRequestDto
 
     public string? Direccion { get; set; }
 
-    [StringLength(20, ErrorMessage = "El teléfono no puede exceder 20 caracteres.")]
+    [StringLength(20, ErrorMessage = "El telefono no puede exceder 20 caracteres.")]
     public string? Telefono { get; set; }
 
     [EmailAddress(ErrorMessage = "El formato del correo no es válido.")]

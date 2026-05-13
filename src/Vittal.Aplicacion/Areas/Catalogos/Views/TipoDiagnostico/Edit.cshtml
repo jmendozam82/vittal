@@ -1,150 +1,299 @@
 @{
-    ViewData["Title"] = "Editar Tipo de Diagn贸stico";
+
+    ViewData["Title"] = "Editar Tipo de Diagn髎tico";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoDiagnostico'>Tipos de Diagn贸stico</a></li>" +
-                             "<li class='breadcrumb-item active'>Editar Tipo de Diagn贸stico</li>";
+
+                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoDiagnostico'>Tipos de Diagn髎tico</a></li>" +
+
+                             "<li class='breadcrumb-item active'>Editar Tipo de Diagn髎tico</li>";
+
 }
 
+
+
 <div class="card shadow-sm border-0">
+
     <div class="card-header bg-white py-3">
+
         <h5 class="mb-0">
-            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Tipo de Diagn贸stico
+
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Tipo de Diagn髎tico
+
         </h5>
+
     </div>
+
     <div class="card-body">
+
         <form id="formTipoDiagnostico" novalidate>
+
             <input type="hidden" id="tipoDiagnosticoId" value="" />
 
-            <!-- Datos del tipo de diagn贸stico -->
+
+
+            <!-- Datos del tipo de diagn髎tico -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-info-circle me-2"></i>Informaci贸n del Tipo de Diagn贸stico
+
+                <i class="bi bi-info-circle me-2"></i>Informaci髇 del Tipo de Diagn髎tico
+
             </h6>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="nombre" name="nombre"
-                           required maxlength="255" placeholder="Ingrese el nombre del tipo de diagn贸stico">
-                    <div class="invalid-feedback">El nombre del tipo de diagn贸stico es obligatorio.</div>
-                </div>
-            </div>
+
 
             <div class="row g-3 mb-3">
-                <div class="col-md-12">
-                    <label for="descripcion" class="form-label fw-semibold">Descripci贸n</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion"
-                              rows="3" placeholder="Descripci贸n del tipo de diagn贸stico (opcional)"></textarea>
+
+                <div class="col-md-6">
+
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+
+                           required maxlength="255" placeholder="Ingrese el nombre del tipo de diagn髎tico">
+
+                    <div class="invalid-feedback">El nombre del tipo de diagn髎tico es obligatorio.</div>
+
                 </div>
+
             </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-12">
+
+                    <label for="descripcion" class="form-label fw-semibold">Descripci髇</label>
+
+                    <textarea class="form-control" id="descripcion" name="descripcion"
+
+                              rows="3" placeholder="Descripci髇 del tipo de diagn髎tico (opcional)"></textarea>
+
+                </div>
+
+            </div>
+
+
 
             <!-- Botones -->
+
             <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+
                 <a href="/Catalogos/TipoDiagnostico" class="btn btn-outline-secondary">
+
                     <i class="bi bi-x-lg me-1"></i> Cancelar
+
                 </a>
+
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
-                    <i class="bi bi-floppy me-1"></i> Actualizar Tipo de Diagn贸stico
+
+                    <i class="bi bi-floppy me-1"></i> Actualizar Tipo de Diagn髎tico
+
                 </button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
 
+
+
 @section Scripts {
+
 <script>
-    // Cargar datos del tipo de diagn贸stico al iniciar
+
+    // Cargar datos del tipo de diagn髎tico al iniciar
+
     document.addEventListener('DOMContentLoaded', function() {
+
         cargarDatosTipoDiagnostico();
+
     });
 
+
+
     function cargarDatosTipoDiagnostico() {
+
         // Los datos vienen del servidor en ViewBag.TipoDiagnostico
+
         const t = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TipoDiagnostico, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
 
+
+
         if (!t) {
-            showToast('danger', 'Error: No se encontraron datos del tipo de diagn贸stico.');
+
+            showToast('danger', 'Error: No se encontraron datos del tipo de diagn髎tico.');
+
             return;
+
         }
+
+
 
         document.getElementById('tipoDiagnosticoId').value = t.id || '';
+
         document.getElementById('nombre').value = t.nombre || '';
+
         document.getElementById('descripcion').value = t.descripcion || '';
 
-        // Nombre completo en el t铆tulo
+
+
+        // Nombre completo en el t韙ulo
+
         const nombreCompleto = t.nombre || '';
+
         document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando: ${escapeHtml(nombreCompleto)}`;
+
     }
 
+
+
     // Submit del formulario
+
     document.getElementById('formTipoDiagnostico').addEventListener('submit', async function(e) {
+
         e.preventDefault();
 
+
+
         const form = this;
+
         if (!form.checkValidity()) {
+
             form.classList.add('was-validated');
+
             return;
+
         }
 
+
+
         const btn = document.getElementById('btnGuardar');
+
         const textoOriginal = btn.innerHTML;
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+
 
         const id = document.getElementById('tipoDiagnosticoId').value;
 
+
+
         const data = {
+
             nombre: document.getElementById('nombre').value.trim(),
+
             descripcion: document.getElementById('descripcion').value.trim() || null
+
         };
 
+
+
         try {
+
             const res = await fetch(`@Url.Action("JsonActualizar")?id=${id}`, {
+
                 method: 'PUT',
+
                 headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify(data)
+
             });
+
+
 
             const json = await res.json();
 
+
+
             if (res.ok && json.success) {
-                showToast('success', json.message || 'Tipo de diagn贸stico actualizado exitosamente.');
+
+                showToast('success', json.message || 'Tipo de diagn髎tico actualizado exitosamente.');
+
                 setTimeout(() => {
+
                     window.location.href = '/Catalogos/TipoDiagnostico';
+
                 }, 1000);
+
             } else {
-                showToast('danger', json.message || 'Error al actualizar el tipo de diagn贸stico.');
+
+                showToast('danger', json.message || 'Error al actualizar el tipo de diagn髎tico.');
+
                 btn.disabled = false;
+
                 btn.innerHTML = textoOriginal;
+
             }
+
         } catch (err) {
-            showToast('danger', 'Error de conexi贸n al guardar.');
+
+            showToast('danger', 'Error de conexi髇 al guardar.');
+
             btn.disabled = false;
+
             btn.innerHTML = textoOriginal;
+
         }
+
     });
 
+
+
     function escapeHtml(text) {
+
         if (!text) return '';
+
         const div = document.createElement('div');
+
         div.textContent = text;
+
         return div.innerHTML;
+
     }
+
+
 
     function showToast(type, message) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

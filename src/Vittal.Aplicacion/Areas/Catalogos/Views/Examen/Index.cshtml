@@ -1,425 +1,801 @@
 @{
-    ViewData["Title"] = "Gesti√≥n de Ex√°menes";
+
+    ViewData["Title"] = "GestiÛn de Ex·menes";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'>Cat√°logos</li>" +
-                             "<li class='breadcrumb-item active'>Ex√°menes</li>";
+
+                             "<li class='breadcrumb-item'>Cat·logos</li>" +
+
+                             "<li class='breadcrumb-item active'>Ex·menes</li>";
+
     var jsonExamenesUrl = Url.Action("JsonExamenes");
+
     var jsonBuscarUrl = Url.Action("JsonBuscar");
+
     var crearExamenUrl = Url.Action("Create");
+
 }
+
 
 @section HeaderActions {
+
     <a asp-action="Create" class="btn btn-primary btn-sm">
+
         <i class="bi bi-plus-lg me-1"></i> Nuevo Examen
+
     </a>
+
 }
 
+
 <div class="card shadow-sm border-0">
+
     <div class="card-body">
+
         <!-- Buscador -->
+
         <div class="row mb-3">
+
             <div class="col-md-6">
+
                 <div class="input-group">
+
                     <span class="input-group-text bg-white">
+
                         <i class="bi bi-search text-muted"></i>
+
                     </span>
+
                     <input type="text"
+
                            id="buscarExamen"
+
                            class="form-control"
-                           placeholder="Buscar por nombre o descripci√≥n..."
+
+                           placeholder="Buscar por nombre o descripciÛn..."
+
                            autocomplete="off" />
+
                     <button type="button"
+
                             class="btn btn-outline-secondary"
+
                             id="btnLimpiarBusqueda"
+
                             style="display: none;"
-                            title="Limpiar b√∫squeda">
+
+                            title="Limpiar b˙squeda">
+
                         <i class="bi bi-x-lg"></i>
+
                     </button>
+
                 </div>
+
             </div>
+
             <div class="col-md-6 d-flex align-items-center justify-content-between mt-2 mt-md-0">
+
                 <small class="text-muted" id="contadorResultados"></small>
+
                 <div class="form-check form-switch">
+
                     <input class="form-check-input" type="checkbox" id="toggleInactivos">
+
                     <label class="form-check-label small" for="toggleInactivos">
+
                         Mostrar inactivos
+
                     </label>
+
                 </div>
+
             </div>
+
         </div>
+
 
         <!-- Tabla de datos -->
+
         <div id="tablaContainer">
+
             <div class="d-flex justify-content-center p-4">
+
                 <div class="spinner-border text-primary" role="status">
+
                     <span class="visually-hidden">Cargando...</span>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- Modal de confirmaci√≥n de desactivar -->
+
+<!-- Modal de confirmaciÛn de desactivar -->
+
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
+
             <div class="modal-header border-0 pb-0">
+
                 <h5 class="modal-title">
+
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-                    Confirmar desactivaci√≥n
+
+                    Confirmar desactivaciÛn
+
                 </h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
             </div>
+
             <div class="modal-body">
+
                 <p class="mb-0">
-                    ¬øEst√° seguro que desea desactivar el examen
+
+                    øEst· seguro que desea desactivar el examen
+
                     <strong id="nombreExamenDesactivar"></strong>?
+
                     <br><small class="text-muted">
-                        El registro no ser√° eliminado, solo quedar√° inactivo.
+
+                        El registro no ser· eliminado, solo quedar· inactivo.
+
                     </small>
+
                 </p>
+
             </div>
+
             <div class="modal-footer border-0">
+
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+
                     Cancelar
+
                 </button>
+
                 <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarDesactivar">
+
                     <i class="bi bi-slash-circle me-1"></i> Desactivar
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- Modal de confirmaci√≥n de reactivar -->
+
+<!-- Modal de confirmaciÛn de reactivar -->
+
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content">
+
             <div class="modal-header border-0 pb-0">
+
                 <h5 class="modal-title">
+
                     <i class="bi bi-check-circle text-success me-2"></i>
-                    Confirmar reactivaci√≥n
+
+                    Confirmar reactivaciÛn
+
                 </h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
             </div>
+
             <div class="modal-body">
+
                 <p class="mb-0">
-                    ¬øEst√° seguro que desea reactivar el examen
+
+                    øEst· seguro que desea reactivar el examen
+
                     <strong id="nombreExamenReactivar"></strong>?
+
                 </p>
+
             </div>
+
             <div class="modal-footer border-0">
+
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+
                 <button type="button" class="btn btn-success btn-sm" id="btnConfirmarReactivar">
+
                     <i class="bi bi-check-lg me-1"></i> Reactivar
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
 
 @section Scripts {
+
 <script>
+
     // URLs seguras desde el servidor
+
     const URLS = {
+
         listar: '@jsonExamenesUrl',
+
         buscar: '@jsonBuscarUrl',
+
         crear: '@crearExamenUrl',
+
         desactivar: '@Url.Action("JsonDesactivar")',
+
         reactivar: '@Url.Action("JsonReactivar")'
+
     };
 
+
     let examenes = [];
+
     let idSeleccionado = null;
+
     let terminoBusqueda = '';
+
     let mostrarInactivos = false;
+
     let debounceTimer = null;
+
     const modalDesactivar = new bootstrap.Modal(document.getElementById('modalDesactivar'));
+
     const modalReactivar = new bootstrap.Modal(document.getElementById('modalReactivar'));
 
+
     document.addEventListener('DOMContentLoaded', function() {
+
         cargarExamenes();
+
         inicializarBuscador();
 
+
         document.getElementById('toggleInactivos').addEventListener('change', function() {
+
             mostrarInactivos = this.checked;
+
             cargarExamenes();
+
         });
+
     });
 
+
     function inicializarBuscador() {
+
         const input = document.getElementById('buscarExamen');
+
         const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+
 
         if (!input) return;
 
+
         input.addEventListener('input', function() {
+
             const valor = this.value.trim();
+
             btnLimpiar.style.display = valor ? 'inline-block' : 'none';
 
+
             clearTimeout(debounceTimer);
+
             debounceTimer = setTimeout(function() {
+
                 terminoBusqueda = valor.toLowerCase();
+
                 if (terminoBusqueda.length >= 2) {
+
                     buscarEnAPI(terminoBusqueda);
+
                 } else if (terminoBusqueda.length === 0) {
+
                     cargarExamenes();
+
                 }
+
             }, 300);
+
         });
+
 
         btnLimpiar.addEventListener('click', function() {
+
             input.value = '';
+
             this.style.display = 'none';
+
             terminoBusqueda = '';
+
             cargarExamenes();
+
             input.focus();
+
         });
+
     }
+
 
     async function buscarEnAPI(termino) {
+
         try {
+
             const res = await fetch(`${URLS.buscar}?q=${encodeURIComponent(termino)}`, {
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
 
+
             if (!res.ok) {
-                mostrarError('Error al buscar ex√°menes.');
+
+                mostrarError('Error al buscar ex·menes.');
+
                 return;
+
             }
+
 
             const json = await res.json();
 
+
             if (!json.success) {
+
                 mostrarError(json.message || 'Error al buscar.');
+
                 return;
+
             }
 
+
             examenes = json.data || [];
+
             renderTabla(examenes);
+
             actualizarContador(examenes.length, examenes.length, true);
+
         } catch (err) {
-            mostrarError('Error de conexi√≥n.');
+
+            mostrarError('Error de conexiÛn.');
+
         }
+
     }
+
 
     function actualizarContador(mostrados, total, esBusqueda) {
+
         const el = document.getElementById('contadorResultados');
+
         if (!el) return;
 
+
         if (esBusqueda && terminoBusqueda) {
-            el.textContent = mostrados + ' de ' + total + ' ex√°menes encontrados';
+
+            el.textContent = mostrados + ' de ' + total + ' ex·menes encontrados';
+
         } else {
+
             el.textContent = '';
+
         }
+
     }
 
+
     async function cargarExamenes() {
+
         try {
+
             const url = mostrarInactivos ? `${URLS.listar}?inactivos=true` : URLS.listar;
+
             const res = await fetch(url, {
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
 
+
             if (!res.ok) {
+
                 mostrarError('No se pudo conectar con el servidor.');
+
                 return;
+
             }
+
 
             const json = await res.json();
 
+
             if (!json.success) {
-                mostrarError(json.message || 'Error al cargar los ex√°menes.');
+
+                mostrarError(json.message || 'Error al cargar los ex·menes.');
+
                 return;
+
             }
 
+
             examenes = json.data || [];
+
             renderTabla(examenes);
+
         } catch (err) {
-            mostrarError('Error de conexi√≥n. Verifique su red e intente nuevamente.');
+
+            mostrarError('Error de conexiÛn. Verifique su red e intente nuevamente.');
+
         }
+
     }
+
 
     function mostrarError(mensaje) {
+
         document.getElementById('tablaContainer').innerHTML = `
+
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
+
                 <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
             </div>
+
             <div class="text-center mt-3">
+
                 <button class="btn btn-outline-primary btn-sm" onclick="cargarExamenes()">
+
                     <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+
                 </button>
+
             </div>`;
+
     }
 
+
     function renderTabla(items) {
+
         if (items.length === 0) {
+
             const hayDatos = examenes.length > 0;
+
             const mensaje = hayDatos
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b√∫squeda.'
-                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron ex√°menes registrados.';
+
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b˙squeda.'
+
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron ex·menes registrados.';
+
             const accion = hayDatos
+
                 ? ''
+
                 : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primer examen</a>';
 
+
             document.getElementById('tablaContainer').innerHTML = `
+
                 <div class="text-center py-5 text-muted">
+
                     ${mensaje}
+
                     ${accion}
+
                 </div>`;
+
             return;
+
         }
 
+
         const filas = items.map(m => {
+
             const nombre = m.nombre || '';
-            const descripcion = m.descripcion || '\u2014';
+
+            const descripcion = m.descripcion || 'ó';
+
             const estadoBadge = m.activo
+
                 ? '<span class="badge bg-success">Activo</span>'
+
                 : '<span class="badge bg-secondary">Inactivo</span>';
+
 
             const rowClass = m.activo ? '' : 'opacity-75';
 
+
             return `
+
             <tr class="${rowClass}">
+
                 <td>
+
                     <strong>${escapeHtml(nombre)}</strong>
+
                     ${m.id ? '<br><small class="text-muted" style="font-size:0.7rem;">' + m.id.substring(0, 8) + '...</small>' : ''}
+
                 </td>
+
                 <td class="text-muted small">${escapeHtml(descripcion)}</td>
+
                 <td class="text-center">${estadoBadge}</td>
+
                 <td class="text-end">
+
                     <a href="/Catalogos/Examen/Edit/${m.id}"
+
                        class="btn btn-outline-primary btn-sm me-1" title="Editar">
+
                         <i class="bi bi-pencil"></i>
+
                     </a>
+
                     ${m.activo ? `
+
                     <button class="btn btn-outline-warning btn-sm"
+
                             onclick="confirmarDesactivar('${m.id}', '${escapeHtml(nombre)}')"
+
                             title="Desactivar">
+
                         <i class="bi bi-slash-circle"></i>
+
                     </button>` : `
+
                     <button class="btn btn-outline-success btn-sm"
+
                             onclick="confirmarReactivar('${m.id}', '${escapeHtml(nombre)}')"
+
                             title="Reactivar">
+
                         <i class="bi bi-check-circle"></i>
+
                     </button>`}
+
                 </td>
+
             </tr>`;
+
         }).join('');
 
+
         document.getElementById('tablaContainer').innerHTML = `
+
             <div class="table-responsive">
+
                 <table class="table table-hover align-middle mb-0">
+
                     <thead class="table-light">
+
                         <tr>
+
                             <th>Nombre</th>
-                            <th>Descripci√≥n</th>
+
+                            <th>DescripciÛn</th>
+
                             <th class="text-center">Estado</th>
+
                             <th class="text-end">Acciones</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>${filas}</tbody>
+
                 </table>
+
             </div>`;
+
     }
+
 
     function confirmarDesactivar(id, nombre) {
+
         idSeleccionado = id;
+
         document.getElementById('nombreExamenDesactivar').textContent = nombre;
+
         modalDesactivar.show();
+
     }
+
 
     function confirmarReactivar(id, nombre) {
+
         idSeleccionado = id;
+
         document.getElementById('nombreExamenReactivar').textContent = nombre;
+
         modalReactivar.show();
+
     }
+
 
     document.getElementById('btnConfirmarDesactivar').addEventListener('click', async () => {
+
         if (!idSeleccionado) return;
+
 
         const btn = document.getElementById('btnConfirmarDesactivar');
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Desactivando...';
 
+
         try {
+
             const res = await fetch(`${URLS.desactivar}?id=${idSeleccionado}`, {
+
                 method: 'PATCH',
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
+
 
             const json = await res.json();
 
+
             if (res.ok && json.success) {
+
                 showToast(json.message || 'Examen desactivado exitosamente.', 'success');
+
                 await cargarExamenes();
+
             } else {
+
                 showToast(json.message || 'Error al desactivar el examen.', 'danger');
+
             }
+
         } catch (err) {
-            showToast('Error de conexi√≥n al desactivar.', 'danger');
+
+            showToast('Error de conexiÛn al desactivar.', 'danger');
+
         } finally {
+
             btn.disabled = false;
+
             btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
+
             modalDesactivar.hide();
+
             idSeleccionado = null;
+
         }
+
     });
+
 
     document.getElementById('btnConfirmarReactivar').addEventListener('click', async () => {
+
         if (!idSeleccionado) return;
 
+
         const btn = document.getElementById('btnConfirmarReactivar');
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Reactivando...';
 
+
         try {
+
             const res = await fetch(`${URLS.reactivar}?id=${idSeleccionado}`, {
+
                 method: 'PATCH',
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
+
 
             const json = await res.json();
 
+
             if (res.ok && json.success) {
+
                 showToast(json.message || 'Examen reactivado exitosamente.', 'success');
+
                 await cargarExamenes();
+
             } else {
+
                 showToast(json.message || 'Error al reactivar el examen.', 'danger');
+
             }
+
         } catch (err) {
-            showToast('Error de conexi√≥n al reactivar.', 'danger');
+
+            showToast('Error de conexiÛn al reactivar.', 'danger');
+
         } finally {
+
             btn.disabled = false;
+
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Reactivar';
+
             modalReactivar.hide();
+
             idSeleccionado = null;
+
         }
+
     });
 
+
     function escapeHtml(text) {
+
         if (!text) return '';
+
         const div = document.createElement('div');
+
         div.textContent = text;
+
         return div.innerHTML;
+
     }
+
 
     function showToast(message, type) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

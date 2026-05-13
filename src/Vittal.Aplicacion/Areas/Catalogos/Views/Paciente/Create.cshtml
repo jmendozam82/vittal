@@ -1,227 +1,453 @@
-@{
+﻿@{
+
     ViewData["Title"] = "Nuevo Paciente";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
                              "<li class='breadcrumb-item'><a href='/Catalogos/Paciente'>Pacientes</a></li>" +
+
                              "<li class='breadcrumb-item active'>Nuevo Paciente</li>";
+
 }
 
+
+
 <div class="card shadow-sm border-0">
+
     <div class="card-header bg-white py-3">
+
         <h5 class="mb-0">
+
             <i class="bi bi-person-plus me-2 text-primary"></i>Registrar Nuevo Paciente
+
         </h5>
+
     </div>
+
     <div class="card-body">
+
         <form id="formPaciente" novalidate>
+
             <!-- Datos personales -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3">
+
                 <i class="bi bi-person-vcard me-2"></i>Datos Personales
+
             </h6>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label for="primerNombre" class="form-label fw-semibold">Primer Nombre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="primerNombre" name="primerNombre"
-                           required maxlength="100" placeholder="Ingrese el primer nombre">
-                    <div class="invalid-feedback">El primer nombre es obligatorio.</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="segundoNombre" class="form-label fw-semibold">Segundo Nombre</label>
-                    <input type="text" class="form-control" id="segundoNombre" name="segundoNombre"
-                           maxlength="100" placeholder="Ingrese el segundo nombre (opcional)">
-                </div>
-                <div class="col-md-4">
-                    <label for="fechaNacimiento" class="form-label fw-semibold">Fecha de Nacimiento</label>
-                    <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento">
-                </div>
-            </div>
+
 
             <div class="row g-3 mb-3">
+
                 <div class="col-md-4">
-                    <label for="primerApellido" class="form-label fw-semibold">Primer Apellido <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="primerApellido" name="primerApellido"
-                           required maxlength="100" placeholder="Ingrese el primer apellido">
-                    <div class="invalid-feedback">El primer apellido es obligatorio.</div>
+
+                    <label for="primerNombre" class="form-label fw-semibold">Primer Nombre <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="primerNombre" name="primerNombre"
+
+                           required maxlength="100" placeholder="Ingrese el primer nombre">
+
+                    <div class="invalid-feedback">El primer nombre es obligatorio.</div>
+
                 </div>
+
                 <div class="col-md-4">
-                    <label for="segundoApellido" class="form-label fw-semibold">Segundo Apellido</label>
-                    <input type="text" class="form-control" id="segundoApellido" name="segundoApellido"
-                           maxlength="100" placeholder="Ingrese el segundo apellido (opcional)">
+
+                    <label for="segundoNombre" class="form-label fw-semibold">Segundo Nombre</label>
+
+                    <input type="text" class="form-control" id="segundoNombre" name="segundoNombre"
+
+                           maxlength="100" placeholder="Ingrese el segundo nombre (opcional)">
+
                 </div>
+
                 <div class="col-md-4">
-                    <label for="sexo" class="form-label fw-semibold">Sexo</label>
-                    <select class="form-select" id="sexo" name="sexo">
-                        <option value="">-- Seleccione --</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Femenino</option>
-                    </select>
+
+                    <label for="fechaNacimiento" class="form-label fw-semibold">Fecha de Nacimiento</label>
+
+                    <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento">
+
                 </div>
+
             </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-4">
+
+                    <label for="primerApellido" class="form-label fw-semibold">Primer Apellido <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="primerApellido" name="primerApellido"
+
+                           required maxlength="100" placeholder="Ingrese el primer apellido">
+
+                    <div class="invalid-feedback">El primer apellido es obligatorio.</div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="segundoApellido" class="form-label fw-semibold">Segundo Apellido</label>
+
+                    <input type="text" class="form-control" id="segundoApellido" name="segundoApellido"
+
+                           maxlength="100" placeholder="Ingrese el segundo apellido (opcional)">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="sexo" class="form-label fw-semibold">Sexo</label>
+
+                    <select class="form-select" id="sexo" name="sexo">
+
+                        <option value="">-- Seleccione --</option>
+
+                        <option value="M">Masculino</option>
+
+                        <option value="F">Femenino</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
 
             <!-- Contacto -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
                 <i class="bi bi-envelope me-2"></i>Información de Contacto
+
             </h6>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
-                    <input type="email" class="form-control" id="email" name="email"
-                           maxlength="255" placeholder="paciente@ejemplo.com">
-                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="celular" class="form-label fw-semibold">Celular</label>
-                    <input type="tel" class="form-control" id="celular" name="celular"
-                           maxlength="20" placeholder="+505 8888-8888">
-                </div>
-                <div class="col-md-4">
-                    <label for="doctorId" class="form-label fw-semibold">Doctor Asignado <span class="text-danger">*</span></label>
-                    <select class="form-select" id="doctorId" name="doctorId" required>
-                        <option value="">-- Seleccione un doctor --</option>
-                    </select>
-                    <div class="invalid-feedback">Debe asignar un doctor al paciente.</div>
-                </div>
-            </div>
+
 
             <div class="row g-3 mb-3">
-                <div class="col-md-12">
-                    <label for="direccion" class="form-label fw-semibold">Dirección</label>
-                    <textarea class="form-control" id="direccion" name="direccion"
-                              rows="2" placeholder="Dirección del paciente (opcional)"></textarea>
+
+                <div class="col-md-4">
+
+                    <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
+
+                    <input type="email" class="form-control" id="email" name="email"
+
+                           maxlength="255" placeholder="paciente@ejemplo.com">
+
+                    <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
+
                 </div>
+
+                <div class="col-md-4">
+
+                    <label for="celular" class="form-label fw-semibold">Celular</label>
+
+                    <input type="tel" class="form-control" id="celular" name="celular"
+
+                           maxlength="20" placeholder="+505 8888-8888">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="doctorId" class="form-label fw-semibold">Doctor Asignado <span class="text-danger">*</span></label>
+
+                    <select class="form-select" id="doctorId" name="doctorId" required>
+
+                        <option value="">-- Seleccione un doctor --</option>
+
+                    </select>
+
+                    <div class="invalid-feedback">Debe asignar un doctor al paciente.</div>
+
+                </div>
+
             </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-12">
+
+                    <label for="dirección" class="form-label fw-semibold">Dirección</label>
+
+                    <textarea class="form-control" id="direccion" name="direccion"
+
+                              rows="2" placeholder="Dirección del paciente (opcional)"></textarea>
+
+                </div>
+
+            </div>
+
+
 
             <!-- Observaciones -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
                 <i class="bi bi-journal-text me-2"></i>Observaciones
+
             </h6>
 
+
+
             <div class="row g-3 mb-3">
+
                 <div class="col-md-12">
+
                     <textarea class="form-control" id="observaciones" name="observaciones"
+
                               rows="3" placeholder="Observaciones o notas adicionales (opcional)"></textarea>
+
                 </div>
+
             </div>
+
+
 
             <!-- Botones -->
+
             <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+
                 <a href="/Catalogos/Paciente" class="btn btn-outline-secondary">
+
                     <i class="bi bi-x-lg me-1"></i> Cancelar
+
                 </a>
+
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
+
                     <i class="bi bi-floppy me-1"></i> Guardar Paciente
+
                 </button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
 
+
+
 @section Scripts {
+
 <script>
+
     // Cargar doctores al iniciar
+
     document.addEventListener('DOMContentLoaded', function() {
+
         cargarDoctores();
+
     });
+
+
 
     async function cargarDoctores() {
+
         try {
+
             const res = await fetch('@Url.Action("JsonDoctores")', {
+
                 headers: { 'Content-Type': 'application/json' }
+
             });
+
+
 
             if (!res.ok) {
+
                 console.error('Error al cargar doctores');
+
                 return;
+
             }
 
+
+
             const json = await res.json();
+
+
 
             if (json.success && json.data) {
+
                 const select = document.getElementById('doctorId');
+
                 json.data.forEach(d => {
+
                     const op = document.createElement('option');
+
                     op.value = d.id || d.usuarioId || '';
+
                     op.textContent = d.nombreCompleto || d.nombres + ' ' + d.apellidos || 'Sin nombre';
+
                     select.appendChild(op);
+
                 });
+
             }
+
         } catch (err) {
+
             console.error('Error al cargar doctores:', err);
+
         }
+
     }
 
+
+
     // Submit del formulario
+
     document.getElementById('formPaciente').addEventListener('submit', async function(e) {
+
         e.preventDefault();
 
+
+
         // Validación del lado cliente
+
         const form = this;
+
         if (!form.checkValidity()) {
+
             form.classList.add('was-validated');
+
             return;
+
         }
 
+
+
         const btn = document.getElementById('btnGuardar');
+
         const textoOriginal = btn.innerHTML;
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
 
+
+
         const data = {
+
             doctorId: document.getElementById('doctorId').value,
+
             primerNombre: document.getElementById('primerNombre').value.trim(),
+
             segundoNombre: document.getElementById('segundoNombre').value.trim() || null,
+
             primerApellido: document.getElementById('primerApellido').value.trim(),
+
             segundoApellido: document.getElementById('segundoApellido').value.trim() || null,
+
             email: document.getElementById('email').value.trim() || null,
+
             celular: document.getElementById('celular').value.trim() || null,
+
             direccion: document.getElementById('direccion').value.trim() || null,
+
             sexo: document.getElementById('sexo').value || null,
+
             fechaNacimiento: document.getElementById('fechaNacimiento').value || null,
+
             observaciones: document.getElementById('observaciones').value.trim() || null
+
         };
 
+
+
         try {
+
             const res = await fetch('@Url.Action("JsonCrear")', {
+
                 method: 'POST',
+
                 headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify(data)
+
             });
+
+
 
             const json = await res.json();
 
+
+
             if (res.ok && json.success) {
+
                 showToast('success', json.message || 'Paciente creado exitosamente.');
+
                 setTimeout(() => {
+
                     window.location.href = '/Catalogos/Paciente';
+
                 }, 1000);
+
             } else {
+
                 showToast('danger', json.message || 'Error al crear el paciente.');
+
                 btn.disabled = false;
+
                 btn.innerHTML = textoOriginal;
+
             }
+
         } catch (err) {
+
             showToast('danger', 'Error de conexión al guardar.');
+
             btn.disabled = false;
+
             btn.innerHTML = textoOriginal;
+
         }
+
     });
 
+
+
     function showToast(type, message) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

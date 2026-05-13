@@ -1,199 +1,597 @@
-@using System.Text.Json
+﻿@using System.Text.Json
+
+
 @{
+
+
     ViewData["Title"] = "Editar Perfil";
+
+
     var perfilIndexUrl = Url.Action("Index");
+
+
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
+
                              $"<li class='breadcrumb-item'><a href='{perfilIndexUrl}'>Perfiles</a></li>" +
+
+
                              "<li class='breadcrumb-item active'>Editar</li>";
+
+
     var jsonActualizarUrl = Url.Action("JsonActualizar");
 
+
+
+
+
     // Datos del perfil cargados server-side
+
+
     var perfil = ViewBag.Perfil as System.Collections.Generic.IDictionary<string, object>;
+
+
     var perfilId = perfil != null && perfil.ContainsKey("id") ? perfil["id"]?.ToString() : (ViewContext.RouteData.Values["id"]?.ToString() ?? string.Empty);
+
+
     var perfilNombre = perfil != null && perfil.ContainsKey("nombre") ? perfil["nombre"]?.ToString() : string.Empty;
+
+
     var perfilDescripcion = perfil != null && perfil.ContainsKey("descripcion") ? perfil["descripcion"]?.ToString() : string.Empty;
+
+
     var perfilEsAdmin = perfil != null && perfil.ContainsKey("esAdmin") && Convert.ToBoolean(perfil["esAdmin"]);
+
+
     var perfilActivo = perfil == null || !perfil.ContainsKey("activo") || Convert.ToBoolean(perfil["activo"]);
+
+
     var perfilFechaCreacion = perfil != null && perfil.ContainsKey("fechaCreacion") ? perfil["fechaCreacion"]?.ToString() : null;
+
+
     var perfilFechaModificacion = perfil != null && perfil.ContainsKey("fechaModificacion") ? perfil["fechaModificacion"]?.ToString() : null;
+
+
 }
 
+
+
+
+
 <div class="row justify-content-center">
+
+
     <div class="col-lg-7">
+
+
         <div class="card shadow-sm border-0">
+
+
             <div class="card-body p-4">
+
+
                 <div class="d-flex align-items-center gap-2 mb-4">
+
+
                     <i class="bi bi-pencil-square text-primary fs-5"></i>
+
+
                     <h5 class="mb-0">Editar perfil</h5>
+
+
                 </div>
+
+
+
+
 
                 <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
 
+
+
+
+
                 <form id="frmPerfil" novalidate>
+
+
                     <input type="hidden" id="perfilId" value="@perfilId" />
+
+
                     <div class="row g-3">
+
+
                         <!-- Nombre -->
+
+
                         <div class="col-12">
+
+
                             <label for="nombre" class="form-label fw-medium">
+
+
                                 Nombre <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="text" id="nombre" name="nombre"
+
+
                                    class="form-control" maxlength="100"
+
+
                                    value="@perfilNombre" required />
-                            <div class="invalid-feedback">El nombre del perfil es obligatorio (m&iacute;nimo 3 caracteres).</div>
+
+
+                            <div class="invalid-feedback">El nombre del perfil es obligatorio (mínimo 3 caracteres).</div>
+
+
                         </div>
 
-                        <!-- Descripci&oacute;n -->
+
+
+
+
+                        <!-- Descripción -->
+
+
                         <div class="col-12">
+
+
                             <label for="descripcion" class="form-label fw-medium">
-                                Descripci&oacute;n
+
+
+                                Descripción
+
+
                             </label>
+
+
                             <textarea id="descripcion" name="descripcion"
+
+
                                       class="form-control" rows="3" maxlength="500">@perfilDescripcion</textarea>
-                            <div class="form-text">Opcional. M&aacute;ximo 500 caracteres.</div>
+
+
+                            <div class="form-text">Opcional. Máximo 500 caracteres.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Es Admin -->
+
+
                         <div class="col-12">
+
+
                             <div class="form-check form-switch">
+
+
                                 <input class="form-check-input" type="checkbox"
+
+
                                        id="esAdmin" name="esAdmin"
+
+
                                        @(perfilEsAdmin ? "checked" : "") />
+
+
                                 <label class="form-check-label" for="esAdmin">
+
+
                                     <i class="bi bi-shield-check me-1"></i>
+
+
                                     Perfil de Administrador
+
+
                                 </label>
+
+
                             </div>
+
+
                             <div class="form-text">
-                                Los perfiles de administrador tienen acceso total a todos los m&oacute;dulos.
+
+
+                                Los perfiles de administrador tienen acceso total a todos los módulos.
+
+
                             </div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Info adicional (solo lectura) -->
+
+
                         <div class="col-12">
+
+
                             <hr class="text-muted" />
+
+
                             <dl class="row mb-0 small text-muted">
+
+
                                 <dt class="col-sm-5">Estado actual:</dt>
+
+
                                 <dd class="col-sm-7">
+
+
                                     @if (perfilActivo)
+
+
                                     {
+
+
                                         <span class="badge bg-success">Activo</span>
+
+
                                     }
+
+
                                     else
+
+
                                     {
+
+
                                         <span class="badge bg-secondary">Inactivo</span>
+
+
                                     }
+
+
                                 </dd>
+
+
                                 <dt class="col-sm-5">Creado el:</dt>
+
+
                                 <dd class="col-sm-7">@(perfilFechaCreacion ?? "No disponible")</dd>
-                                <dt class="col-sm-5">&Uacute;ltima modificaci&oacute;n:</dt>
+
+
+                                <dt class="col-sm-5">Última modificación:</dt>
+
+
                                 <dd class="col-sm-7">@(perfilFechaModificacion ?? "Sin modificaciones")</dd>
+
+
                             </dl>
+
+
                         </div>
+
+
+
+
 
                         <!-- Botones -->
+
+
                         <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+
+
                             <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+
+
                                 <i class="bi bi-arrow-left me-1"></i> Cancelar
+
+
                             </a>
+
+
                             <button type="submit" class="btn btn-primary btn-sm" id="btnGuardar">
+
+
                                 <span id="btnSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+
+
                                 <i class="bi bi-check-lg me-1" id="btnIcon"></i>
+
+
                                 Guardar Cambios
+
+
                             </button>
+
+
                         </div>
+
+
                     </div>
+
+
                 </form>
+
+
             </div>
+
+
         </div>
+
+
     </div>
+
+
 </div>
 
+
+
+
+
 @section Scripts {
+
+
 <script>
+
+
     const perfilId = document.getElementById('perfilId').value;
+
+
     const jsonActualizarUrl = '@jsonActualizarUrl';
 
+
+
+
+
     document.getElementById('frmPerfil').addEventListener('submit', async (e) => {
+
+
         e.preventDefault();
 
+
+
+
+
         const nombre = document.getElementById('nombre').value.trim();
+
+
         const descripcion = document.getElementById('descripcion').value.trim();
+
+
         const esAdmin = document.getElementById('esAdmin').checked;
 
+
+
+
+
         const errores = [];
+
+
         if (!nombre) errores.push('El nombre del perfil es obligatorio.');
+
+
         else if (nombre.length < 3) errores.push('El nombre debe tener al menos 3 caracteres.');
-        if (descripcion.length > 500) errores.push('La descripci&oacute;n no puede exceder 500 caracteres.');
+
+
+        if (descripcion.length > 500) errores.push('La descripcion no puede exceder 500 caracteres.');
+
+
+
+
 
         if (errores.length > 0) {
+
+
             mostrarErrores(errores);
+
+
             return;
+
+
         }
+
+
+
+
 
         setLoading(true);
+
+
         ocultarError();
 
+
+
+
+
         const res = await fetch(`${jsonActualizarUrl}?id=${perfilId}`, {
+
+
             method: 'PUT',
+
+
             headers: { 'Content-Type': 'application/json' },
+
+
             body: JSON.stringify({ nombre, descripcion, esAdmin })
+
+
         });
 
+
+
+
+
         const json = await res.json();
+
+
         setLoading(false);
 
+
+
+
+
         if (res.ok && json.success) {
+
+
             showToast('Perfil actualizado exitosamente.', 'success');
+
+
             setTimeout(() => window.location.href = '@perfilIndexUrl', 1200);
+
+
         } else {
+
+
             const errs = json.errors || [json.message || 'Error al actualizar el perfil.'];
+
+
             mostrarErrores(errs);
+
+
         }
+
+
     });
 
+
+
+
+
     function setLoading(loading) {
+
+
         const btn = document.getElementById('btnGuardar');
+
+
         const spinner = document.getElementById('btnSpinner');
+
+
         const icon = document.getElementById('btnIcon');
+
+
         btn.disabled = loading;
+
+
         spinner.classList.toggle('d-none', !loading);
+
+
         icon.classList.toggle('d-none', loading);
+
+
     }
+
+
+
+
 
     function mostrarErrores(errores) {
+
+
         const alert = document.getElementById('alertError');
+
+
         alert.classList.remove('d-none');
+
+
         alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+
+
             errores.map(e => `<div>${escapeHtml(e)}</div>`).join('');
+
+
     }
+
+
+
+
 
     function ocultarError() {
+
+
         document.getElementById('alertError').classList.add('d-none');
+
+
     }
+
+
+
+
 
     function showToast(message, type) {
+
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
+
         const toast = document.createElement('div');
+
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
+
         container.appendChild(toast);
+
+
         setTimeout(() => toast.remove(), 5000);
+
+
     }
+
+
+
+
 
     function createToastContainer() {
+
+
         const div = document.createElement('div');
+
+
         div.id = 'toastContainer';
+
+
         document.body.appendChild(div);
+
+
         return div;
+
+
     }
 
+
+
+
+
     function escapeHtml(text) {
+
+
         if (!text) return '';
+
+
         const div = document.createElement('div');
+
+
         div.textContent = text;
+
+
         return div.innerHTML;
+
+
     }
+
+
 </script>
+
+
 }
+
+

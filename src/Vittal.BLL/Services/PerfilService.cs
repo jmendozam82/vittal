@@ -1,4 +1,4 @@
-using Vittal.BLL.Interfaces;
+﻿using Vittal.BLL.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -256,7 +256,7 @@ public class PerfilService : IPerfilService
             errors.Add("El nombre no puede exceder 100 caracteres.");
 
         if (dto.Descripcion != null && dto.Descripcion.Length > 500)
-            errors.Add("La descripción no puede exceder 500 caracteres.");
+            errors.Add("La descripcion no puede exceder 500 caracteres.");
 
         return errors;
     }

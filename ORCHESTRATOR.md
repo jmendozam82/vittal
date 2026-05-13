@@ -563,7 +563,44 @@ El @PM rechaza inmediatamente si el plan contiene:
 
 ---
 
-### Sprint 4 — Catálogos Parte 2 (Semanas 7-8)
+### Sprint 3.5 — Especialidades por Sala (Semanas 6-7)
+
+**Objetivo:** Habilitar el modelo multi-especialidad dinámico por sala. Catálogos configurables sin código hardcodeado.
+
+> **Decisión arquitectónica:** `sala_id` = discriminador de especialidad. `clinica_id` = RLS únicamente. Ver CLAUDE.md sección 4.1.
+
+| HU | Módulo | Días | Dependencias |
+|---|---|---|---|
+| HU-E01 | ALTER citas: Agregar hora_fin | 0.5 | Ninguna |
+| HU-E02 | Plantillas de Especialidad + Seed | 1 | Ninguna |
+| HU-E03 | Tipos de Antecedente por Sala | 2 | HU-E02 |
+| HU-E04 | Tipos de Signo Vital por Sala | 2 | HU-E02 |
+| HU-E05 | Antecedentes del Paciente | 2 | HU-E03, HU20 |
+| HU-E06 | Signos Vitales por Consulta | 1.5 | HU-E04, HU20 |
+| HU-E07 | Constancias Médicas | 2 | HU20 |
+
+**Total estimado: ~11 días**
+
+**Entregables del sprint:**
+- Columna `hora_fin` en tabla `citas`
+- Plantillas de especialidad con seed de 8 especialidades médicas
+- Catálogos dinámicos `tipos_antecedente` y `tipos_signo_vital` por sala
+- Registro de antecedentes de paciente ligados al expediente por sala
+- Registro de signos vitales por consulta con detección de rango anormal
+- Módulo de constancias médicas imprimibles
+
+**Criterio de done del sprint:**
+- Al crear una sala y seleccionar especialidad, el sistema importa automáticamente los ítems de la plantilla
+- El doctor al abrir una hoja de cita ve los signos vitales y antecedentes específicos de la sala donde atiende
+- El flag `fuera_de_rango` se calcula automáticamente al guardar un signo vital
+- Se puede emitir e imprimir una constancia médica desde el expediente
+
+> [!WARNING]
+> HU-E05, HU-E06 y HU-E07 requieren que `expedientes` y `hojas_cita` existan (HU20). Si HU20 no está completada al llegar a este sprint, adelantar solo HU-E01, HU-E02, HU-E03 y HU-E04.
+
+---
+
+### Sprint 4 — Catálogos Parte 2 (Semanas 8-9)
 
 **Objetivo:** Catálogos médicos especializados.
 
@@ -637,29 +674,43 @@ El @PM rechaza inmediatamente si el plan contiene:
 El @PM debe respetar este grafo de dependencias al asignar tareas entre sprints:
 
 ```
-HU01 (BD) ─────────────────────────────┐
-    │                                   │
-    ▼                                   ▼
-HU02 (Login) ──► HU03 (Perfiles) ──► HU04 (Usuarios)
-                                        │
-                                        ▼
-                                  HU05 (Permisos)
-                                        │
-                    ┌───────────────────┼───────────────────┐
-                    ▼                   ▼                   ▼
-              HU09 (Clínicas)    HU06 (Asignar Salas)  HU07 (Pacientes)
-                    │                   │                   │
-                    ▼                   ▼                   ▼
-              HU10 (Salas)       HU21 (Agenda)        HU08..HU17
-                                        │               (Catálogos)
-                                        ▼                   │
-                                  HU18 (Cola)               ▼
-                                        │             HU20 (Expedientes)
-                                        ▼                   │
-                                  HU19 (Línea Tiempo)       ▼
-                                                      HU22 (Reportes)
-                                                      HU23 (Dashboard)
-                                                      HU23 (Alertas)
+HU01 (BD) ─────────────────────────────────────────┐
+    │                                               │
+    ▼                                               ▼
+HU02 (Login) ──► HU03 (Perfiles) ──────────► HU04 (Usuarios)
+                                                    │
+                                                    ▼
+                                              HU05 (Permisos)
+                                                    │
+                    ┌───────────────────────────────┼──────────────────┐
+                    ▼                               ▼                  ▼
+              HU09 (Clínicas)           HU06 (Asignar Salas)   HU07 (Pacientes)
+                    │                               │                  │
+                    ▼                               ▼                  ▼
+              HU10 (Salas) ──── HU-E01 (hora_fin citas)        HU08..HU17
+                    │                                           (Catálogos)
+                    ├───────────────────────────────────────────────┐
+                    ▼                                               │
+              HU-E02 (Plantillas Especialidad)                      │
+              /         \                                           │
+             ▼           ▼                                         │
+  HU-E03 (TiposAnt)  HU-E04 (TiposSV)                            │
+             │           │                                          │
+             ▼           ▼                    ◄─────────── HU20 (Expedientes)
+  HU-E05 (AntPac)  HU-E06 (SVHoja)                                │
+                                                                    ▼
+                    ┌───────────────────────────────────────HU-E07 (Constancias)
+                    ▼
+              HU21 (Agenda)
+                    │
+                    ▼
+              HU18 (Cola de Espera)
+                    │
+                    ▼
+              HU19 (Línea de Tiempo)
+                                    HU22 (Reportes)
+                                    HU23 (Dashboard)
+                                    HU23 (Alertas)
 ```
 
 **Regla:** Un módulo no puede iniciar hasta que sus dependencias estén en estado Completado.
@@ -748,24 +799,34 @@ tmux kill-session -t <session-name>
 El @PM actualiza esta sección al inicio de cada sesión de trabajo:
 
 ```
-SPRINT ACTUAL: Sprint 1 — Fundación
+SPRINT ACTUAL: Sprint 3.5 — Especialidades por Sala (pendiente inicio)
 FECHA INICIO:  [Pendiente]
 FECHA FIN EST: [Pendiente]
 
 HU EN PROGRESO:
-  - [ ] HU01 Creación de la Base de Datos
-  - [ ] HU02 Acceso al Sistema (Login)
-  - [ ] HU03 Gestión de Perfiles
+  (ninguna — pendiente arranque de Sprint 3.5)
 
-HU COMPLETADAS:
-  (ninguna aún)
+HU COMPLETADAS (referencia):
+  - [x] HU01 Creación de la Base de Datos (migración base)
+  - Revisar estado real con el equipo al inicio de sesión
+
+PREPARACIÓN SPRINT 3.5:
+  - [ ] HU-E01 ALTER citas: Agregar hora_fin
+  - [ ] HU-E02 Plantillas de Especialidad + Seed
+  - [ ] HU-E03 Tipos de Antecedente por Sala
+  - [ ] HU-E04 Tipos de Signo Vital por Sala
+  - [ ] HU-E05 Antecedentes del Paciente (requiere HU20)
+  - [ ] HU-E06 Signos Vitales por Consulta (requiere HU20)
+  - [ ] HU-E07 Constancias Médicas (requiere HU20)
 
 BLOCKERS ACTIVOS:
-  (ninguno)
+  - HU-E05, HU-E06, HU-E07 bloqueadas hasta que HU20 esté completa
 
 NOTAS DEL SPRINT:
-  - Proyecto en fase de arranque
-  - Primer sprint enfocado en infraestructura base
+  - Decisión arquitectónica confirmada: sala_id = discriminador de especialidad
+  - plantillas_especialidad es tabla global del sistema (sin clinica_id)
+  - Seed inicial: 8 especialidades médicas con sus ítems
+  - Ver CLAUDE.md sección 4.1 para detalles completos
 ```
 
 ---

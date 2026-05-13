@@ -1,117 +1,233 @@
 @{
+
     ViewData["Title"] = "Nuevo Examen";
+
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Examen'>Ex谩menes</a></li>" +
+
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Examen'>Ex醡enes</a></li>" +
+
                              "<li class='breadcrumb-item active'>Nuevo Examen</li>";
+
 }
 
+
+
 <div class="card shadow-sm border-0">
+
     <div class="card-header bg-white py-3">
+
         <h5 class="mb-0">
+
             <i class="bi bi-clipboard2-pulse me-2 text-primary"></i>Registrar Nuevo Examen
+
         </h5>
+
     </div>
+
     <div class="card-body">
+
         <form id="formExamen" novalidate>
+
             <!-- Datos del examen -->
+
             <h6 class="text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-info-circle me-2"></i>Informaci贸n del Examen
+
+                <i class="bi bi-info-circle me-2"></i>Informaci髇 del Examen
+
             </h6>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="nombre" name="nombre"
-                           required maxlength="255" placeholder="Ingrese el nombre del examen">
-                    <div class="invalid-feedback">El nombre del examen es obligatorio.</div>
-                </div>
-            </div>
+
 
             <div class="row g-3 mb-3">
-                <div class="col-md-12">
-                    <label for="descripcion" class="form-label fw-semibold">Descripci贸n</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion"
-                              rows="3" placeholder="Descripci贸n del examen (opcional)"></textarea>
+
+                <div class="col-md-6">
+
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+
+                           required maxlength="255" placeholder="Ingrese el nombre del examen">
+
+                    <div class="invalid-feedback">El nombre del examen es obligatorio.</div>
+
                 </div>
+
             </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-12">
+
+                    <label for="descripcion" class="form-label fw-semibold">Descripci髇</label>
+
+                    <textarea class="form-control" id="descripcion" name="descripcion"
+
+                              rows="3" placeholder="Descripci髇 del examen (opcional)"></textarea>
+
+                </div>
+
+            </div>
+
+
 
             <!-- Botones -->
+
             <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+
                 <a href="/Catalogos/Examen" class="btn btn-outline-secondary">
+
                     <i class="bi bi-x-lg me-1"></i> Cancelar
+
                 </a>
+
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
+
                     <i class="bi bi-floppy me-1"></i> Guardar Examen
+
                 </button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
 
+
+
 @section Scripts {
+
 <script>
+
     // Submit del formulario
+
     document.getElementById('formExamen').addEventListener('submit', async function(e) {
+
         e.preventDefault();
 
-        // Validaci贸n del lado cliente
+
+
+        // Validaci髇 del lado cliente
+
         const form = this;
+
         if (!form.checkValidity()) {
+
             form.classList.add('was-validated');
+
             return;
+
         }
 
+
+
         const btn = document.getElementById('btnGuardar');
+
         const textoOriginal = btn.innerHTML;
+
         btn.disabled = true;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
 
+
+
         const data = {
+
             nombre: document.getElementById('nombre').value.trim(),
+
             descripcion: document.getElementById('descripcion').value.trim() || null
+
         };
 
+
+
         try {
+
             const res = await fetch('@Url.Action("JsonCrear")', {
+
                 method: 'POST',
+
                 headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify(data)
+
             });
+
+
 
             const json = await res.json();
 
+
+
             if (res.ok && json.success) {
+
                 showToast('success', json.message || 'Examen creado exitosamente.');
+
                 setTimeout(() => {
+
                     window.location.href = '/Catalogos/Examen';
+
                 }, 1000);
+
             } else {
+
                 showToast('danger', json.message || 'Error al crear el examen.');
+
                 btn.disabled = false;
+
                 btn.innerHTML = textoOriginal;
+
             }
+
         } catch (err) {
-            showToast('danger', 'Error de conexi贸n al guardar.');
+
+            showToast('danger', 'Error de conexi髇 al guardar.');
+
             btn.disabled = false;
+
             btn.innerHTML = textoOriginal;
+
         }
+
     });
 
+
+
     function showToast(type, message) {
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
         const toast = document.createElement('div');
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
         container.appendChild(toast);
+
         setTimeout(() => toast.remove(), 5000);
+
     }
 
+
+
     function createToastContainer() {
+
         const div = document.createElement('div');
+
         div.id = 'toastContainer';
+
         document.body.appendChild(div);
+
         return div;
+
     }
+
 </script>
+
 }

@@ -184,6 +184,40 @@ CREATE POLICY "tenant_isolation" ON pacientes
 
 ---
 
+## 4.1 Decisión Arquitectónica — Especialidad por Sala
+
+> **Confirmado 2026-05-12** | Aprobado por @PM
+
+Una clínica puede tener múltiples salas con **distintas especialidades médicas**. Los catálogos de antecedentes y signos vitales se configuran **por sala**, no por clínica.
+
+```
+Ejemplo:
+  Clínica COA
+  ├── Sala 1 = Oftalmología  → antecedentes: Glaucoma, Miopía, Cirugía ocular previa
+  ├── Sala 2 = Cardiología   → antecedentes: HTA, Diabetes, IAM previo, Tabaquismo
+  └── Sala 3 = Dermatología  → antecedentes: Alergias cutáneas, Psoriasis, Acné
+```
+
+### Regla de discriminadores
+
+| Campo | Propósito | Aplica en |
+|---|---|---|
+| `sala_id` | Discriminador de **especialidad** | `tipos_antecedente`, `tipos_signo_vital`, `antecedentes_paciente`, `signos_vitales_hoja` |
+| `clinica_id` | Discriminador de **tenant** (RLS) | Todas las tablas de negocio |
+
+**Regla absoluta:** `sala_id` define la especialidad. `clinica_id` define el aislamiento de datos. **Nunca usar `clinica_id` como discriminador de especialidad.**
+
+### Flujo de onboarding de sala (plantillas)
+
+```
+Admin crea sala → Selecciona especialidad → Sistema importa plantilla →
+Se generan tipos_antecedente y tipos_signo_vital para esa sala →
+Admin puede personalizar (agregar/quitar/editar) →
+Sala lista para atender pacientes en segundos
+```
+
+---
+
 ## 5. Módulos del Sistema
 
 ### Orden de desarrollo (por prioridad del backlog)
@@ -207,6 +241,13 @@ CREATE POLICY "tenant_isolation" ON pacientes
 | HU15 | Gestión de Tratamientos | Catálogos | Media | 85 | 3 |
 | HU16 | Gestión de Recomendaciones | Catálogos | Media | 85 | 3 |
 | HU17 | Gestión de Exámenes | Catálogos | Media | 85 | 3 |
+| **HU-E01** | **ALTER citas: Agregar hora_fin** | **Agenda/BD** | **Alta** | **90** | **0.5** |
+| **HU-E02** | **Plantillas de Especialidad + Seed** | **Catálogos Sistema** | **Alta** | **88** | **1** |
+| **HU-E03** | **Tipos de Antecedente por Sala** | **Catálogos Médicos** | **Alta** | **88** | **2** |
+| **HU-E04** | **Tipos de Signo Vital por Sala** | **Catálogos Médicos** | **Alta** | **88** | **2** |
+| **HU-E05** | **Antecedentes del Paciente** | **Expedientes** | **Alta** | **85** | **2** |
+| **HU-E06** | **Signos Vitales por Consulta** | **Expedientes** | **Alta** | **85** | **1.5** |
+| **HU-E07** | **Constancias Médicas** | **Expedientes** | **Media** | **80** | **2** |
 | HU18 | Cola de Espera | Cola Espera | Media | 80 | 8 |
 | HU19 | Línea de Tiempo | Línea Tiempo | Media | 80 | 5 |
 | HU20 | Gestión de Expedientes | Expedientes | Media | 80 | 28 |
@@ -215,7 +256,7 @@ CREATE POLICY "tenant_isolation" ON pacientes
 | HU22 | Reportes | Reportes | Media | 80 | 6 |
 | HU23 | Alertas Configurables | Alertas | Media | 70 | 2 |
 
-**Total estimado: 142 días de desarrollo**
+**Total estimado: ~153 días de desarrollo** *(+11 días por Sprint de Especialidades por Sala)*
 
 ### Áreas MVC del Frontend
 
@@ -660,6 +701,10 @@ Estas reglas aplican a **todos** los módulos sin excepción:
 
 10. **Archivos médicos protegidos.** Los archivos de Supabase Storage están en buckets privados. Las URLs son generadas con tokens de acceso temporal, nunca públicas permanentes.
 
+11. **Especialidad por Sala — discriminador `sala_id`.** Los catálogos médicos dinámicos (`tipos_antecedente`, `tipos_signo_vital`) usan `sala_id` como discriminador de especialidad. El `clinica_id` solo existe para RLS. **Nunca usar `clinica_id` como discriminador de especialidad médica.** Una misma clínica puede tener salas de distintas especialidades. El código nunca tiene campos hardcodeados de especialidades — todo se gestiona dinámicamente a través de los catálogos por sala.
+
+12. **Plantillas de especialidad son globales del sistema.** Las tablas `plantillas_especialidad` y `plantilla_items` NO tienen `clinica_id` — pertenecen al sistema, no a ningún tenant. Solo el Super Admin puede administrarlas. Son el punto de partida para el onboarding de nuevas salas.
+
 ---
 
 ## 13. Estructura de Carpetas del Repositorio
@@ -778,5 +823,6 @@ claude --teammate-mode in-process
 
 ---
 
-*CLAUDE.md — Vittal v1.0.0 | Última actualización: 2026-04-26*
+*CLAUDE.md — Vittal v1.0.0 | Última actualización: 2026-05-12*
 *Archivo Maestro del proyecto — cargado automáticamente por todos los agentes de Claude Code*
+*v1.1 — Decisión arquitectónica: Especialidad por Sala (sala_id). Sprint 3.5 agregado. HU-E01 a HU-E07 incorporadas al backlog.*

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Panel Principal";
 
     // Helper para verificar si el usuario puede ver un módulo
@@ -35,7 +35,7 @@
                         </div>
                         <div>
                             <h4 class="mb-1">Bienvenido al Sistema Vittal</h4>
-                            <p class="mb-0 opacity-75">Sistema de gestion de citas y expedientes medicos</p>
+                            <p class="mb-0 opacity-75">Sistema de gestión de citas y expedientes médicos</p>
                         </div>
                     </div>
                 </div>
@@ -44,20 +44,20 @@
     </div>
 </div>
 
-<!-- Modulos disponibles -->
+<!-- Módulos disponibles -->
 <h5 class="mb-3">
-    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Modulos del Sistema
+    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Módulos del Sistema
 </h5>
 
 <div class="row g-3 mb-4">
     @if (hayAdmin)
     {
-    <!-- Administracion -->
+    <!-- Administración -->
     <div class="col-12">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-bottom py-3">
                 <h6 class="mb-0">
-                    <i class="bi bi-gear-wide-connected text-primary me-2"></i>Administracion
+                    <i class="bi bi-gear-wide-connected text-primary me-2"></i>Administración
                 </h6>
             </div>
             <div class="card-body p-0">
@@ -76,7 +76,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Gestion de perfiles y roles del sistema</div>
+                            <div class="text-muted small">Gestión de perfiles y roles del sistema</div>
                         </a>
                     </div>
                     }
@@ -95,7 +95,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Gestion de usuarios del sistema</div>
+                            <div class="text-muted small">Gestión de usuarios del sistema</div>
                         </a>
                     </div>
                     }
@@ -114,7 +114,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Configuracion de permisos por modulo</div>
+                            <div class="text-muted small">Configuración de permisos por módulo</div>
                         </a>
                     </div>
                     }
@@ -133,7 +133,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Asignacion de salas y areas medicas</div>
+                            <div class="text-muted small">Asignación de salas y áreas médicas</div>
                         </a>
                     </div>
                     }
@@ -147,12 +147,12 @@
 @if (hayCatalogos)
 {
 <div class="row g-3 mb-4">
-    <!-- Catalogos -->
+    <!-- Catálogos -->
     <div class="col-12">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-bottom py-3">
                 <h6 class="mb-0">
-                    <i class="bi bi-book text-success me-2"></i>Catalogos
+                    <i class="bi bi-book text-success me-2"></i>Catálogos
                 </h6>
             </div>
             <div class="card-body p-0">
@@ -171,7 +171,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Gestion de pacientes de la clinica</div>
+                            <div class="text-muted small">Gestión de pacientes de la clínica</div>
                         </a>
                     </div>
                     }
@@ -190,14 +190,14 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de medicamentos</div>
+                            <div class="text-muted small">Catálogo de medicamentos</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("clinicas"))
                     {
-                    <!-- Clinicas -->
+                    <!-- Clínicas -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/Clinica" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -205,18 +205,18 @@
                                     <i class="bi bi-building"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Clinicas</div>
+                                    <div class="fw-semibold small">Clínicas</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Gestion de clinicas y sucursales</div>
+                            <div class="text-muted small">Gestión de clínicas y sucursales</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("tipos_cirugia"))
                     {
-                    <!-- Tipos de Cirugia -->
+                    <!-- Tipos de Cirugía -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/TipoCirugia" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -224,18 +224,18 @@
                                     <i class="bi bi-scissors"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Tipos de Cirugia</div>
+                                    <div class="fw-semibold small">Tipos de Cirugía</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de tipos de cirugias</div>
+                            <div class="text-muted small">Catálogo de tipos de cirugías</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("cirugias"))
                     {
-                    <!-- Cirugias -->
+                    <!-- Cirugías -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/Cirugia" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -243,18 +243,18 @@
                                     <i class="bi bi-scissors"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Cirugias</div>
+                                    <div class="fw-semibold small">Cirugías</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Cirugias especificas por tipo</div>
+                            <div class="text-muted small">Cirugías específicas por tipo</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("tipos_diagnostico"))
                     {
-                    <!-- Tipos de Diagnostico -->
+                    <!-- Tipos de Diagnóstico -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/TipoDiagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -262,18 +262,18 @@
                                     <i class="bi bi-clipboard2-pulse"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Tipos de Diagnostico</div>
+                                    <div class="fw-semibold small">Tipos de Diagnóstico</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de tipos de diagnostico</div>
+                            <div class="text-muted small">Catálogo de tipos de diagnóstico</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("diagnosticos"))
                     {
-                    <!-- Diagnosticos -->
+                    <!-- Diagnósticos -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/Diagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -281,11 +281,11 @@
                                     <i class="bi bi-clipboard2-plus"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Diagnosticos</div>
+                                    <div class="fw-semibold small">Diagnósticos</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Diagnosticos asignados a citas medicas</div>
+                            <div class="text-muted small">Diagnósticos asignados a citas médicas</div>
                         </a>
                     </div>
                     }
@@ -304,14 +304,14 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de tratamientos medicos</div>
+                            <div class="text-muted small">Catálogo de tratamientos médicos</div>
                         </a>
                     </div>
                     }
 
                     @if (PuedeVer("examenes"))
                     {
-                    <!-- Examenes -->
+                    <!-- Exámenes -->
                     <div class="col-6 col-md-4 col-lg-3">
                         <a href="/Catalogos/Examen" class="module-card d-block p-3 text-decoration-none text-dark">
                             <div class="d-flex align-items-center mb-2">
@@ -319,11 +319,11 @@
                                     <i class="bi bi-eyedropper"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold small">Examenes</div>
+                                    <div class="fw-semibold small">Exámenes</div>
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de examenes medicos</div>
+                            <div class="text-muted small">Catálogo de exámenes médicos</div>
                         </a>
                     </div>
                     }
@@ -342,7 +342,7 @@
                                     <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
                                 </div>
                             </div>
-                            <div class="text-muted small">Catalogo de recomendaciones medicas</div>
+                            <div class="text-muted small">Catálogo de recomendaciones médicas</div>
                         </a>
                     </div>
                     }
@@ -356,7 +356,7 @@
 
 @if (ViewBag.EsAdmin == true)
 {
-<!-- Proximamente: modulos avanzados (solo visible para admin) -->
+<!-- Próximamente: módulos avanzados (solo visible para admin) -->
 <div class="row g-3 mt-1">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -364,20 +364,20 @@
                 <div class="row g-2">
                     <div class="col-md-8">
                         <h6 class="text-muted mb-2">
-                            <i class="bi bi-cone-striped me-2"></i>Modulos en construccion
+                            <i class="bi bi-cone-striped me-2"></i>Módulos en construcción
                         </h6>
                         <div class="d-flex flex-wrap gap-2">
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Agenda</span>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Cola de Espera</span>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Expedientes</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Linea de Tiempo</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Línea de Tiempo</span>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Dashboard</span>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Reportes</span>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border">Alertas</span>
                         </div>
                     </div>
                     <div class="col-md-4 text-md-end text-muted small align-self-center">
-                        <i class="bi bi-info-circle me-1"></i>BD lista, codigo en desarrollo
+                        <i class="bi bi-info-circle me-1"></i>BD lista, código en desarrollo
                     </div>
                 </div>
             </div>

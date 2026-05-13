@@ -1,311 +1,933 @@
-@{
+﻿@{
+
+
     ViewData["Title"] = "Nuevo Usuario";
+
+
     var usuarioIndexUrl = Url.Action("Index");
+
+
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
+
                              $"<li class='breadcrumb-item'><a href='{usuarioIndexUrl}'>Usuarios</a></li>" +
+
+
                              "<li class='breadcrumb-item active'>Nuevo</li>";
+
+
     var jsonCrearUrl = Url.Action("JsonCrear");
+
+
     var jsonPerfilesUrl = Url.Action("JsonPerfiles", "Perfil");
+
+
 }
 
+
+
+
+
 <div class="row justify-content-center">
+
+
     <div class="col-lg-8">
+
+
         <div class="card shadow-sm border-0">
+
+
             <div class="card-body p-4">
+
+
                 <div class="d-flex align-items-center gap-2 mb-4">
+
+
                     <i class="bi bi-person-plus text-primary fs-5"></i>
+
+
                     <h5 class="mb-0">Registrar nuevo usuario</h5>
+
+
                 </div>
+
+
+
+
 
                 <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
 
+
+
+
+
                 <form id="frmUsuario" novalidate>
+
+
                     <div class="row g-3">
+
+
                         <!-- Username -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="username" class="form-label fw-medium">
+
+
                                 Nombre de usuario <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="text" id="username" name="username"
+
+
                                    class="form-control" maxlength="100"
+
+
                                    placeholder="Ej: jgarcia"
+
+
                                    required />
+
+
                             <div class="invalid-feedback">El nombre de usuario es obligatorio (minimo 3 caracteres).</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Email -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="email" class="form-label fw-medium">
+
+
                                 Correo electronico <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="email" id="email" name="email"
+
+
                                    class="form-control" maxlength="255"
+
+
                                    placeholder="usuario@ejemplo.com"
+
+
                                    required />
+
+
                             <div class="invalid-feedback">Ingrese un correo electronico valido.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Nombres -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="nombres" class="form-label fw-medium">
+
+
                                 Nombres <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="text" id="nombres" name="nombres"
+
+
                                    class="form-control" maxlength="255"
+
+
                                    placeholder="Nombres del usuario"
+
+
                                    required />
+
+
                             <div class="invalid-feedback">Los nombres son obligatorios (minimo 3 caracteres).</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Apellidos -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="apellidos" class="form-label fw-medium">
+
+
                                 Apellidos <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="text" id="apellidos" name="apellidos"
+
+
                                    class="form-control" maxlength="255"
+
+
                                    placeholder="Apellidos del usuario"
+
+
                                    required />
+
+
                             <div class="invalid-feedback">Los apellidos son obligatorios (minimo 3 caracteres).</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Password -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="password" class="form-label fw-medium">
-                                Contrasena <span class="text-danger">*</span>
+
+
+                                Contraseña <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <div class="input-group">
+
+
                                 <input type="password" id="password" name="password"
+
+
                                        class="form-control" maxlength="255"
+
+
                                        placeholder="Minimo 6 caracteres"
+
+
                                        required />
+
+
                                 <button type="button" class="btn btn-outline-secondary"
-                                        id="btnTogglePassword" title="Mostrar/Ocultar contrasena">
+
+
+                                        id="btnTogglePassword" title="Mostrar/Ocultar contraseña">
+
+
                                     <i class="bi bi-eye"></i>
+
+
                                 </button>
+
+
                             </div>
-                            <div class="invalid-feedback">La contrasena debe tener al menos 6 caracteres.</div>
+
+
+                            <div class="invalid-feedback">La contraseña debe tener al menos 6 caracteres.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Perfil -->
+
+
                         <div class="col-md-6">
+
+
                             <label for="perfilId" class="form-label fw-medium">
+
+
                                 Perfil <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <select id="perfilId" name="perfilId" class="form-select" required>
+
+
                                 <option value="">-- Seleccione un perfil --</option>
+
+
                             </select>
+
+
                             <div class="invalid-feedback">Debe seleccionar un perfil.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Sexo -->
+
+
                         <div class="col-md-4">
+
+
                             <label for="sexo" class="form-label fw-medium">Sexo</label>
+
+
                             <select id="sexo" name="sexo" class="form-select">
+
+
                                 <option value="">-- Seleccione --</option>
+
+
                                 <option value="M">Masculino</option>
+
+
                                 <option value="F">Femenino</option>
+
+
                             </select>
+
+
                         </div>
+
+
+
+
 
                         <!-- Celular -->
+
+
                         <div class="col-md-4">
+
+
                             <label for="celular" class="form-label fw-medium">Celular</label>
+
+
                             <input type="text" id="celular" name="celular"
+
+
                                    class="form-control" maxlength="20"
+
+
                                    placeholder="Ej: +502 5555-1234" />
+
+
                         </div>
+
+
+
+
 
                         <!-- Es Doctor -->
+
+
                         <div class="col-md-4 d-flex align-items-end">
+
+
                             <div class="form-check form-switch mb-1">
+
+
                                 <input class="form-check-input" type="checkbox"
+
+
                                        id="esDoctor" name="esDoctor" />
+
+
                                 <label class="form-check-label" for="esDoctor">
+
+
                                     <i class="bi bi-heart-pulse me-1"></i>
+
+
                                     Es Doctor
+
+
                                 </label>
+
+
                             </div>
+
+
                         </div>
 
-                        <!-- Direccion -->
+
+
+
+
+                        <!-- Dirección -->
+
+
                         <div class="col-12">
-                            <label for="direccion" class="form-label fw-medium">Direccion</label>
+
+
+                            <label for="dirección" class="form-label fw-medium">Dirección</label>
+
+
                             <textarea id="direccion" name="direccion"
+
+
                                       class="form-control" rows="2" maxlength="500"
-                                      placeholder="Direccion del usuario..."></textarea>
+
+
+                                      placeholder="Dirección del usuario..."></textarea>
+
+
                             <div class="form-text">Opcional. Maximo 500 caracteres.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Botones -->
+
+
                         <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+
+
                             <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+
+
                                 <i class="bi bi-arrow-left me-1"></i> Cancelar
+
+
                             </a>
+
+
                             <button type="submit" class="btn btn-primary btn-sm" id="btnGuardar">
+
+
                                 <span id="btnSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+
+
                                 <i class="bi bi-check-lg me-1" id="btnIcon"></i>
+
+
                                 Guardar Usuario
+
+
                             </button>
+
+
                         </div>
+
+
                     </div>
+
+
                 </form>
+
+
             </div>
+
+
         </div>
+
+
     </div>
+
+
 </div>
 
+
+
+
+
 @section Scripts {
+
+
 <script>
+
+
     // Toggle password visibility
+
+
     document.getElementById('btnTogglePassword').addEventListener('click', function() {
+
+
         const input = document.getElementById('password');
+
+
         const icon = this.querySelector('i');
+
+
         if (input.type === 'password') {
+
+
             input.type = 'text';
+
+
             icon.classList.remove('bi-eye');
+
+
             icon.classList.add('bi-eye-slash');
+
+
         } else {
+
+
             input.type = 'password';
+
+
             icon.classList.remove('bi-eye-slash');
+
+
             icon.classList.add('bi-eye');
+
+
         }
+
+
     });
 
+
+
+
+
     // Load profiles dropdown
+
+
     async function cargarPerfiles() {
+
+
         try {
+
+
             const res = await fetch('@jsonPerfilesUrl', {
+
+
                 method: 'GET',
+
+
                 headers: { 'Content-Type': 'application/json' }
+
+
             });
+
+
+
+
 
             if (!res.ok) return;
 
+
+
+
+
             const json = await res.json();
+
+
             if (!json.success) return;
 
+
+
+
+
             const select = document.getElementById('perfilId');
+
+
             json.data.forEach(function(p) {
+
+
                 const option = document.createElement('option');
+
+
                 option.value = p.id;
+
+
                 option.textContent = p.nombre + (p.esAdmin ? ' (Admin)' : '');
+
+
                 select.appendChild(option);
+
+
             });
+
+
         } catch (err) {
+
+
             // Silently fail - user will see empty dropdown
+
+
         }
+
+
     }
+
+
+
+
 
     document.addEventListener('DOMContentLoaded', cargarPerfiles);
 
+
+
+
+
     // Form submit
+
+
     document.getElementById('frmUsuario').addEventListener('submit', async (e) => {
+
+
         e.preventDefault();
 
+
+
+
+
         const username = document.getElementById('username').value.trim();
+
+
         const nombres = document.getElementById('nombres').value.trim();
+
+
         const apellidos = document.getElementById('apellidos').value.trim();
+
+
         const email = document.getElementById('email').value.trim();
+
+
         const password = document.getElementById('password').value;
+
+
         const perfilId = document.getElementById('perfilId').value;
+
+
         const sexo = document.getElementById('sexo').value;
+
+
         const celular = document.getElementById('celular').value.trim();
+
+
         const direccion = document.getElementById('direccion').value.trim();
+
+
         const esDoctor = document.getElementById('esDoctor').checked;
 
+
+
+
+
         // Client validation
+
+
         const errores = [];
+
+
         if (!username) errores.push('El nombre de usuario es obligatorio.');
+
+
         else if (username.length < 3) errores.push('El nombre de usuario debe tener al menos 3 caracteres.');
+
+
         if (!nombres) errores.push('Los nombres son obligatorios.');
+
+
         else if (nombres.length < 3) errores.push('Los nombres deben tener al menos 3 caracteres.');
+
+
         if (!apellidos) errores.push('Los apellidos son obligatorios.');
+
+
         else if (apellidos.length < 3) errores.push('Los apellidos deben tener al menos 3 caracteres.');
+
+
         if (!email) errores.push('El correo electronico es obligatorio.');
+
+
         else if (!isValidEmail(email)) errores.push('El formato del correo no es valido.');
-        if (!password) errores.push('La contrasena es obligatoria.');
-        else if (password.length < 6) errores.push('La contrasena debe tener al menos 6 caracteres.');
+
+
+        if (!password) errores.push('La contraseña es obligatoria.');
+
+
+        else if (password.length < 6) errores.push('La contraseña debe tener al menos 6 caracteres.');
+
+
         if (!perfilId) errores.push('Debe seleccionar un perfil.');
 
+
+
+
+
         if (errores.length > 0) {
+
+
             mostrarErrores(errores);
+
+
             return;
+
+
         }
+
+
+
+
 
         setLoading(true);
+
+
         ocultarError();
 
+
+
+
+
         const res = await fetch('@jsonCrearUrl', {
+
+
             method: 'POST',
+
+
             headers: { 'Content-Type': 'application/json' },
+
+
             body: JSON.stringify({
+
+
                 username, nombres, apellidos, email, password,
+
+
                 perfilId, sexo, celular, direccion, esDoctor
+
+
             })
+
+
         });
 
+
+
+
+
         const json = await res.json();
+
+
         setLoading(false);
 
+
+
+
+
         if (res.ok && json.success) {
+
+
             showToast('Usuario creado exitosamente.', 'success');
+
+
             setTimeout(() => window.location.href = '@Url.Action("Index")', 1200);
+
+
         } else {
+
+
             const errs = json.errors || [json.message || 'Error al crear el usuario.'];
+
+
             mostrarErrores(errs);
+
+
         }
+
+
     });
 
+
+
+
+
     function setLoading(loading) {
+
+
         const btn = document.getElementById('btnGuardar');
+
+
         const spinner = document.getElementById('btnSpinner');
+
+
         const icon = document.getElementById('btnIcon');
+
+
         btn.disabled = loading;
+
+
         spinner.classList.toggle('d-none', !loading);
+
+
         icon.classList.toggle('d-none', loading);
+
+
     }
+
+
+
+
 
     function mostrarErrores(errores) {
+
+
         const alert = document.getElementById('alertError');
+
+
         alert.classList.remove('d-none');
+
+
         alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+
+
             errores.map(e => '<div>' + escapeHtml(e) + '</div>').join('');
+
+
     }
+
+
+
+
 
     function ocultarError() {
+
+
         document.getElementById('alertError').classList.add('d-none');
+
+
     }
+
+
+
+
 
     function showToast(message, type) {
+
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
+
         const toast = document.createElement('div');
+
+
         toast.className = 'alert alert-' + type + ' alert-dismissible fade show shadow-sm';
+
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
+
         toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+
+
         container.appendChild(toast);
+
+
         setTimeout(() => toast.remove(), 5000);
+
+
     }
+
+
+
+
 
     function createToastContainer() {
+
+
         const div = document.createElement('div');
+
+
         div.id = 'toastContainer';
+
+
         document.body.appendChild(div);
+
+
         return div;
+
+
     }
+
+
+
+
 
     function escapeHtml(text) {
+
+
         if (!text) return '';
+
+
         const div = document.createElement('div');
+
+
         div.textContent = text;
+
+
         return div.innerHTML;
+
+
     }
 
+
+
+
+
     function isValidEmail(email) {
+
+
         var atPos = email.indexOf('@@');
+
+
         if (atPos <= 0) return false;
+
+
         var domain = email.substring(atPos + 1);
+
+
         return domain.indexOf('.') > 0 && domain.indexOf('.') < domain.length - 1;
+
+
     }
+
+
 </script>
+
+
 }
+
+

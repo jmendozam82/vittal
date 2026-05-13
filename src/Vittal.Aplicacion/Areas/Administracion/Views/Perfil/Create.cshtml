@@ -1,166 +1,498 @@
-@{
+﻿@{
+
+
     ViewData["Title"] = "Nuevo Perfil";
+
+
     var perfilIndexUrl = Url.Action("Index");
+
+
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
+
                              $"<li class='breadcrumb-item'><a href='{perfilIndexUrl}'>Perfiles</a></li>" +
+
+
                              "<li class='breadcrumb-item active'>Nuevo</li>";
+
+
     var jsonCrearUrl = Url.Action("JsonCrear");
+
+
 }
 
+
+
+
+
 <div class="row justify-content-center">
+
+
     <div class="col-lg-7">
+
+
         <div class="card shadow-sm border-0">
+
+
             <div class="card-body p-4">
+
+
                 <div class="d-flex align-items-center gap-2 mb-4">
+
+
                     <i class="bi bi-plus-circle text-primary fs-5"></i>
+
+
                     <h5 class="mb-0">Registrar nuevo perfil</h5>
+
+
                 </div>
+
+
+
+
 
                 <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
 
+
+
+
+
                 <form id="frmPerfil" novalidate>
+
+
                     <div class="row g-3">
+
+
                         <!-- Nombre -->
+
+
                         <div class="col-12">
+
+
                             <label for="nombre" class="form-label fw-medium">
+
+
                                 Nombre <span class="text-danger">*</span>
+
+
                             </label>
+
+
                             <input type="text" id="nombre" name="nombre"
+
+
                                    class="form-control" maxlength="100"
-                                   placeholder="Ej: Recepcionista, Enfermer&iacute;a, etc."
+
+
+                                   placeholder="Ej: Recepcionista, Enfermería, etc."
+
+
                                    required />
-                            <div class="invalid-feedback">El nombre del perfil es obligatorio (m&iacute;nimo 3 caracteres).</div>
+
+
+                            <div class="invalid-feedback">El nombre del perfil es obligatorio (mínimo 3 caracteres).</div>
+
+
                         </div>
 
-                        <!-- Descripci&oacute;n -->
+
+
+
+
+                        <!-- Descripción -->
+
+
                         <div class="col-12">
+
+
                             <label for="descripcion" class="form-label fw-medium">
-                                Descripci&oacute;n
+
+
+                                Descripción
+
+
                             </label>
+
+
                             <textarea id="descripcion" name="descripcion"
+
+
                                       class="form-control" rows="3" maxlength="500"
-                                      placeholder="Descripci&oacute;n breve del rol y responsabilidades..."></textarea>
-                            <div class="form-text">Opcional. M&aacute;ximo 500 caracteres.</div>
+
+
+                                      placeholder="Descripción breve del rol y responsabilidades..."></textarea>
+
+
+                            <div class="form-text">Opcional. Máximo 500 caracteres.</div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Es Admin -->
+
+
                         <div class="col-12">
+
+
                             <div class="form-check form-switch">
+
+
                                 <input class="form-check-input" type="checkbox"
+
+
                                        id="esAdmin" name="esAdmin" />
+
+
                                 <label class="form-check-label" for="esAdmin">
+
+
                                     <i class="bi bi-shield-check me-1"></i>
+
+
                                     Perfil de Administrador
+
+
                                 </label>
+
+
                             </div>
+
+
                             <div class="form-text">
-                                Los perfiles de administrador tienen acceso total a todos los m&oacute;dulos
+
+
+                                Los perfiles de administrador tienen acceso total a todos los módulos
+
+
                                 sin necesidad de configurar permisos individuales.
+
+
                             </div>
+
+
                         </div>
+
+
+
+
 
                         <!-- Botones -->
+
+
                         <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+
+
                             <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+
+
                                 <i class="bi bi-arrow-left me-1"></i> Cancelar
+
+
                             </a>
+
+
                             <button type="submit" class="btn btn-primary btn-sm" id="btnGuardar">
+
+
                                 <span id="btnSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+
+
                                 <i class="bi bi-check-lg me-1" id="btnIcon"></i>
+
+
                                 Guardar Perfil
+
+
                             </button>
+
+
                         </div>
+
+
                     </div>
+
+
                 </form>
+
+
             </div>
+
+
         </div>
+
+
     </div>
+
+
 </div>
 
+
+
+
+
 @section Scripts {
+
+
 <script>
+
+
     document.getElementById('frmPerfil').addEventListener('submit', async (e) => {
+
+
         e.preventDefault();
 
+
+
+
+
         const nombre = document.getElementById('nombre').value.trim();
+
+
         const descripcion = document.getElementById('descripcion').value.trim();
+
+
         const esAdmin = document.getElementById('esAdmin').checked;
 
-        // Validaci&oacute;n cliente
+
+
+
+
+        // Validación cliente
+
+
         const errores = [];
+
+
         if (!nombre) errores.push('El nombre del perfil es obligatorio.');
+
+
         else if (nombre.length < 3) errores.push('El nombre debe tener al menos 3 caracteres.');
+
+
         else if (nombre.length > 100) errores.push('El nombre no puede exceder 100 caracteres.');
-        if (descripcion.length > 500) errores.push('La descripci&oacute;n no puede exceder 500 caracteres.');
+
+
+        if (descripcion.length > 500) errores.push('La descripcion no puede exceder 500 caracteres.');
+
+
+
+
 
         if (errores.length > 0) {
+
+
             mostrarErrores(errores);
+
+
             return;
+
+
         }
+
+
+
+
 
         setLoading(true);
+
+
         ocultarError();
 
+
+
+
+
         const res = await fetch('@jsonCrearUrl', {
+
+
             method: 'POST',
+
+
             headers: { 'Content-Type': 'application/json' },
+
+
             body: JSON.stringify({ nombre, descripcion, esAdmin })
+
+
         });
 
+
+
+
+
         const json = await res.json();
+
+
         setLoading(false);
 
+
+
+
+
         if (res.ok && json.success) {
+
+
             showToast('Perfil creado exitosamente.', 'success');
+
+
             setTimeout(() => window.location.href = '@Url.Action("Index")', 1200);
+
+
         } else {
+
+
             const errs = json.errors || [json.message || 'Error al crear el perfil.'];
+
+
             mostrarErrores(errs);
+
+
         }
+
+
     });
 
+
+
+
+
     function setLoading(loading) {
+
+
         const btn = document.getElementById('btnGuardar');
+
+
         const spinner = document.getElementById('btnSpinner');
+
+
         const icon = document.getElementById('btnIcon');
+
+
         btn.disabled = loading;
+
+
         spinner.classList.toggle('d-none', !loading);
+
+
         icon.classList.toggle('d-none', loading);
+
+
     }
+
+
+
+
 
     function mostrarErrores(errores) {
+
+
         const alert = document.getElementById('alertError');
+
+
         alert.classList.remove('d-none');
+
+
         alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+
+
             errores.map(e => `<div>${escapeHtml(e)}</div>`).join('');
+
+
     }
+
+
+
+
 
     function ocultarError() {
+
+
         document.getElementById('alertError').classList.add('d-none');
+
+
     }
+
+
+
+
 
     function showToast(message, type) {
+
+
         const container = document.getElementById('toastContainer') || createToastContainer();
+
+
         const toast = document.createElement('div');
+
+
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
+
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
+
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
+
         container.appendChild(toast);
+
+
         setTimeout(() => toast.remove(), 5000);
+
+
     }
+
+
+
+
 
     function createToastContainer() {
+
+
         const div = document.createElement('div');
+
+
         div.id = 'toastContainer';
+
+
         document.body.appendChild(div);
+
+
         return div;
+
+
     }
 
+
+
+
+
     function escapeHtml(text) {
+
+
         if (!text) return '';
+
+
         const div = document.createElement('div');
+
+
         div.textContent = text;
+
+
         return div.innerHTML;
+
+
     }
+
+
 </script>
+
+
 }
+
+

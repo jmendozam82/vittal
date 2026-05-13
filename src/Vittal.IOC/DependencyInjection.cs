@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Context;
+using Vittal.DAL.Interfaces;
 using Vittal.DAL.Repositories;
 
 namespace Vittal.IOC;
@@ -29,6 +30,14 @@ public static class DependencyInjection
         services.AddScoped<IExamenRepository, ExamenRepository>();
         services.AddScoped<IRecomendacionRepository, RecomendacionRepository>();
         services.AddScoped<ITratamientoRepository, TratamientoRepository>();
+        
+        services.AddScoped<IPlantillaEspecialidadRepository, PlantillaEspecialidadRepository>();
+        services.AddScoped<ITipoAntecedenteRepository, TipoAntecedenteRepository>();
+        services.AddScoped<ITipoSignoVitalRepository, TipoSignoVitalRepository>();
+        services.AddScoped<ICitaRepository, CitaRepository>();
+        services.AddScoped<IAntecedentePacienteRepository, AntecedentePacienteRepository>();
+        services.AddScoped<ISignosVitalesHojaRepository, SignosVitalesHojaRepository>();
+        services.AddScoped<IConstanciaRepository, ConstanciaRepository>();
 
         // Services
         services.AddScoped<IUsuarioService, UsuarioService>();
@@ -45,6 +54,14 @@ public static class DependencyInjection
         services.AddScoped<IExamenService, ExamenService>();
         services.AddScoped<IRecomendacionService, RecomendacionService>();
         services.AddScoped<ITratamientoService, TratamientoService>();
+        
+        services.AddScoped<IPlantillaEspecialidadService, PlantillaEspecialidadService>();
+        services.AddScoped<ITipoAntecedenteService, TipoAntecedenteService>();
+        services.AddScoped<ITipoSignoVitalService, TipoSignoVitalService>();
+        services.AddScoped<ICitaService, CitaService>();
+        services.AddScoped<IAntecedentePacienteService, AntecedentePacienteService>();
+        services.AddScoped<ISignosVitalesHojaService, SignosVitalesHojaService>();
+        services.AddScoped<IConstanciaService, ConstanciaService>();
         
         return services;
     }

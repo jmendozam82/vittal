@@ -10,6 +10,7 @@
 - **Architecture**: N-Tier + MVC, strict layer separation
 - **Language**: Spanish (UI/DB), English (code)
 - **Multi-tenant**: Every table MUST have `clinica_id` field
+- **Specialty model**: `sala_id` = specialty discriminator | `clinica_id` = RLS only (see CLAUDE.md §4.1)
 
 ## Mandatory Instructions
 
@@ -54,13 +55,14 @@ Use MCP (Model Context Protocol) servers for enhanced capabilities:
 ## Essential Rules (Summary)
 
 1. **Multi-tenant**: Every table MUST have `clinica_id` — NO exceptions
-2. **No delete**: Only deactivate (`activo = false`) — applies to all catalogs
-3. **N-tier flow**: View → MVC Controller → API → BLL → DAL → DB (never skip layers)
-4. **API responses**: Always use `ApiResponse<T>`, never return Entity directly
-5. **Service registration**: Always register in `Vittal.IOC/DependencyInjection.cs`
-6. **Permissions**: Verify `READ`, `CREATE`, `UPDATE` before any operation (NO DELETE)
-7. **RLS**: Enable Row Level Security on all business tables
-8. **Audit fields**: Every entity has `fecha_creacion` and `fecha_modificacion`
+2. **Specialty by Room**: `sala_id` = specialty discriminator in `tipos_antecedente`, `tipos_signo_vital`, `antecedentes_paciente`, `signos_vitales_hoja`. `clinica_id` = RLS ONLY in these tables
+3. **No delete**: Only deactivate (`activo = false`) — applies to all catalogs
+4. **N-tier flow**: View → MVC Controller → API → BLL → DAL → DB (never skip layers)
+5. **API responses**: Always use `ApiResponse<T>`, never return Entity directly
+6. **Service registration**: Always register in `Vittal.IOC/DependencyInjection.cs`
+7. **Permissions**: Verify `READ`, `CREATE`, `UPDATE` before any operation (NO DELETE)
+8. **RLS**: Enable Row Level Security on all business tables
+9. **Audit fields**: Every entity has `fecha_creacion` and `fecha_modificacion`
 
 ## Project Structure (Quick Reference)
 

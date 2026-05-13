@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -76,7 +76,7 @@ public class ClinicasController : ControllerBase
     /// <summary>Crea una nueva clínica en el sistema.</summary>
     /// <remarks>
     /// El nombre de la clínica debe ser único en todo el sistema.
-    /// Esta operación normalmente es reservada para Administradores del Sistema (SaaS).
+    /// Esta operacion normalmente es reservada para Administradores del Sistema (SaaS).
     /// </remarks>
     [HttpPost]
     [RequirePermission("clinicas", PermissionType.Create)]
