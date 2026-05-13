@@ -1,0 +1,296 @@
+@{
+    ViewData["Title"] = "Agenda Médica";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item active'>Agenda</li>";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-agenda.css" asp-append-version="true" />
+}
+
+@{/* ── URLs seguras para JavaScript ───────────────────────────── */}
+@{
+    var jsonCitasUrl = Url.Action("JsonCitas");
+    var jsonCitasRangoUrl = Url.Action("JsonCitasRango");
+    var jsonPacientesUrl = Url.Action("JsonPacientes");
+    var jsonDoctoresUrl = Url.Action("JsonDoctores");
+    var jsonSalasUrl = Url.Action("JsonSalas");
+    var jsonCrearUrl = Url.Action("JsonCrear");
+    var jsonActualizarUrl = Url.Action("JsonActualizar");
+    var jsonCambiarEstadoUrl = Url.Action("JsonCambiarEstado");
+    var jsonDesactivarUrl = Url.Action("JsonDesactivar");
+    var jsonBuscarPacientesUrl = Url.Action("JsonBuscarPacientes");
+}
+
+@{/* ── Toolbar superior ────────────────────────────────────────── */}
+<div class="agenda-toolbar">
+    <div class="agenda-toolbar-left">
+        <div class="agenda-view-switch" role="group" aria-label="Vista de agenda">
+            <button type="button" class="btn-view active" data-view="day" title="Vista Día">
+                <i class="bi bi-calendar-day me-1"></i>Día
+            </button>
+            <button type="button" class="btn-view" data-view="5days" title="Vista 5 Días">
+                <i class="bi bi-calendar-week me-1"></i>5 Días
+            </button>
+            <button type="button" class="btn-view" data-view="week" title="Vista Semanal">
+                <i class="bi bi-calendar-week me-1"></i>7 Días
+            </button>
+            <button type="button" class="btn-view" data-view="month" title="Vista Mes">
+                <i class="bi bi-calendar-month me-1"></i>Mes
+            </button>
+        </div>
+    </div>
+
+    <div class="agenda-toolbar-center">
+        <div class="agenda-date-nav">
+            <button type="button" class="btn-nav" id="btnPrev" title="Anterior">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <button type="button" class="btn-today" id="btnToday">Hoy</button>
+            <button type="button" class="btn-nav" id="btnNext" title="Siguiente">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+        <div class="agenda-date-title" id="agendaDateTitle">
+            <span id="dateTitleMain">Cargando...</span>
+            <span class="subtitle" id="dateTitleSub"></span>
+        </div>
+    </div>
+
+    <div class="agenda-toolbar-right">
+        <div class="agenda-doctor-filter">
+            <select id="filterDoctor" aria-label="Filtrar por doctor">
+                <option value="todos">Todos los doctores</option>
+            </select>
+        </div>
+        <button type="button" class="btn-agenda-nueva" id="btnNuevaCita">
+            <i class="bi bi-plus-lg"></i>
+            <span class="d-none d-md-inline">Nueva Cita</span>
+        </button>
+    </div>
+</div>
+
+@{/* ── Contenedor del calendario ──────────────────────────────── */}
+<div class="agenda-container">
+    <div class="agenda-week-view" id="agendaCalendar">
+        <div class="agenda-empty-state">
+            <i class="bi bi-calendar3"></i>
+            <p>Cargando agenda...</p>
+            <div class="spinner-border text-primary mt-2" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{/* ── MODAL: Nueva / Editar Cita ──────────────────────────────── */}
+<div class="modal fade agenda-modal" id="modalCita" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCitaTitle">
+                    <i class="bi bi-calendar-plus me-2 text-primary"></i>
+                    <span id="modalCitaTitleText">Nueva Cita</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCita" novalidate>
+                    <input type="hidden" id="citaId" value="" />
+
+                    @{/* ── Paciente ───────────────────────────── */}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="citaPacienteId" class="form-label">
+                                Paciente <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="citaPacienteId" required>
+                                <option value="">-- Buscar o seleccionar paciente --</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar un paciente.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="citaDoctorId" class="form-label">
+                                Doctor <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="citaDoctorId" required>
+                                <option value="">-- Seleccionar doctor --</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar un doctor.</div>
+                        </div>
+                    </div>
+
+                    @{/* ── Fecha y Hora ──────────────────────────── */}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="citaFecha" class="form-label">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="citaFecha" required />
+                            <div class="invalid-feedback">La fecha es obligatoria.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="citaHora" class="form-label">Hora Inicio <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="citaHora" required value="08:00" step="300" />
+                            <div class="invalid-feedback">La hora de inicio es obligatoria.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="citaHoraFin" class="form-label">Hora Fin</label>
+                            <input type="time" class="form-control" id="citaHoraFin" step="300" />
+                            <div class="form-text small text-muted">Opcional. Déjelo vacío si no tiene hora definida.</div>
+                        </div>
+                    </div>
+
+                    @{/* ── Sala y Lugar ──────────────────────────── */}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="citaSalaId" class="form-label">Sala / Área</label>
+                            <select class="form-select" id="citaSalaId">
+                                <option value="">-- Sin sala --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="citaLugar" class="form-label">Lugar</label>
+                            <input type="text" class="form-control" id="citaLugar" maxlength="200"
+                                   placeholder="Consultorio, Sala de espera...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="citaEstado" class="form-label">Estado</label>
+                            <select class="form-select" id="citaEstado">
+                                <option value="agendada">Agendada</option>
+                                <option value="en_espera">En Espera</option>
+                                <option value="en_atencion">En Atención</option>
+                                <option value="atendida">Atendida</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @{/* ── Motivo ────────────────────────────────── */}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label for="citaMotivo" class="form-label">Motivo de la Consulta</label>
+                            <textarea class="form-control" id="citaMotivo" rows="2" maxlength="500"
+                                      placeholder="Motivo de la consulta (opcional)"></textarea>
+                        </div>
+                    </div>
+
+                    @{/* ── Notas ──────────────────────────────────── */}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label for="citaNotas" class="form-label">Notas Internas</label>
+                            <textarea class="form-control" id="citaNotas" rows="2" maxlength="1000"
+                                      placeholder="Notas internas sobre la cita (opcional)"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-danger btn-sm d-none" id="btnDesactivarCita">
+                        <i class="bi bi-slash-circle me-1"></i> Desactivar
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarCita">
+                        <i class="bi bi-floppy me-1"></i> <span id="btnGuardarTexto">Guardar Cita</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{/* ── MODAL: Detalle rápido de cita ─────────────────────────── */}
+<div class="modal fade agenda-modal" id="modalDetalleCita" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>Detalle de Cita
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleCitaBody">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex gap-2 w-100 justify-content-between">
+                    <div class="d-flex gap-1" id="detalleAccionesEstado">
+                        <button type="button" class="btn-estado" data-estado="en_espera" title="Marcar en espera">
+                            <i class="bi bi-clock me-1"></i>Espera
+                        </button>
+                        <button type="button" class="btn-estado" data-estado="en_atencion" title="Iniciar atención">
+                            <i class="bi bi-play-circle me-1"></i>Atención
+                        </button>
+                        <button type="button" class="btn-estado" data-estado="atendida" title="Marcar atendida">
+                            <i class="bi bi-check-circle me-1"></i>Atendida
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnEditarDesdeDetalle">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{/* ── MODAL: Confirmar desactivar ──────────────────────────────── */}
+<div class="modal fade" id="modalConfirmarDesactivar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Cancelar / Desactivar Cita
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    ¿Está seguro que desea desactivar la cita de
+                    <strong id="confirmarDesactivarPaciente"></strong>?
+                    <br><small class="text-muted">La cita no será eliminada, solo quedará inactiva.</small>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarDesactivar">
+                    <i class="bi bi-slash-circle me-1"></i> Desactivar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/agenda/agenda-calendar.js" asp-append-version="true"></script>
+    <script>
+        // ── Configuración global para el JS del calendario ──
+        const AGENDA_CONFIG = {
+            urls: {
+                citas: '@jsonCitasUrl',
+                citasRango: '@jsonCitasRangoUrl',
+                pacientes: '@jsonPacientesUrl',
+                doctores: '@jsonDoctoresUrl',
+                salas: '@jsonSalasUrl',
+                crear: '@jsonCrearUrl',
+                actualizar: '@jsonActualizarUrl',
+                cambiarEstado: '@jsonCambiarEstadoUrl',
+                desactivar: '@jsonDesactivarUrl',
+                buscarPacientes: '@jsonBuscarPacientesUrl'
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.vittalAgenda.init(AGENDA_CONFIG);
+        });
+    </script>
+}

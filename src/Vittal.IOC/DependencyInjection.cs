@@ -62,7 +62,26 @@ public static class DependencyInjection
         services.AddScoped<IAntecedentePacienteService, AntecedentePacienteService>();
         services.AddScoped<ISignosVitalesHojaService, SignosVitalesHojaService>();
         services.AddScoped<IConstanciaService, ConstanciaService>();
-        
+
+        // ══════════════════════════════════════════════
+        // HU20 — Expedientes
+        // ══════════════════════════════════════════════
+        services.AddScoped<IExpedienteRepository, ExpedienteRepository>();
+        services.AddScoped<IHojaCitaRepository, HojaCitaRepository>();
+        services.AddScoped<IHojaDiagnosticoRepository, HojaDiagnosticoRepository>();
+        services.AddScoped<IHojaTratamientoRepository, HojaTratamientoRepository>();
+        services.AddScoped<IHojaCirugiaRepository, HojaCirugiaRepository>();
+        services.AddScoped<IHojaExamenRepository, HojaExamenRepository>();
+        services.AddScoped<IExpedienteArchivoRepository, ExpedienteArchivoRepository>();
+
+        services.AddScoped<IExpedienteService, ExpedienteService>();
+        services.AddScoped<IHojaCitaService, HojaCitaService>();
+        services.AddScoped<IHojaDiagnosticoService, HojaDiagnosticoService>();
+        services.AddScoped<IHojaTratamientoService, HojaTratamientoService>();
+        services.AddScoped<IHojaCirugiaService, HojaCirugiaService>();
+        services.AddScoped<IHojaExamenService, HojaExamenService>();
+        services.AddScoped<IExpedienteArchivoService, ExpedienteArchivoService>();
+
         return services;
     }
 }

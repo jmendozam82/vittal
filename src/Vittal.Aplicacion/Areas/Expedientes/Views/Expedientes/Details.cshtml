@@ -1,0 +1,1000 @@
+@{
+    ViewData["Title"] = "Detalle del Expediente";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Expedientes/Expedientes'>Expedientes</a></li>" +
+                             "<li class='breadcrumb-item active'>Detalle del Expediente</li>";
+
+    var expedienteId = ViewBag.ExpedienteId?.ToString() ?? "";
+}
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-folder2-open me-2 text-primary"></i>Expediente: <span id="headerPacienteNombre">Cargando...</span>
+        </h5>
+        <div>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaHojaCita">
+                <i class="bi bi-plus-lg me-1"></i> Nueva Hoja de Cita
+            </button>
+            <a href="/Expedientes/Expedientes" class="btn btn-outline-secondary btn-sm ms-1">
+                <i class="bi bi-arrow-left me-1"></i> Volver
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Info del expediente -->
+        <div class="row mb-4" id="infoExpediente">
+            <div class="col-md-4">
+                <small class="text-muted d-block">Paciente</small>
+                <strong id="detallePaciente">-</strong>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Doctor Asignado</small>
+                <strong id="detalleDoctor">-</strong>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Fecha de Creación</small>
+                <strong id="detalleFecha">-</strong>
+            </div>
+        </div>
+
+        <!-- Notas generales -->
+        <div id="notasGeneralesContainer" class="mb-4" style="display:none;">
+            <h6 class="text-primary border-bottom pb-2 mb-2">
+                <i class="bi bi-journal-text me-2"></i>Notas Generales
+            </h6>
+            <p id="detalleNotas" class="text-muted mb-0"></p>
+        </div>
+
+        <hr />
+
+        <!-- Sección: Hojas de Cita (lista cronológica descendente) -->
+        <h6 class="text-primary border-bottom pb-2 mb-3">
+            <i class="bi bi-calendar-check me-2"></i>Hojas de Cita
+            <span class="badge bg-primary rounded-pill ms-2" id="hojasCount">0</span>
+        </h6>
+
+        <div id="hojasCitaContainer">
+            <div class="d-flex justify-content-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando hojas de cita...</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="mt-4" />
+
+        <!-- Sección: Archivos -->
+        <h6 class="text-primary border-bottom pb-2 mb-3">
+            <i class="bi bi-paperclip me-2"></i>Archivos Adjuntos
+            <span class="badge bg-secondary rounded-pill ms-2" id="archivosCount">0</span>
+        </h6>
+
+        <div id="archivosContainer">
+            <div class="d-flex justify-content-center p-4">
+                <div class="spinner-border text-secondary" role="status">
+                    <span class="visually-hidden">Cargando archivos...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Nueva Hoja de Cita ========== -->
+<div class="modal fade" id="modalNuevaHojaCita" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-success"></i>Nueva Hoja de Cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formHojaCita" novalidate>
+                    <input type="hidden" id="hcExpedienteId" value="@expedienteId" />
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="hcCitaId" class="form-label fw-semibold">Cita Asociada <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="hcCitaId" placeholder="ID de la cita (opcional)" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hcDoctorId" class="form-label fw-semibold">Doctor <span class="text-danger">*</span></label>
+                            <select class="form-select" id="hcDoctorId" required>
+                                <option value="">-- Seleccione --</option>
+                            </select>
+                            <div class="invalid-feedback">Seleccione un doctor.</div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="hcFechaConsulta" class="form-label fw-semibold">Fecha de Consulta</label>
+                            <input type="date" class="form-control" id="hcFechaConsulta" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hcMotivoConsulta" class="form-label fw-semibold">Motivo de Consulta</label>
+                            <input type="text" class="form-control" id="hcMotivoConsulta" maxlength="500" placeholder="Motivo de la consulta" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hcNotasConsulta" class="form-label fw-semibold">Notas Clínicas</label>
+                        <textarea class="form-control" id="hcNotasConsulta" rows="3" maxlength="2000" placeholder="Notas de la consulta"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnGuardarHojaCita">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Hoja de Cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Agregar Diagnóstico ========== -->
+<div class="modal fade" id="modalAgregarDiagnostico" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-heart-pulse me-2 text-primary"></i>Agregar Diagnóstico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formDiagnostico">
+                    <input type="hidden" id="diagHojaCitaId" />
+                    <div class="mb-3">
+                        <label for="diagDiagnosticoId" class="form-label fw-semibold">Diagnóstico <span class="text-danger">*</span></label>
+                        <select class="form-select" id="diagDiagnosticoId" required>
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="diagObservaciones" class="form-label fw-semibold">Observaciones</label>
+                        <textarea class="form-control" id="diagObservaciones" rows="2" maxlength="1000" placeholder="Observaciones adicionales"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnGuardarDiagnostico">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Agregar Tratamiento ========== -->
+<div class="modal fade" id="modalAgregarTratamiento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-capsule me-2 text-success"></i>Agregar Tratamiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTratamiento">
+                    <input type="hidden" id="tratHojaCitaId" />
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="tratMedicamentoId" class="form-label fw-semibold">Medicamento</label>
+                            <select class="form-select" id="tratMedicamentoId">
+                                <option value="">-- Seleccione (opcional) --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tratTratamientoId" class="form-label fw-semibold">Tratamiento</label>
+                            <select class="form-select" id="tratTratamientoId">
+                                <option value="">-- Seleccione (opcional) --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="tratDosis" class="form-label fw-semibold">Dosis</label>
+                            <input type="text" class="form-control" id="tratDosis" maxlength="100" placeholder="Ej: 500mg" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="tratFrecuencia" class="form-label fw-semibold">Frecuencia</label>
+                            <input type="text" class="form-control" id="tratFrecuencia" maxlength="100" placeholder="Ej: cada 8 horas" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="tratDuracion" class="form-label fw-semibold">Duración</label>
+                            <input type="text" class="form-control" id="tratDuracion" maxlength="100" placeholder="Ej: 7 días" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tratInstrucciones" class="form-label fw-semibold">Instrucciones</label>
+                        <textarea class="form-control" id="tratInstrucciones" rows="2" maxlength="1000" placeholder="Instrucciones adicionales"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnGuardarTratamiento">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Agregar Cirugía ========== -->
+<div class="modal fade" id="modalAgregarCirugia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-hospital me-2 text-warning"></i>Agregar Cirugía</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCirugia">
+                    <input type="hidden" id="cirHojaCitaId" />
+                    <div class="mb-3">
+                        <label for="cirCirugiaId" class="form-label fw-semibold">Cirugía <span class="text-danger">*</span></label>
+                        <select class="form-select" id="cirCirugiaId" required>
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cirFechaCirugia" class="form-label fw-semibold">Fecha de Cirugía</label>
+                        <input type="date" class="form-control" id="cirFechaCirugia" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="cirObservaciones" class="form-label fw-semibold">Observaciones</label>
+                        <textarea class="form-control" id="cirObservaciones" rows="2" maxlength="1000" placeholder="Observaciones"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning btn-sm text-white" id="btnGuardarCirugia">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Agregar Examen ========== -->
+<div class="modal fade" id="modalAgregarExamen" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2 text-info"></i>Agregar Examen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formExamen">
+                    <input type="hidden" id="exaHojaCitaId" />
+                    <div class="mb-3">
+                        <label for="exaExamenId" class="form-label fw-semibold">Examen <span class="text-danger">*</span></label>
+                        <select class="form-select" id="exaExamenId" required>
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exaResultado" class="form-label fw-semibold">Resultado</label>
+                        <textarea class="form-control" id="exaResultado" rows="3" maxlength="2000" placeholder="Resultado del examen"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exaArchivoUrl" class="form-label fw-semibold">URL del Archivo</label>
+                        <input type="text" class="form-control" id="exaArchivoUrl" maxlength="500" placeholder="URL del archivo asociado (opcional)" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info btn-sm text-white" id="btnGuardarExamen">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Subir Archivo ========== -->
+<div class="modal fade" id="modalSubirArchivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload me-2 text-primary"></i>Subir Archivo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formArchivo">
+                    <input type="hidden" id="archExpedienteId" value="@expedienteId" />
+                    <div class="mb-3">
+                        <label for="archHojaCitaId" class="form-label fw-semibold">Asociar a Hoja de Cita (opcional)</label>
+                        <select class="form-select" id="archHojaCitaId">
+                            <option value="">-- General del expediente --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="archNombre" class="form-label fw-semibold">Nombre del Archivo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="archNombre" required maxlength="255" placeholder="Nombre del archivo" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="archTipoMime" class="form-label fw-semibold">Tipo MIME <span class="text-danger">*</span></label>
+                        <select class="form-select" id="archTipoMime" required>
+                            <option value="">-- Seleccione --</option>
+                            <option value="application/pdf">PDF</option>
+                            <option value="image/jpeg">JPEG</option>
+                            <option value="image/png">PNG</option>
+                            <option value="image/webp">WebP</option>
+                            <option value="text/plain">Texto plano</option>
+                            <option value="application/msword">Word</option>
+                            <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="archStoragePath" class="form-label fw-semibold">Ruta de Storage <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="archStoragePath" required maxlength="500" placeholder="ej: clinicaId/pacienteId/archivo.pdf" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="archUrl" class="form-label fw-semibold">URL Pública (opcional)</label>
+                        <input type="text" class="form-control" id="archUrl" maxlength="1000" placeholder="URL pública firmada" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="archTamano" class="form-label fw-semibold">Tamaño (bytes, opcional)</label>
+                        <input type="number" class="form-control" id="archTamano" placeholder="0" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSubirArchivo">
+                    <i class="bi bi-upload me-1"></i> Subir Archivo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const EXPEDIENTE_ID = '@expedienteId';
+    let hojasCita = [];
+    let archivos = [];
+
+    // URLs seguras desde el servidor
+    const URLS = {
+        expediente: '@Url.Action("JsonExpediente")',
+        hojasCita: '@Url.Action("JsonHojasCita")',
+        diagnosticos: '@Url.Action("JsonDiagnosticos")',
+        tratamientos: '@Url.Action("JsonTratamientos")',
+        cirugias: '@Url.Action("JsonCirugias")',
+        examenes: '@Url.Action("JsonExamenes")',
+        archivos: '@Url.Action("JsonArchivos")',
+        crearHojaCita: '@Url.Action("JsonCrearHojaCita")',
+        crearDiagnostico: '@Url.Action("JsonCrearDiagnostico")',
+        crearTratamiento: '@Url.Action("JsonCrearTratamiento")',
+        crearCirugia: '@Url.Action("JsonCrearCirugia")',
+        crearExamen: '@Url.Action("JsonCrearExamen")',
+        doctores: '@Url.Action("JsonDoctores")'
+    };
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await cargarExpediente();
+        await Promise.all([
+            cargarHojasCita(),
+            cargarArchivos(),
+            cargarDoctoresDropdown()
+        ]);
+    });
+
+    // ========== CARGAR DATOS DEL EXPEDIENTE ==========
+    async function cargarExpediente() {
+        try {
+            const res = await fetch(`${URLS.expediente}?id=${EXPEDIENTE_ID}`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (!json.success || !json.data) return;
+
+            const e = json.data;
+            const pacienteNombre = e.pacienteNombre || 'Sin nombre';
+            const doctorNombre = e.doctorNombre || 'Sin asignar';
+            const fecha = e.fechaCreacion ? new Date(e.fechaCreacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+
+            document.getElementById('headerPacienteNombre').textContent = pacienteNombre;
+            document.getElementById('detallePaciente').textContent = pacienteNombre;
+            document.getElementById('detalleDoctor').textContent = doctorNombre;
+            document.getElementById('detalleFecha').textContent = fecha;
+
+            if (e.notasGenerales) {
+                document.getElementById('detalleNotas').textContent = e.notasGenerales;
+                document.getElementById('notasGeneralesContainer').style.display = 'block';
+            }
+
+            // Actualizar título
+            document.title = 'Expediente: ' + pacienteNombre + ' - Vittal';
+        } catch (err) {
+            console.error('Error al cargar expediente:', err);
+        }
+    }
+
+    // ========== CARGAR DOCTORES DROPDOWN ==========
+    let doctores = [];
+    async function cargarDoctoresDropdown() {
+        try {
+            const res = await fetch(URLS.doctores, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json.success && json.data) {
+                doctores = json.data;
+                const selects = ['hcDoctorId'];
+                selects.forEach(id => {
+                    const sel = document.getElementById(id);
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">-- Seleccione --</option>';
+                    json.data.forEach(d => {
+                        const op = document.createElement('option');
+                        op.value = d.id || d.usuarioId || '';
+                        op.textContent = d.nombreCompleto || 'Sin nombre';
+                        sel.appendChild(op);
+                    });
+                });
+            }
+        } catch (err) {
+            console.error('Error al cargar doctores:', err);
+        }
+    }
+
+    // ========== CARGAR HOJAS DE CITA ==========
+    async function cargarHojasCita() {
+        try {
+            const res = await fetch(`${URLS.hojasCita}?expedienteId=${EXPEDIENTE_ID}`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                document.getElementById('hojasCitaContainer').innerHTML = '<div class="alert alert-warning">Error al cargar hojas de cita.</div>';
+                return;
+            }
+            const json = await res.json();
+            if (!json.success) {
+                document.getElementById('hojasCitaContainer').innerHTML = '<div class="alert alert-warning">' + (json.message || 'Error al cargar.') + '</div>';
+                return;
+            }
+
+            hojasCita = json.data || [];
+            document.getElementById('hojasCount').textContent = hojasCita.length;
+            renderHojasCita(hojasCita);
+        } catch (err) {
+            document.getElementById('hojasCitaContainer').innerHTML = '<div class="alert alert-danger">Error de conexión.</div>';
+        }
+    }
+
+    async function renderHojasCita(hojas) {
+        if (hojas.length === 0) {
+            document.getElementById('hojasCitaContainer').innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                    No hay hojas de cita registradas.
+                    <br><button class="btn btn-sm btn-outline-success mt-2" data-bs-toggle="modal" data-bs-target="#modalNuevaHojaCita">
+                        <i class="bi bi-plus-lg me-1"></i>Crear primera hoja de cita
+                    </button>
+                </div>`;
+            return;
+        }
+
+        // Ordenar descendente por fecha
+        hojas.sort((a, b) => new Date(b.fechaConsulta) - new Date(a.fechaConsulta));
+
+        let html = '<div class="accordion" id="accordionHojas">';
+        for (let i = 0; i < hojas.length; i++) {
+            const h = hojas[i];
+            const fecha = h.fechaConsulta ? new Date(h.fechaConsulta).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Sin fecha';
+            const doctor = h.doctorNombre || 'Sin doctor';
+            const motivo = h.motivoConsulta || 'Sin motivo';
+            const idx = i;
+
+            html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#hoja${h.id}"
+                            onclick="cargarDetallesHoja('${h.id}', ${idx})">
+                        <div class="d-flex w-100 justify-content-between align-items-center me-3">
+                            <span><i class="bi bi-calendar-event me-2 text-primary"></i><strong>${fecha}</strong></span>
+                            <span class="badge bg-light text-dark ms-3">${escapeHtml(doctor)}</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="hoja${h.id}" class="accordion-collapse collapse" data-bs-parent="#accordionHojas">
+                    <div class="accordion-body">
+                        <div class="mb-2">
+                            <small class="text-muted">Motivo:</small>
+                            <p class="mb-2">${escapeHtml(motivo)}</p>
+                            ${h.notasConsulta ? '<small class="text-muted">Notas:</small><p class="mb-2">' + escapeHtml(h.notasConsulta) + '</p>' : ''}
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary btn-sm" onclick="abrirModalDiagnostico('${h.id}')">
+                                <i class="bi bi-heart-pulse me-1"></i> + Diagnóstico
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="abrirModalTratamiento('${h.id}')">
+                                <i class="bi bi-capsule me-1"></i> + Tratamiento
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="abrirModalCirugia('${h.id}')">
+                                <i class="bi bi-hospital me-1"></i> + Cirugía
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalExamen('${h.id}')">
+                                <i class="bi bi-clipboard2-pulse me-1"></i> + Examen
+                            </button>
+                        </div>
+                        <hr class="my-2">
+                        <!-- Sub-contenedores de detalles -->
+                        <div id="diagnosticos_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                        </div>
+                        <div id="tratamientos_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-success"></div></div>
+                        </div>
+                        <div id="cirugias_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-warning"></div></div>
+                        </div>
+                        <div id="examenes_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-info"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        html += '</div>';
+        document.getElementById('hojasCitaContainer').innerHTML = html;
+    }
+
+    // ========== CARGAR DETALLES DE HOJA (diagnósticos, tratamientos, etc.) ==========
+    async function cargarDetallesHoja(hojaCitaId, idx) {
+        // Cargar diagnósticos, tratamientos, cirugías, exámenes
+        await Promise.all([
+            cargarDiagnosticos(hojaCitaId),
+            cargarTratamientos(hojaCitaId),
+            cargarCirugias(hojaCitaId),
+            cargarExamenes(hojaCitaId)
+        ]);
+    }
+
+    async function cargarDiagnosticos(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.diagnosticos}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('diagnosticos_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin diagnósticos registrados.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-primary">Diagnósticos:</strong>' +
+                    data.map(d => `<div class="small ms-2"><i class="bi bi-dot me-1"></i>${escapeHtml(d.diagnosticoNombre || '')} ${d.observaciones ? '- ' + escapeHtml(d.observaciones) : ''}</div>`).join('');
+            }
+        } catch (err) {
+            document.getElementById('diagnosticos_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar diagnósticos.</div>';
+        }
+    }
+
+    async function cargarTratamientos(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.tratamientos}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('tratamientos_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin tratamientos registrados.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-success">Tratamientos:</strong>' +
+                    data.map(t => {
+                        const nombre = t.medicamentoNombre || t.tratamientoNombre || '';
+                        const dosis = t.dosis ? '- ' + t.dosis : '';
+                        const freq = t.frecuencia ? ', ' + t.frecuencia : '';
+                        const dur = t.duracion ? ', ' + t.duracion : '';
+                        return `<div class="small ms-2"><i class="bi bi-dot me-1"></i>${escapeHtml(nombre)} ${escapeHtml(dosis)}${escapeHtml(freq)}${escapeHtml(dur)}</div>`;
+                    }).join('');
+            }
+        } catch (err) {
+            document.getElementById('tratamientos_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar tratamientos.</div>';
+        }
+    }
+
+    async function cargarCirugias(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.cirugias}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('cirugias_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin cirugías registradas.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-warning">Cirugías:</strong>' +
+                    data.map(c => `<div class="small ms-2"><i class="bi bi-dot me-1"></i>${escapeHtml(c.cirugiaNombre || '')} ${c.fechaCirugia ? '- ' + new Date(c.fechaCirugia).toLocaleDateString() : ''}</div>`).join('');
+            }
+        } catch (err) {
+            document.getElementById('cirugias_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar cirugías.</div>';
+        }
+    }
+
+    async function cargarExamenes(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.examenes}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('examenes_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin exámenes registrados.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-info">Exámenes:</strong>' +
+                    data.map(e => `<div class="small ms-2"><i class="bi bi-dot me-1"></i>${escapeHtml(e.examenNombre || '')} ${e.resultado ? '- ' + escapeHtml(e.resultado) : ''}</div>`).join('');
+            }
+        } catch (err) {
+            document.getElementById('examenes_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar exámenes.</div>';
+        }
+    }
+
+    // ========== CARGAR ARCHIVOS ==========
+    async function cargarArchivos() {
+        try {
+            const res = await fetch(`${URLS.archivos}?expedienteId=${EXPEDIENTE_ID}`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-warning">Error al cargar archivos.</div>';
+                return;
+            }
+            const json = await res.json();
+            if (!json.success) {
+                document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-warning">' + (json.message || 'Error al cargar.') + '</div>';
+                return;
+            }
+
+            archivos = json.data || [];
+            document.getElementById('archivosCount').textContent = archivos.length;
+            renderArchivos(archivos);
+        } catch (err) {
+            document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-danger">Error de conexión.</div>';
+        }
+    }
+
+    function renderArchivos(archivos) {
+        if (archivos.length === 0) {
+            document.getElementById('archivosContainer').innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
+                    No hay archivos adjuntos.
+                    <br><button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
+                        <i class="bi bi-upload me-1"></i>Subir archivo
+                    </button>
+                </div>`;
+            return;
+        }
+
+        const items = archivos.map(a => {
+            const icono = a.tipoMime?.includes('pdf') ? 'bi-filetype-pdf text-danger' :
+                          a.tipoMime?.includes('image') ? 'bi-filetype-jpg text-info' :
+                          'bi-file-earmark text-muted';
+            const tamanoStr = a.tamanoBytes ? formatBytes(a.tamanoBytes) : '';
+            return `
+            <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <i class="bi ${icono} me-2 fs-5"></i>
+                    <strong>${escapeHtml(a.nombreArchivo || '')}</strong>
+                    ${tamanoStr ? '<br><small class="text-muted">' + tamanoStr + '</small>' : ''}
+                </div>
+                <div>
+                    ${a.urlPublica ? `<a href="${escapeHtml(a.urlPublica)}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Ver archivo"><i class="bi bi-eye"></i></a>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('archivosContainer').innerHTML = `
+            <div class="d-flex justify-content-between mb-2">
+                <span></span>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
+                    <i class="bi bi-upload me-1"></i> Subir Archivo
+                </button>
+            </div>
+            <div class="list-group">${items}</div>`;
+    }
+
+    // ========== MODALES: ACCIONES ==========
+
+    // --- NUEVA HOJA DE CITA ---
+    document.getElementById('btnGuardarHojaCita').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const data = {
+            expedienteId: EXPEDIENTE_ID,
+            citaId: document.getElementById('hcCitaId').value.trim() || '00000000-0000-0000-0000-000000000000',
+            doctorId: document.getElementById('hcDoctorId').value,
+            fechaConsulta: document.getElementById('hcFechaConsulta').value || null,
+            motivoConsulta: document.getElementById('hcMotivoConsulta').value.trim() || null,
+            notasConsulta: document.getElementById('hcNotasConsulta').value.trim() || null
+        };
+
+        if (!data.doctorId) {
+            showToast('danger', 'Debe seleccionar un doctor.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Hoja de Cita';
+            return;
+        }
+
+        try {
+            const res = await fetch(URLS.crearHojaCita, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Hoja de cita creada.');
+                bootstrap.Modal.getInstance(document.getElementById('modalNuevaHojaCita')).hide();
+                await cargarHojasCita();
+                document.getElementById('formHojaCita').reset();
+            } else {
+                showToast('danger', json.message || 'Error al crear.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Hoja de Cita';
+        }
+    });
+
+    // --- AGREGAR DIAGNÓSTICO ---
+    window.abrirModalDiagnostico = function(hojaCitaId) {
+        document.getElementById('diagHojaCitaId').value = hojaCitaId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarDiagnostico')).show();
+    };
+
+    document.getElementById('btnGuardarDiagnostico').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('diagHojaCitaId').value;
+        const diagnosticoId = document.getElementById('diagDiagnosticoId').value;
+        if (!diagnosticoId) { showToast('danger', 'Seleccione un diagnóstico.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const res = await fetch(URLS.crearDiagnostico, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hojaCitaId: hojaCitaId,
+                    diagnosticoId: diagnosticoId,
+                    observaciones: document.getElementById('diagObservaciones').value.trim() || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Diagnóstico agregado.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAgregarDiagnostico')).hide();
+                await cargarDiagnosticos(hojaCitaId);
+                document.getElementById('formDiagnostico').reset();
+            } else {
+                showToast('danger', json.message || 'Error al agregar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // --- AGREGAR TRATAMIENTO ---
+    window.abrirModalTratamiento = function(hojaCitaId) {
+        document.getElementById('tratHojaCitaId').value = hojaCitaId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarTratamiento')).show();
+    };
+
+    document.getElementById('btnGuardarTratamiento').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('tratHojaCitaId').value;
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const res = await fetch(URLS.crearTratamiento, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hojaCitaId: hojaCitaId,
+                    medicamentoId: document.getElementById('tratMedicamentoId').value || null,
+                    tratamientoId: document.getElementById('tratTratamientoId').value || null,
+                    dosis: document.getElementById('tratDosis').value.trim() || null,
+                    frecuencia: document.getElementById('tratFrecuencia').value.trim() || null,
+                    duracion: document.getElementById('tratDuracion').value.trim() || null,
+                    instrucciones: document.getElementById('tratInstrucciones').value.trim() || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Tratamiento agregado.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAgregarTratamiento')).hide();
+                await cargarTratamientos(hojaCitaId);
+                document.getElementById('formTratamiento').reset();
+            } else {
+                showToast('danger', json.message || 'Error al agregar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // --- AGREGAR CIRUGÍA ---
+    window.abrirModalCirugia = function(hojaCitaId) {
+        document.getElementById('cirHojaCitaId').value = hojaCitaId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarCirugia')).show();
+    };
+
+    document.getElementById('btnGuardarCirugia').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('cirHojaCitaId').value;
+        const cirugiaId = document.getElementById('cirCirugiaId').value;
+        if (!cirugiaId) { showToast('danger', 'Seleccione una cirugía.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const res = await fetch(URLS.crearCirugia, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hojaCitaId: hojaCitaId,
+                    cirugiaId: cirugiaId,
+                    fechaCirugia: document.getElementById('cirFechaCirugia').value || null,
+                    observaciones: document.getElementById('cirObservaciones').value.trim() || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Cirugía agregada.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAgregarCirugia')).hide();
+                await cargarCirugias(hojaCitaId);
+                document.getElementById('formCirugia').reset();
+            } else {
+                showToast('danger', json.message || 'Error al agregar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // --- AGREGAR EXAMEN ---
+    window.abrirModalExamen = function(hojaCitaId) {
+        document.getElementById('exaHojaCitaId').value = hojaCitaId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarExamen')).show();
+    };
+
+    document.getElementById('btnGuardarExamen').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('exaHojaCitaId').value;
+        const examenId = document.getElementById('exaExamenId').value;
+        if (!examenId) { showToast('danger', 'Seleccione un examen.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const res = await fetch(URLS.crearExamen, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hojaCitaId: hojaCitaId,
+                    examenId: examenId,
+                    resultado: document.getElementById('exaResultado').value.trim() || null,
+                    archivoUrl: document.getElementById('exaArchivoUrl').value.trim() || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Examen agregado.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAgregarExamen')).hide();
+                await cargarExamenes(hojaCitaId);
+                document.getElementById('formExamen').reset();
+            } else {
+                showToast('danger', json.message || 'Error al agregar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // --- SUBIR ARCHIVO ---
+    document.getElementById('btnSubirArchivo').addEventListener('click', async function() {
+        const nombre = document.getElementById('archNombre').value.trim();
+        const tipoMime = document.getElementById('archTipoMime').value;
+        const storagePath = document.getElementById('archStoragePath').value.trim();
+
+        if (!nombre) { showToast('danger', 'El nombre del archivo es obligatorio.'); return; }
+        if (!tipoMime) { showToast('danger', 'Seleccione un tipo MIME.'); return; }
+        if (!storagePath) { showToast('danger', 'La ruta de storage es obligatoria.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Subiendo...';
+
+        try {
+            const res = await fetch('/api/expedientes-archivos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    expedienteId: EXPEDIENTE_ID,
+                    hojaCitaId: document.getElementById('archHojaCitaId').value || null,
+                    nombreArchivo: nombre,
+                    tipoMime: tipoMime,
+                    storagePath: storagePath,
+                    urlPublica: document.getElementById('archUrl').value.trim() || null,
+                    tamanoBytes: parseInt(document.getElementById('archTamano').value) || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Archivo subido exitosamente.');
+                bootstrap.Modal.getInstance(document.getElementById('modalSubirArchivo')).hide();
+                await cargarArchivos();
+                document.getElementById('formArchivo').reset();
+            } else {
+                showToast('danger', json.message || 'Error al subir archivo.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-upload me-1"></i> Subir Archivo';
+        }
+    });
+
+    // ========== UTILIDADES ==========
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes) return '';
+        const units = ['bytes', 'KB', 'MB', 'GB'];
+        let i = 0;
+        let size = bytes;
+        while (size >= 1024 && i < units.length - 1) {
+            size /= 1024;
+            i++;
+        }
+        return size.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    }
+
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

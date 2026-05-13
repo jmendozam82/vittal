@@ -1,0 +1,826 @@
+/* ───────────────────────────────────────────────────────────────
+   VITTAL AGENDA — Premium Calendar SaaS Design
+   src/Vittal.Aplicacion/wwwroot/css/vittal-agenda.css
+   Historia de Usuario: HU21 — Agenda
+   ─────────────────────────────────────────────────────────────── */
+
+/* ── Import Inter font ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Variables específicas de Agenda ───────────────────────────── */
+:root {
+  --agenda-header-bg:        #FFFFFF;
+  --agenda-grid-border:      #E9ECEF;
+  --agenda-grid-bg:          #FFFFFF;
+  --agenda-hour-label:       #6B7280;
+  --agenda-hour-line:        #F3F4F6;
+  --agenda-current-time:     #EF4444;
+  --agenda-today-badge:      #1A6FA8;
+  
+  /* Colores de estado para citas en grid */
+  --agenda-card-agendada:    #EBF5FB;
+  --agenda-card-agendada-border: #3498DB;
+  --agenda-card-en-espera:   #FEF5E7;
+  --agenda-card-en-espera-border: #F39C12;
+  --agenda-card-en-atencion: #F4ECF7;
+  --agenda-card-en-atencion-border: #9B59B6;
+  --agenda-card-atendida:    #EAFAF1;
+  --agenda-card-atendida-border: #2ECC71;
+  --agenda-card-cancelada:   #FDEBD0;
+  --agenda-card-cancelada-border: #E67E22;
+  
+  /* Tamaños */
+  --agenda-hour-height:      60px;
+  --agenda-sidebar-width:    70px;
+  --agenda-card-radius:      6px;
+}
+
+/* ── Reset body para full-height ────────────────────────────────── */
+body.agenda-page {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ── Toolbar superior ───────────────────────────────────────────── */
+.agenda-toolbar {
+  background: var(--agenda-header-bg);
+  border-bottom: 1px solid var(--agenda-grid-border);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.agenda-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agenda-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agenda-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Navegación de fecha ────────────────────────────────────────── */
+.agenda-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.agenda-date-nav .btn-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--agenda-grid-border);
+  background: white;
+  color: var(--agenda-hour-label);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.agenda-date-nav .btn-nav:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #1F2937;
+}
+
+.agenda-date-nav .btn-today {
+  padding: 0.35rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--agenda-grid-border);
+  background: white;
+  color: var(--agenda-hour-label);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.agenda-date-nav .btn-today:hover {
+  background: var(--vittal-primary-light);
+  border-color: var(--vittal-primary);
+  color: var(--vittal-primary);
+}
+
+.agenda-date-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1F2937;
+  min-width: 180px;
+  text-align: center;
+  user-select: none;
+}
+
+.agenda-date-title .subtitle {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--agenda-hour-label);
+  display: block;
+}
+
+/* ── Switch de vistas (Día | 5 | 7 | Mes) ──────────────────────── */
+.agenda-view-switch {
+  display: flex;
+  background: #F3F4F6;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.agenda-view-switch .btn-view {
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--agenda-hour-label);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.agenda-view-switch .btn-view:hover {
+  color: #1F2937;
+  background: rgba(255,255,255,0.5);
+}
+
+.agenda-view-switch .btn-view.active {
+  background: white;
+  color: var(--vittal-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── Filtro de doctores ─────────────────────────────────────────── */
+.agenda-doctor-filter {
+  min-width: 180px;
+  position: relative;
+}
+
+.agenda-doctor-filter select {
+  appearance: none;
+  background: white;
+  border: 1px solid var(--agenda-grid-border);
+  border-radius: 8px;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  color: #1F2937;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.agenda-doctor-filter select:focus {
+  outline: none;
+  border-color: var(--vittal-primary);
+  box-shadow: 0 0 0 3px rgba(26,111,168,0.1);
+}
+
+.agenda-doctor-filter::after {
+  content: '\F282';
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--agenda-hour-label);
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
+/* ── Botón Nueva Cita ───────────────────────────────────────────── */
+.btn-agenda-nueva {
+  background: var(--vittal-primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(26,111,168,0.3);
+}
+
+.btn-agenda-nueva:hover {
+  background: var(--vittal-primary-dark);
+  box-shadow: 0 4px 12px rgba(26,111,168,0.35);
+  transform: translateY(-1px);
+  color: white;
+}
+
+/* ── CONTENEDOR PRINCIPAL DEL CALENDARIO ───────────────────────── */
+.agenda-container {
+  display: flex;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── VISTA SEMANAL/DÍA — GRID DE TIEMPO ────────────────────────── */
+.agenda-week-view {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  background: var(--agenda-grid-bg);
+}
+
+.agenda-week-view::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.agenda-week-view::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agenda-week-view::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+/* ── Cabecera de columnas (días) ───────────────────────────────── */
+.agenda-week-header {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: white;
+  border-bottom: 2px solid var(--agenda-grid-border);
+}
+
+.agenda-week-header .day-header {
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--agenda-hour-label);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-right: 1px solid var(--agenda-grid-border);
+  position: relative;
+}
+
+.agenda-week-header .day-header:last-child {
+  border-right: none;
+}
+
+.agenda-week-header .day-header .day-number {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1F2937;
+  display: block;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.agenda-week-header .day-header.today .day-number {
+  background: var(--agenda-today-badge);
+  color: white;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  border-radius: 50%;
+  margin: 2px auto 0;
+  font-size: 1.1rem;
+}
+
+.agenda-week-header .day-header.today {
+  color: var(--agenda-today-badge);
+}
+
+.agenda-week-header .day-header.other-month {
+  opacity: 0.4;
+}
+
+/* ── Grid de tiempo ─────────────────────────────────────────────── */
+.agenda-time-grid {
+  display: grid;
+  position: relative;
+}
+
+.agenda-time-grid .time-row {
+  display: grid;
+  border-bottom: 1px solid var(--agenda-hour-line);
+  min-height: var(--agenda-hour-height);
+  position: relative;
+}
+
+.agenda-time-grid .time-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Etiqueta de hora ──────────────────────────────────────────── */
+.agenda-time-label {
+  grid-column: 1;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--agenda-hour-label);
+  text-align: right;
+  padding: 0 8px;
+  position: relative;
+  top: -7px;
+  height: 0;
+  user-select: none;
+}
+
+/* ── Celdas de día ──────────────────────────────────────────────── */
+.agenda-day-cell {
+  position: relative;
+  min-height: var(--agenda-hour-height);
+  border-right: 1px solid var(--agenda-hour-line);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.agenda-day-cell:last-child {
+  border-right: none;
+}
+
+.agenda-day-cell:hover {
+  background: rgba(26,111,168,0.03);
+}
+
+.agenda-day-cell.today-cell {
+  background: rgba(26,111,168,0.02);
+}
+
+.agenda-day-cell.other-month-cell {
+  background: #FAFBFC;
+}
+
+/* ── Línea de hora actual ───────────────────────────────────────── */
+.agenda-current-time-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--agenda-current-time);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.agenda-current-time-line::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--agenda-current-time);
+}
+
+/* ── TARJETA DE CITA EN EL GRID ────────────────────────────────── */
+.agenda-card {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: var(--agenda-card-radius);
+  padding: 4px 6px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 5;
+  transition: box-shadow 0.15s, transform 0.1s;
+  border-left: 3px solid;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.agenda-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 15;
+  transform: scale(1.02);
+}
+
+/* Estados de cita */
+.agenda-card.estado-agendada {
+  background: var(--agenda-card-agendada);
+  border-left-color: var(--agenda-card-agendada-border);
+}
+.agenda-card.estado-en_espera {
+  background: var(--agenda-card-en-espera);
+  border-left-color: var(--agenda-card-en-espera-border);
+}
+.agenda-card.estado-en_atencion {
+  background: var(--agenda-card-en-atencion);
+  border-left-color: var(--agenda-card-en-atencion-border);
+}
+.agenda-card.estado-atendida {
+  background: var(--agenda-card-atendida);
+  border-left-color: var(--agenda-card-atendida-border);
+  opacity: 0.75;
+}
+.agenda-card.estado-cancelada {
+  background: var(--agenda-card-cancelada);
+  border-left-color: var(--agenda-card-cancelada-border);
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.agenda-card .card-time {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.68rem;
+  margin-bottom: 1px;
+}
+
+.agenda-card .card-patient {
+  font-weight: 600;
+  color: #1F2937;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agenda-card .card-doctor {
+  font-size: 0.65rem;
+  color: var(--agenda-hour-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agenda-card .card-more {
+  font-size: 0.7rem;
+  color: var(--agenda-hour-label);
+  font-weight: 500;
+}
+
+/* ── Indicador de más citas (ocultas por falta de espacio) ────── */
+.agenda-card-more {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #F3F4F6;
+  color: var(--agenda-hour-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.agenda-card-more:hover {
+  background: #E5E7EB;
+}
+
+/* ── VACIOS — sin citas ─────────────────────────────────────────── */
+.agenda-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--agenda-hour-label);
+  font-size: 0.85rem;
+  padding: 3rem;
+  text-align: center;
+}
+
+.agenda-empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* ── VISTA MES ──────────────────────────────────────────────────── */
+.agenda-month-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.agenda-month-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: white;
+  border-bottom: 2px solid var(--agenda-grid-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.agenda-month-header .month-day-name {
+  padding: 0.75rem 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--agenda-hour-label);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.agenda-month-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(100px, 1fr);
+  overflow-y: auto;
+}
+
+.agenda-month-cell {
+  border-right: 1px solid var(--agenda-grid-border);
+  border-bottom: 1px solid var(--agenda-grid-border);
+  padding: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+  overflow: hidden;
+  position: relative;
+}
+
+.agenda-month-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.agenda-month-cell:hover {
+  background: rgba(26,111,168,0.03);
+}
+
+.agenda-month-cell.today-cell {
+  background: rgba(26,111,168,0.05);
+}
+
+.agenda-month-cell.other-month-cell {
+  background: #FAFBFC;
+}
+
+.agenda-month-cell .month-day-number {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+}
+
+.agenda-month-cell.today-cell .month-day-number {
+  background: var(--agenda-today-badge);
+  color: white;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0;
+}
+
+.agenda-month-cell.other-month-cell .month-day-number {
+  opacity: 0.4;
+}
+
+/* Citas en vista mes (pequeñas) */
+.agenda-month-card {
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  margin-bottom: 1px;
+  border-left: 2px solid;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.agenda-month-card .mc-time {
+  font-weight: 600;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.agenda-month-card .mc-patient {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+/* ── MODAL DE CITA ──────────────────────────────────────────────── */
+.agenda-modal .modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+
+.agenda-modal .modal-header {
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--agenda-grid-border);
+}
+
+.agenda-modal .modal-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.agenda-modal .modal-footer {
+  padding: 0.75rem 1.5rem 1.25rem;
+  border-top: 1px solid var(--agenda-grid-border);
+}
+
+.agenda-modal .form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.3rem;
+}
+
+.agenda-modal .form-control,
+.agenda-modal .form-select {
+  font-size: 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  padding: 0.5rem 0.75rem;
+}
+
+.agenda-modal .form-control:focus,
+.agenda-modal .form-select:focus {
+  border-color: var(--vittal-primary);
+  box-shadow: 0 0 0 3px rgba(26,111,168,0.1);
+}
+
+/* ── Selector de hora (time picker) ─────────────────────────────── */
+.agenda-time-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agenda-time-picker select {
+  width: auto;
+  min-width: 80px;
+}
+
+/* ── Badge de estado en modal ───────────────────────────────────── */
+.agenda-estado-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ── Quick status buttons ───────────────────────────────────────── */
+.btn-estado {
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--agenda-grid-border);
+  background: white;
+  color: var(--agenda-hour-label);
+  transition: all 0.15s;
+}
+
+.btn-estado:hover:not(:disabled) {
+  border-color: #D1D5DB;
+  background: #F9FAFB;
+}
+
+.btn-estado.activo { 
+  background: var(--vittal-primary);
+  color: white;
+  border-color: var(--vittal-primary);
+}
+
+/* ── Toast personalizado ─────────────────────────────────────────── */
+.agenda-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 450px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .agenda-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .agenda-toolbar-left,
+  .agenda-toolbar-center,
+  .agenda-toolbar-right {
+    justify-content: center;
+  }
+  
+  .agenda-view-switch .btn-view {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+  }
+  
+  .agenda-date-title {
+    font-size: 0.95rem;
+    min-width: auto;
+  }
+  
+  .agenda-doctor-filter {
+    min-width: 140px;
+  }
+  
+  .agenda-week-view {
+    font-size: 0.75rem;
+  }
+  
+  .agenda-week-header .day-header {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.25rem;
+  }
+  
+  .agenda-week-header .day-header .day-number {
+    font-size: 1.1rem;
+  }
+  
+  .agenda-month-grid {
+    grid-auto-rows: minmax(80px, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .agenda-toolbar-center {
+    flex-wrap: wrap;
+  }
+  
+  .agenda-view-switch {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .agenda-week-header .day-header {
+    font-size: 0.6rem;
+    padding: 0.3rem 0.15rem;
+  }
+  
+  .agenda-week-header .day-header .day-number {
+    font-size: 0.9rem;
+  }
+  
+  .agenda-week-header .day-header.today .day-number {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 0.85rem;
+  }
+  
+  .agenda-month-grid {
+    grid-auto-rows: minmax(60px, 1fr);
+  }
+  
+  .agenda-month-card {
+    font-size: 0.6rem;
+  }
+}
+
+/* ── Transiciones suaves entre vistas ──────────────────────────── */
+.agenda-fade-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.agenda-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.2s ease-out;
+}
+
+/* ── Barra de progreso de tiempo en cards ──────────────────────── */
+.agenda-card .card-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(26,111,168,0.15);
+  border-radius: 0 0 var(--agenda-card-radius) var(--agenda-card-radius);
+}

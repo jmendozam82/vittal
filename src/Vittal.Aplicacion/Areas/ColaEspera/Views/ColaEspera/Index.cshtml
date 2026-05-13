@@ -1,0 +1,183 @@
+@{
+    ViewData["Title"] = "Cola de Espera";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item active'>Cola de Espera</li>";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-cola.css" asp-append-version="true" />
+}
+
+@{/* ── URLs seguras para JavaScript ───────────────────────────── */}
+@{
+    var jsonColaUrl = Url.Action("JsonCola");
+    var jsonDoctoresUrl = Url.Action("JsonDoctores");
+    var jsonLlegadaUrl = Url.Action("JsonLlegada");
+    var jsonAtenderUrl = Url.Action("JsonAtender");
+    var jsonCompletarUrl = Url.Action("JsonCompletar");
+    var jsonCancelarUrl = Url.Action("JsonCancelar");
+}
+
+@{/* ── Toolbar superior ────────────────────────────────────────── */}
+<div class="cola-toolbar">
+    <div class="cola-toolbar-left">
+        <h5 class="cola-title mb-0">
+            <i class="bi bi-people-fill me-2 text-primary"></i>Cola de Espera
+        </h5>
+        <span class="cola-subtitle text-muted small ms-2" id="colaSubtitle">
+            <span id="colaTotalCount">0</span> pacientes en cola
+        </span>
+    </div>
+
+    <div class="cola-toolbar-center">
+        <div class="cola-doctor-filter">
+            <select id="filterDoctor" aria-label="Filtrar por doctor">
+                <option value="todos">Todos los doctores</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="cola-toolbar-right">
+        <div class="cola-refresh-control">
+            <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                <label class="form-check-label small" for="autoRefresh">Auto <span id="refreshIntervalLabel">10s</span></label>
+            </div>
+        </div>
+        <button type="button" class="cola-btn-refresh" id="btnRefresh" title="Refrescar">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+</div>
+
+@{/* ── Contadores rápidos ──────────────────────────────────────── */}
+<div class="cola-stats-row">
+    <div class="cola-stat-card">
+        <div class="cola-stat-icon cola-stat-pendientes">
+            <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="cola-stat-info">
+            <span class="cola-stat-value" id="statAgendadas">0</span>
+            <span class="cola-stat-label">Pendientes</span>
+        </div>
+    </div>
+    <div class="cola-stat-card">
+        <div class="cola-stat-icon cola-stat-espera">
+            <i class="bi bi-clock"></i>
+        </div>
+        <div class="cola-stat-info">
+            <span class="cola-stat-value" id="statEnEspera">0</span>
+            <span class="cola-stat-label">En Espera</span>
+        </div>
+    </div>
+    <div class="cola-stat-card">
+        <div class="cola-stat-icon cola-stat-atencion">
+            <i class="bi bi-play-circle"></i>
+        </div>
+        <div class="cola-stat-info">
+            <span class="cola-stat-value" id="statEnAtencion">0</span>
+            <span class="cola-stat-label">En Atención</span>
+        </div>
+    </div>
+    <div class="cola-stat-card">
+        <div class="cola-stat-icon cola-stat-atendidas">
+            <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="cola-stat-info">
+            <span class="cola-stat-value" id="statAtendidas">0</span>
+            <span class="cola-stat-label">Hoy Atendidas</span>
+        </div>
+    </div>
+</div>
+
+@{/* ── Grid de tarjetas de pacientes ───────────────────────────── */}
+<div class="cola-grid-container" id="colaGridContainer">
+    <div class="cola-empty-state" id="colaEmptyState">
+        <i class="bi bi-emoji-smile"></i>
+        <h5>¡No hay pacientes en cola!</h5>
+        <p class="text-muted">Todos los pacientes han sido atendidos. La cola se actualiza automáticamente.</p>
+    </div>
+    <div class="cola-grid" id="colaGrid">
+        <!-- Las tarjetas se renderizan acá desde JS -->
+    </div>
+</div>
+
+@{/* ── MODAL: Confirmar Llegada ────────────────────────────────── */}
+<div class="modal fade" id="modalConfirmarLlegada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title">
+                    <i class="bi bi-box-arrow-in-right text-primary me-2"></i>
+                    Registrar Llegada
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 small">
+                    ¿Confirmar llegada de <strong id="confirmarLlegadaPaciente"></strong>?
+                    <br><span class="text-muted">El paciente pasará a "En Espera" y se registrará su hora de llegada.</span>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnConfirmarLlegada">
+                    <i class="bi bi-check-lg me-1"></i> Confirmar Llegada
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{/* ── MODAL: Confirmar Cancelar ────────────────────────────────── */}
+<div class="modal fade" id="modalConfirmarCancelar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title">
+                    <i class="bi bi-x-circle text-danger me-2"></i>
+                    Cancelar Cita
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 small">
+                    ¿Está seguro de cancelar la cita de <strong id="confirmarCancelarPaciente"></strong>?
+                    <br><span class="text-muted">La cita quedará registrada como cancelada.</span>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Volver</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnConfirmarCancelar">
+                    <i class="bi bi-slash-circle me-1"></i> Cancelar Cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{/* ── Toast container ──────────────────────────────────────────── */}
+<div class="cola-toast-container" id="colaToastContainer"></div>
+
+@section Scripts {
+    <script src="~/js/cola/cola-espera.js" asp-append-version="true"></script>
+    <script>
+        // ── Configuración global para el JS de cola de espera ──
+        const COLA_CONFIG = {
+            urls: {
+                cola: '@jsonColaUrl',
+                doctores: '@jsonDoctoresUrl',
+                llegada: '@jsonLlegadaUrl',
+                atender: '@jsonAtenderUrl',
+                completar: '@jsonCompletarUrl',
+                cancelar: '@jsonCancelarUrl'
+            },
+            refreshInterval: 10000  // 10 segundos
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.vittalColaEspera.init(COLA_CONFIG);
+        });
+    </script>
+}

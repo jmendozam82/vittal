@@ -1,0 +1,185 @@
+@{
+    ViewData["Title"] = "Editar Expediente";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Expedientes/Expedientes'>Expedientes</a></li>" +
+                             "<li class='breadcrumb-item active'>Editar Expediente</li>";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Expediente
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="formExpediente" novalidate>
+            <input type="hidden" id="expedienteId" value="" />
+            <input type="hidden" id="editPacienteId" value="" />
+
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-person-vcard me-2"></i>Información del Expediente
+            </h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="detPacienteNombre" class="form-label fw-semibold">Paciente</label>
+                    <input type="text" class="form-control" id="detPacienteNombre" readonly disabled />
+                </div>
+                <div class="col-md-6">
+                    <label for="doctorId" class="form-label fw-semibold">Doctor Asignado <span class="text-danger">*</span></label>
+                    <select class="form-select" id="doctorId" name="doctorId" required>
+                        <option value="">-- Seleccione un doctor --</option>
+                    </select>
+                    <div class="invalid-feedback">Debe asignar un doctor.</div>
+                </div>
+            </div>
+
+            <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+                <i class="bi bi-journal-text me-2"></i>Notas Generales
+            </h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <textarea class="form-control" id="notasGenerales" name="notasGenerales"
+                              rows="4" placeholder="Notas generales del expediente (opcional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/Expedientes/Expedientes" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnGuardar">
+                    <i class="bi bi-floppy me-1"></i> Actualizar Expediente
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarDoctores().then(function() {
+            cargarDatosExpediente();
+        });
+    });
+
+    async function cargarDoctores() {
+        try {
+            const res = await fetch('@Url.Action("JsonDoctores")', {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json.success && json.data) {
+                const select = document.getElementById('doctorId');
+                json.data.forEach(d => {
+                    const op = document.createElement('option');
+                    op.value = d.id || d.usuarioId || '';
+                    op.textContent = d.nombreCompleto || d.nombres + ' ' + d.apellidos || 'Sin nombre';
+                    select.appendChild(op);
+                });
+            }
+        } catch (err) {
+            console.error('Error al cargar doctores:', err);
+        }
+    }
+
+    function cargarDatosExpediente() {
+        const e = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Expediente, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        if (!e) {
+            showToast('danger', 'Error: No se encontraron datos del expediente.');
+            return;
+        }
+
+        document.getElementById('expedienteId').value = e.id || '';
+        document.getElementById('editPacienteId').value = e.pacienteId || '';
+        document.getElementById('detPacienteNombre').value = e.pacienteNombre || 'Sin nombre';
+        document.getElementById('notasGenerales').value = e.notasGenerales || '';
+
+        if (e.doctorId) {
+            document.getElementById('doctorId').value = e.doctorId;
+        }
+
+        // Actualizar título
+        const nombrePaciente = e.pacienteNombre || '';
+        document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando expediente de: ${escapeHtml(nombrePaciente)}`;
+    }
+
+    // Submit del formulario
+    document.getElementById('formExpediente').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const form = this;
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardar');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const id = document.getElementById('expedienteId').value;
+
+        const data = {
+            pacienteId: document.getElementById('editPacienteId').value,
+            doctorId: document.getElementById('doctorId').value,
+            notasGenerales: document.getElementById('notasGenerales').value.trim() || null
+        };
+
+        try {
+            const res = await fetch(`@Url.Action("JsonActualizar")?id=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Expediente actualizado exitosamente.');
+                setTimeout(() => {
+                    window.location.href = '/Expedientes/Expedientes';
+                }, 1000);
+            } else {
+                showToast('danger', json.message || 'Error al actualizar el expediente.');
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(type, message) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

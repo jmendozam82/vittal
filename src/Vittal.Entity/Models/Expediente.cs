@@ -1,29 +1,22 @@
 namespace Vittal.Entity.Models;
 
 /// <summary>
-/// Hoja de cita médica que vincula una cita (Cita) con los datos clínicos
-/// registrados durante la consulta (signos vitales, diagnósticos, tratamientos, etc.).
-/// Tabla: public.hojas_cita
+/// Expediente médico de un paciente. Contiene el historial completo de hojas de cita,
+/// diagnósticos, tratamientos, cirugías, exámenes y archivos asociados.
+/// Tabla: public.expedientes
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
-public class HojaCita
+public class Expediente
 {
     // ── Campos primarios ──────────────────────────────────────────
     public Guid Id { get; set; }
     public Guid ClinicaId { get; set; }
-    public Guid CitaId { get; set; }
-    public Guid ExpedienteId { get; set; }
+    public Guid PacienteId { get; set; }
     public Guid DoctorId { get; set; }
 
-    // ── Campos de la consulta ─────────────────────────────────────
-    /// <summary>Fecha en que se realizó la consulta médica.</summary>
-    public DateTime FechaConsulta { get; set; }
-
-    /// <summary>Motivo de la consulta expresado por el paciente.</summary>
-    public string? MotivoConsulta { get; set; }
-
-    /// <summary>Notas clínicas del doctor durante la consulta.</summary>
-    public string? NotasConsulta { get; set; }
+    // ── Campos de negocio ─────────────────────────────────────────
+    /// <summary>Notas generales del expediente médico.</summary>
+    public string? NotasGenerales { get; set; }
 
     // ── Campos de estado y auditoría ──────────────────────────────
     public bool Activo { get; set; } = true;
@@ -31,7 +24,7 @@ public class HojaCita
     public DateTime? FechaModificacion { get; set; }
 
     // ── Propiedades JOIN (no se persisten directamente) ───────────
-    /// <summary>Nombre completo del paciente (JOIN con pacientes vía expediente).</summary>
+    /// <summary>Nombre completo del paciente (JOIN con pacientes).</summary>
     public string PacienteNombre { get; set; } = string.Empty;
 
     /// <summary>Nombre completo del doctor (JOIN con usuarios).</summary>

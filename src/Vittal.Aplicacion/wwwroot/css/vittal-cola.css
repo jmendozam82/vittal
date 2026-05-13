@@ -1,0 +1,728 @@
+/* ───────────────────────────────────────────────────────────────
+   VITTAL COLA DE ESPERA — Premium Queue Dashboard
+   src/Vittal.Aplicacion/wwwroot/css/vittal-cola.css
+   Historia de Usuario: HU18 — Cola de Espera
+   ─────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Variables específicas de Cola ────────────────────────────── */
+:root {
+  --cola-card-radius:       12px;
+  --cola-card-shadow:       0 2px 8px rgba(0,0,0,0.06);
+  --cola-card-shadow-hover: 0 8px 24px rgba(0,0,0,0.12);
+  --cola-border:            #E9ECEF;
+  --cola-bg-hover:          #F8F9FA;
+
+  /* Estados */
+  --cola-pendiente:         #3498DB;
+  --cola-pendiente-bg:      #EBF5FB;
+  --cola-espera:            #F39C12;
+  --cola-espera-bg:         #FEF5E7;
+  --cola-atencion:          #9B59B6;
+  --cola-atencion-bg:       #F4ECF7;
+  --cola-atendida:          #2ECC71;
+  --cola-atendida-bg:       #EAFAF1;
+  --cola-cancelada:         #95A5A6;
+}
+
+/* ── Toolbar superior ──────────────────────────────────────────── */
+.cola-toolbar {
+  background: white;
+  border-bottom: 1px solid var(--cola-border);
+  border-radius: 12px 12px 0 0;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.cola-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cola-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.cola-subtitle {
+  font-size: 0.78rem;
+  color: #6B7280;
+  white-space: nowrap;
+}
+
+.cola-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cola-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Filtro de doctores ────────────────────────────────────────── */
+.cola-doctor-filter {
+  min-width: 200px;
+  position: relative;
+}
+
+.cola-doctor-filter select {
+  appearance: none;
+  background: white;
+  border: 1px solid var(--cola-border);
+  border-radius: 10px;
+  padding: 0.45rem 2rem 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  color: #1F2937;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s;
+  font-family: var(--vittal-font);
+}
+
+.cola-doctor-filter select:focus {
+  outline: none;
+  border-color: var(--vittal-primary);
+  box-shadow: 0 0 0 3px rgba(26,111,168,0.1);
+}
+
+.cola-doctor-filter::after {
+  content: '\F282';
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6B7280;
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
+/* ── Refresh controls ──────────────────────────────────────────── */
+.cola-refresh-control .form-check-input:checked {
+  background-color: var(--vittal-primary);
+  border-color: var(--vittal-primary);
+}
+
+.cola-refresh-control .form-check-input {
+  cursor: pointer;
+}
+
+.cola-refresh-control .form-check-label {
+  color: #6B7280;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cola-btn-refresh {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--cola-border);
+  background: white;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cola-btn-refresh:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+  border-color: #D1D5DB;
+}
+
+.cola-btn-refresh.spinning i {
+  animation: cola-spin 0.6s ease-in-out;
+}
+
+@keyframes cola-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Stats row ──────────────────────────────────────────────────── */
+.cola-stats-row {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid var(--cola-border);
+  flex-wrap: wrap;
+}
+
+.cola-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #FAFBFC;
+  border-radius: 10px;
+  border: 1px solid var(--cola-border);
+  min-width: 140px;
+  flex: 1;
+}
+
+.cola-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.cola-stat-pendientes  { background: var(--cola-pendiente); }
+.cola-stat-espera      { background: var(--cola-espera); }
+.cola-stat-atencion    { background: var(--cola-atencion); }
+.cola-stat-atendidas   { background: var(--cola-atendida); }
+
+.cola-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cola-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1F2937;
+  line-height: 1.2;
+}
+
+.cola-stat-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ── Grid container ─────────────────────────────────────────────── */
+.cola-grid-container {
+  padding: 1.25rem 1.5rem;
+  min-height: 300px;
+  position: relative;
+}
+
+.cola-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Empty state ────────────────────────────────────────────────── */
+.cola-empty-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6B7280;
+}
+
+.cola-empty-state i {
+  font-size: 3.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.6;
+  color: var(--vittal-secondary);
+}
+
+.cola-empty-state h5 {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.cola-empty-state.visible {
+  display: flex;
+}
+
+/* ── TARJETA DE PACIENTE ───────────────────────────────────────── */
+.cola-card {
+  background: white;
+  border-radius: var(--cola-card-radius);
+  border: 1px solid var(--cola-border);
+  box-shadow: var(--cola-card-shadow);
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cola-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  transition: background 0.2s;
+}
+
+.cola-card:hover {
+  box-shadow: var(--cola-card-shadow-hover);
+  transform: translateY(-2px);
+  border-color: #D1D5DB;
+}
+
+/* Colores de estado en la barra lateral */
+.cola-card.estado-agendada::before  { background: var(--cola-pendiente); }
+.cola-card.estado-en_espera::before  { background: var(--cola-espera); }
+.cola-card.estado-en_atencion::before { background: var(--cola-atencion); }
+.cola-card.estado-atendida::before  { background: var(--cola-atendida); }
+.cola-card.estado-cancelada::before { background: var(--cola-cancelada); }
+
+.cola-card.estado-atendida {
+  opacity: 0.7;
+  order: 999;
+}
+
+.cola-card.estado-cancelada {
+  opacity: 0.5;
+  order: 999;
+  display: none; /* Ocultar canceladas del grid principal */
+}
+
+/* ── Card header (avatar + nombre) ──────────────────────────────── */
+.cola-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cola-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--vittal-primary-light);
+  color: var(--vittal-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.cola-card.estado-en_espera .cola-avatar {
+  background: var(--cola-espera-bg);
+  color: var(--cola-espera);
+}
+
+.cola-card.estado-en_atencion .cola-avatar {
+  background: var(--cola-atencion-bg);
+  color: var(--cola-atencion);
+}
+
+.cola-card-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.cola-card-name h6 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cola-card-name .cola-card-doctor {
+  font-size: 0.72rem;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ── Card body (detalles) ──────────────────────────────────────── */
+.cola-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cola-card-time {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #374151;
+}
+
+.cola-card-time i {
+  color: #6B7280;
+  font-size: 0.85rem;
+}
+
+.cola-card-wait {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.cola-wait-normal {
+  color: var(--vittal-primary);
+  background: var(--vittal-primary-light);
+}
+
+.cola-wait-warning {
+  color: #D35400;
+  background: #FDEBD0;
+  animation: cola-pulse-warning 2s ease-in-out infinite;
+}
+
+.cola-wait-danger {
+  color: #C0392B;
+  background: #FADBD8;
+  animation: cola-pulse-danger 1.5s ease-in-out infinite;
+}
+
+@keyframes cola-pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes cola-pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.cola-badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.cola-badge-estado.estado-agendada {
+  background: var(--cola-pendiente-bg);
+  color: var(--cola-pendiente);
+}
+
+.cola-badge-estado.estado-en_espera {
+  background: var(--cola-espera-bg);
+  color: var(--cola-espera);
+}
+
+.cola-badge-estado.estado-en_atencion {
+  background: var(--cola-atencion-bg);
+  color: var(--cola-atencion);
+}
+
+.cola-badge-estado.estado-atendida {
+  background: var(--cola-atendida-bg);
+  color: #1E8449;
+}
+
+/* ── Card footer (acciones) ─────────────────────────────────────── */
+.cola-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #F3F4F6;
+  flex-wrap: wrap;
+}
+
+.cola-btn-action {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--cola-border);
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.cola-btn-action:hover:not(:disabled) {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.cola-btn-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cola-btn-llegada {
+  background: var(--cola-pendiente-bg);
+  color: var(--cola-pendiente);
+  border-color: transparent;
+}
+
+.cola-btn-llegada:hover:not(:disabled) {
+  background: #D4E6F9;
+}
+
+.cola-btn-atender {
+  background: var(--cola-espera-bg);
+  color: var(--cola-espera);
+  border-color: transparent;
+}
+
+.cola-btn-atender:hover:not(:disabled) {
+  background: #FDEBD0;
+}
+
+.cola-btn-completar {
+  background: var(--cola-atencion-bg);
+  color: var(--cola-atencion);
+  border-color: transparent;
+}
+
+.cola-btn-completar:hover:not(:disabled) {
+  background: #E8DAEF;
+}
+
+.cola-btn-cancelar {
+  color: #95A5A6;
+  border-color: transparent;
+  flex: 0;
+  padding: 0.35rem 0.5rem;
+}
+
+.cola-btn-cancelar:hover:not(:disabled) {
+  background: #FDEBD0;
+  color: var(--cola-espera);
+}
+
+/* ── Loading skeleton ───────────────────────────────────────────── */
+.cola-skeleton {
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: cola-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.cola-skeleton-card {
+  background: white;
+  border-radius: var(--cola-card-radius);
+  border: 1px solid var(--cola-border);
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cola-skeleton-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.cola-skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.cola-skeleton-line {
+  flex: 1;
+  height: 12px;
+}
+
+.cola-skeleton-line-sm {
+  width: 60%;
+  height: 10px;
+}
+
+@keyframes cola-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Toast notifications ────────────────────────────────────────── */
+.cola-toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+
+.cola-toast {
+  background: white;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  animation: cola-toast-in 0.3s ease-out;
+  font-size: 0.85rem;
+}
+
+.cola-toast-success { border-left-color: var(--vittal-secondary); }
+.cola-toast-error   { border-left-color: var(--vittal-danger); }
+.cola-toast-info    { border-left-color: var(--vittal-primary); }
+
+.cola-toast i {
+  font-size: 1.1rem;
+}
+
+.cola-toast-success i { color: var(--vittal-secondary); }
+.cola-toast-error i   { color: var(--vittal-danger); }
+.cola-toast-info i    { color: var(--vittal-primary); }
+
+.cola-toast-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.cola-toast-close:hover {
+  color: #374151;
+}
+
+.cola-toast-removing {
+  animation: cola-toast-out 0.3s ease-in forwards;
+}
+
+@keyframes cola-toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cola-toast-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ── Badge de conteo animado ───────────────────────────────────── */
+.cola-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  padding: 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--vittal-primary);
+  color: white;
+}
+
+.cola-count-badge.update {
+  animation: cola-badge-pop 0.3s ease-out;
+}
+
+@keyframes cola-badge-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .cola-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cola-toolbar-left,
+  .cola-toolbar-center,
+  .cola-toolbar-right {
+    justify-content: center;
+  }
+
+  .cola-stats-row {
+    gap: 0.5rem;
+  }
+
+  .cola-stat-card {
+    min-width: calc(50% - 0.5rem);
+    flex: none;
+  }
+
+  .cola-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .cola-toolbar {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .cola-stats-row {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .cola-grid-container {
+    padding: 0.85rem;
+  }
+
+  .cola-stat-card {
+    min-width: 100%;
+  }
+
+  .cola-card-footer {
+    flex-wrap: wrap;
+  }
+
+  .cola-btn-action {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .cola-btn-cancelar {
+    flex: 0;
+    min-width: auto;
+  }
+}
