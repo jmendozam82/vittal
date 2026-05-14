@@ -1,0 +1,190 @@
+/* src/Vittal.Aplicacion/wwwroot/css/vittal-timeline.css */
+
+/* ── Timeline Vertical ────────────────────────────────────────── */
+.timeline-vertical {
+    position: relative;
+    padding-left: 2.5rem;
+}
+.timeline-vertical::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--vittal-border);
+    border-radius: 3px;
+}
+
+/* ── Paso Item ────────────────────────────────────────────────── */
+.timeline-paso {
+    position: relative;
+    margin-bottom: 1.25rem;
+    opacity: 0;
+    animation: timeline-fadeIn 0.4s ease forwards;
+}
+.timeline-paso:nth-child(1) { animation-delay: 0.05s; }
+.timeline-paso:nth-child(2) { animation-delay: 0.10s; }
+.timeline-paso:nth-child(3) { animation-delay: 0.15s; }
+.timeline-paso:nth-child(4) { animation-delay: 0.20s; }
+.timeline-paso:nth-child(5) { animation-delay: 0.25s; }
+.timeline-paso:nth-child(6) { animation-delay: 0.30s; }
+.timeline-paso:nth-child(7) { animation-delay: 0.35s; }
+.timeline-paso:nth-child(8) { animation-delay: 0.40s; }
+
+@keyframes timeline-fadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Círculo de estado ────────────────────────────────────────── */
+.timeline-paso .paso-circulo {
+    position: absolute;
+    left: -2.5rem;
+    top: 1.25rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    z-index: 2;
+    transition: all 0.3s ease;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.timeline-paso .paso-circulo.completado {
+    background: var(--vittal-secondary);
+}
+.timeline-paso .paso-circulo.activo {
+    background: var(--vittal-primary);
+    animation: timeline-pulse 2s infinite;
+}
+.timeline-paso .paso-circulo.pendiente {
+    background: var(--vittal-border);
+    color: var(--vittal-text-muted);
+}
+.timeline-paso .paso-circulo.saltado {
+    background: var(--vittal-warning);
+}
+
+@keyframes timeline-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(26, 111, 168, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(26, 111, 168, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(26, 111, 168, 0); }
+}
+
+/* ── Card del paso ────────────────────────────────────────────── */
+.timeline-paso .paso-card {
+    background: var(--vittal-bg-card);
+    border: 1px solid var(--vittal-border);
+    border-radius: var(--vittal-radius-lg);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--vittal-shadow);
+    transition: all 0.2s ease;
+}
+.timeline-paso .paso-card:hover {
+    box-shadow: var(--vittal-shadow-lg);
+}
+.timeline-paso .paso-card.activo {
+    border-color: var(--vittal-primary);
+    background: var(--vittal-primary-light);
+}
+.timeline-paso .paso-card.completado {
+    border-left: 4px solid var(--vittal-secondary);
+}
+.timeline-paso .paso-card.pendiente {
+    opacity: 0.7;
+}
+.timeline-paso .paso-card.saltado {
+    border-left: 4px solid var(--vittal-warning);
+    opacity: 0.65;
+}
+
+/* ── Paso Header ──────────────────────────────────────────────── */
+.paso-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.paso-header .paso-nombre {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.paso-header .paso-duracion {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--vittal-text-muted);
+    font-weight: 500;
+}
+.paso-header .paso-duracion.vivo {
+    color: var(--vittal-primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* ── Paso Acciones ────────────────────────────────────────────── */
+.paso-acciones {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Barra de Progreso ────────────────────────────────────────── */
+.timeline-progress {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--vittal-border);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.timeline-progress .progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--vittal-secondary);
+    transition: width 0.5s ease;
+}
+
+/* ── Tiempo Total ─────────────────────────────────────────────── */
+.timeline-total {
+    text-align: center;
+    padding: 1rem;
+    background: var(--vittal-primary-light);
+    border-radius: var(--vittal-radius-lg);
+    margin-top: 1rem;
+}
+.timeline-total .total-label {
+    font-size: 0.82rem;
+    color: var(--vittal-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.timeline-total .total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--vittal-primary);
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .timeline-vertical {
+        padding-left: 2rem;
+    }
+    .timeline-paso .paso-circulo {
+        width: 30px;
+        height: 30px;
+        font-size: 0.7rem;
+        left: -2rem;
+        top: 1rem;
+    }
+    .timeline-paso .paso-card {
+        padding: 0.75rem 1rem;
+    }
+    .paso-header .paso-nombre {
+        font-size: 0.85rem;
+    }
+}

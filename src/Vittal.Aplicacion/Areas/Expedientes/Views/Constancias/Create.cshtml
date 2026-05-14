@@ -1,0 +1,325 @@
+﻿@{
+    ViewData["Title"] = "Nueva Constancia Médica";
+
+    var constanciaIndexUrl = Url.Action("Index");
+
+    ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             $"<li class='breadcrumb-item'><a href='{constanciaIndexUrl}'>Constancias</a></li>" +
+                             "<li class='breadcrumb-item active'>Nuevo</li>";
+
+    var jsonCrearUrl = Url.Action("JsonCrear");
+    var jsonPacientesUrl = Url.Action("JsonListarPacientes");
+    var jsonDoctoresUrl = Url.Action("JsonListarDoctores");
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-plus-circle text-primary fs-5"></i>
+                    <h5 class="mb-0">Registrar nueva constancia médica</h5>
+                </div>
+
+                <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
+
+                <form id="frmConstancia" novalidate>
+                    <div class="row g-3">
+                        <!-- Expediente / Paciente -->
+                        <div class="col-md-6">
+                            <label for="expedienteId" class="form-label fw-medium">
+                                Paciente / Expediente <span class="text-danger">*</span>
+                            </label>
+                            <select id="expedienteId" name="expedienteId" class="form-select" required>
+                                <option value="">Seleccione un paciente...</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar un paciente.</div>
+                        </div>
+
+                        <!-- Doctor -->
+                        <div class="col-md-6">
+                            <label for="doctorId" class="form-label fw-medium">
+                                Doctor <span class="text-danger">*</span>
+                            </label>
+                            <select id="doctorId" name="doctorId" class="form-select" required>
+                                <option value="">Seleccione un doctor...</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar un doctor.</div>
+                        </div>
+
+                        <!-- Tipo de Constancia -->
+                        <div class="col-md-6">
+                            <label for="tipoConstancia" class="form-label fw-medium">
+                                Tipo de Constancia <span class="text-danger">*</span>
+                            </label>
+                            <select id="tipoConstancia" name="tipoConstancia" class="form-select" required>
+                                <option value="">Seleccione un tipo...</option>
+                                <option value="ASISTENCIA">Asistencia</option>
+                                <option value="INCAPACIDAD">Incapacidad</option>
+                                <option value="REFERENCIA">Referencia</option>
+                                <option value="JUSTIFICANTE">Justificante</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar un tipo de constancia.</div>
+                        </div>
+
+                        <!-- Fecha de Emisión -->
+                        <div class="col-md-6">
+                            <label for="fechaEmision" class="form-label fw-medium">
+                                Fecha de Emisión
+                            </label>
+                            <input type="datetime-local" id="fechaEmision" name="fechaEmision"
+                                   class="form-control" />
+                            <div class="form-text">Opcional. Si no se especifica, se usará la fecha actual.</div>
+                        </div>
+
+                        <!-- Contenido -->
+                        <div class="col-12">
+                            <label for="contenido" class="form-label fw-medium">
+                                Contenido de la Constancia <span class="text-danger">*</span>
+                            </label>
+                            <textarea id="contenido" name="contenido"
+                                      class="form-control" rows="8" maxlength="5000"
+                                      placeholder="Redacte el contenido completo de la constancia médica..."
+                                      required></textarea>
+                            <div class="form-text">Máximo 5,000 caracteres.</div>
+                            <div class="invalid-feedback">El contenido de la constancia es obligatorio.</div>
+                        </div>
+
+                        <!-- Campos condicionales: DiasReposo (solo INCAPACIDAD) -->
+                        <div class="col-md-6 d-none" id="campoDiasReposo">
+                            <label for="diasReposo" class="form-label fw-medium">
+                                Días de Reposo
+                            </label>
+                            <input type="number" id="diasReposo" name="diasReposo"
+                                   class="form-control" min="1" max="365"
+                                   placeholder="Ej: 7" />
+                            <div class="form-text">Número de días de reposo (1-365).</div>
+                        </div>
+
+                        <!-- Campos condicionales: EspecialistaReferido (solo REFERENCIA) -->
+                        <div class="col-md-6 d-none" id="campoEspecialistaReferido">
+                            <label for="especialistaReferido" class="form-label fw-medium">
+                                Especialista Referido
+                            </label>
+                            <input type="text" id="especialistaReferido" name="especialistaReferido"
+                                   class="form-control" maxlength="200"
+                                   placeholder="Ej: Dr. Juan Pérez - Cardiólogo" />
+                            <div class="form-text">Nombre y especialidad del médico referido.</div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-left me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-sm" id="btnGuardar">
+                                <span id="btnSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                                <i class="bi bi-check-lg me-1" id="btnIcon"></i>
+                                Guardar Constancia
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const jsonCrearUrl = '@jsonCrearUrl';
+    const constanciaIndexUrl = '@constanciaIndexUrl';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarPacientes();
+        cargarDoctores();
+        inicializarTipoConstancia();
+    });
+
+    // ===================== Carga de dropdowns =====================
+
+    async function cargarPacientes() {
+        try {
+            const res = await fetch('@jsonPacientesUrl');
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const select = document.getElementById('expedienteId');
+                json.data.forEach(function(exp) {
+                    const pacienteNombre = exp.pacienteNombre || 'Sin nombre';
+                    // Mostrar también datos del paciente si están disponibles
+                    const identificacion = exp.identificacion || '';
+                    const label = identificacion
+                        ? pacienteNombre + ' (' + identificacion + ')'
+                        : pacienteNombre;
+                    const option = document.createElement('option');
+                    option.value = exp.id;
+                    option.textContent = label;
+                    select.appendChild(option);
+                });
+            }
+        } catch (err) {
+            console.warn('Error al cargar pacientes:', err);
+            showToast('Error al cargar la lista de pacientes.', 'danger');
+        }
+    }
+
+    async function cargarDoctores() {
+        try {
+            const res = await fetch('@jsonDoctoresUrl');
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const select = document.getElementById('doctorId');
+                json.data.forEach(function(doc) {
+                    const nombre = doc.primerNombre || doc.nombre || 'Sin nombre';
+                    const apellido = doc.primerApellido || doc.apellido || '';
+                    const label = (nombre + ' ' + apellido).trim();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = label || 'Doctor sin nombre';
+                    select.appendChild(option);
+                });
+            }
+        } catch (err) {
+            console.warn('Error al cargar doctores:', err);
+            showToast('Error al cargar la lista de doctores.', 'danger');
+        }
+    }
+
+    // ===================== Mostrar/ocultar campos condicionales =====================
+
+    function inicializarTipoConstancia() {
+        const select = document.getElementById('tipoConstancia');
+        select.addEventListener('change', function() {
+            const tipo = this.value;
+            const campoDias = document.getElementById('campoDiasReposo');
+            const campoEsp = document.getElementById('campoEspecialistaReferido');
+
+            // INCAPACIDAD → mostrar días de reposo
+            if (tipo === 'INCAPACIDAD') {
+                campoDias.classList.remove('d-none');
+            } else {
+                campoDias.classList.add('d-none');
+                document.getElementById('diasReposo').value = '';
+            }
+
+            // REFERENCIA → mostrar especialista referido
+            if (tipo === 'REFERENCIA') {
+                campoEsp.classList.remove('d-none');
+            } else {
+                campoEsp.classList.add('d-none');
+                document.getElementById('especialistaReferido').value = '';
+            }
+        });
+    }
+
+    // ===================== Submit del formulario =====================
+
+    document.getElementById('frmConstancia').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const expedienteId = document.getElementById('expedienteId').value;
+        const doctorId = document.getElementById('doctorId').value;
+        const tipoConstancia = document.getElementById('tipoConstancia').value;
+        const contenido = document.getElementById('contenido').value.trim();
+        const fechaEmision = document.getElementById('fechaEmision').value || null;
+        const diasReposo = document.getElementById('diasReposo').value
+            ? parseInt(document.getElementById('diasReposo').value) : null;
+        const especialistaReferido = document.getElementById('especialistaReferido').value.trim() || null;
+
+        // Validación cliente
+        const errores = [];
+        if (!expedienteId) errores.push('Debe seleccionar un paciente.');
+        if (!doctorId) errores.push('Debe seleccionar un doctor.');
+        if (!tipoConstancia) errores.push('Debe seleccionar el tipo de constancia.');
+        if (!contenido) errores.push('El contenido de la constancia es obligatorio.');
+        else if (contenido.length > 5000) errores.push('El contenido no puede exceder 5,000 caracteres.');
+
+        if (tipoConstancia === 'INCAPACIDAD' && diasReposo !== null) {
+            if (diasReposo < 1 || diasReposo > 365) {
+                errores.push('Los días de reposo deben estar entre 1 y 365.');
+            }
+        }
+
+        if (errores.length > 0) {
+            mostrarErrores(errores);
+            return;
+        }
+
+        setLoading(true);
+        ocultarError();
+
+        const res = await fetch(jsonCrearUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                expedienteId: expedienteId,
+                doctorId: doctorId,
+                tipoConstancia: tipoConstancia,
+                contenido: contenido,
+                fechaEmision: fechaEmision,
+                diasReposo: diasReposo,
+                especialistaReferido: especialistaReferido
+            })
+        });
+
+        const json = await res.json();
+        setLoading(false);
+
+        if (res.ok && json.success) {
+            showToast('Constancia creada exitosamente.', 'success');
+            setTimeout(function() {
+                window.location.href = constanciaIndexUrl;
+            }, 1200);
+        } else {
+            const errs = json.errors || [json.message || 'Error al crear la constancia.'];
+            mostrarErrores(errs);
+        }
+    });
+
+    function setLoading(loading) {
+        const btn = document.getElementById('btnGuardar');
+        const spinner = document.getElementById('btnSpinner');
+        const icon = document.getElementById('btnIcon');
+        btn.disabled = loading;
+        spinner.classList.toggle('d-none', !loading);
+        icon.classList.toggle('d-none', loading);
+    }
+
+    function mostrarErrores(errores) {
+        const alert = document.getElementById('alertError');
+        alert.classList.remove('d-none');
+        alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
+            errores.map(function(e) { return '<div>' + escapeHtml(e) + '</div>'; }).join('');
+    }
+
+    function ocultarError() {
+        document.getElementById('alertError').classList.add('d-none');
+    }
+
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' alert-dismissible fade show shadow-sm';
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        container.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+}

@@ -1,0 +1,107 @@
+@* 
+    Partial View para renderizar un paso del timeline.
+    Uso: <partial name="_PasoCard" model="paso" />
+    donde 'paso' es un Dictionary<string, object?> con las propiedades:
+    - id (string/Guid)
+    - nombrePaso (string)
+    - orden (int/double)
+    - estado (string): completado | activo | pendiente | saltado
+    - horaLlegada (string|null)
+    - horaSalida (string|null)
+    - duracionFormateada (string)
+    - pacienteNombre (string)
+    - salaNombre (string|null)
+*@
+
+@model Dictionary<string, object?>
+
+@{
+    var id = Model?.GetValueOrDefault("id")?.ToString() ?? "";
+    var nombrePaso = Model?.GetValueOrDefault("nombrePaso")?.ToString() ?? "Paso";
+    var orden = Model?.GetValueOrDefault("orden") is double d ? (int)d : 0;
+    var estado = Model?.GetValueOrDefault("estado")?.ToString() ?? "pendiente";
+    var horaLlegada = Model?.GetValueOrDefault("horaLlegada")?.ToString() ?? "--:--";
+    var horaSalida = Model?.GetValueOrDefault("horaSalida")?.ToString() ?? "--:--";
+    var duracion = Model?.GetValueOrDefault("duracionFormateada")?.ToString() ?? "--:--";
+    var pacienteNombre = Model?.GetValueOrDefault("pacienteNombre")?.ToString() ?? "";
+    var salaNombre = Model?.GetValueOrDefault("salaNombre")?.ToString();
+
+    var estadoClass = estado switch
+    {
+        "completado" => "completado",
+        "activo" => "activo",
+        "saltado" => "saltado",
+        _ => "pendiente"
+    };
+
+    var icono = estado switch
+    {
+        "completado" => "bi-check-lg",
+        "activo" => "bi-arrow-right-circle",
+        "saltado" => "bi-forward",
+        _ => "bi-circle"
+    };
+
+    var badgeEstado = estado switch
+    {
+        "completado" => "badge-atendida",
+        "activo" => "badge-en-atencion",
+        "saltado" => "badge-en-espera",
+        _ => "badge-cancelada"
+    };
+
+    var estadoTexto = estado switch
+    {
+        "completado" => "Completado",
+        "activo" => "En Progreso",
+        "saltado" => "Saltado",
+        _ => "Pendiente"
+    };
+}
+
+<div class="timeline-paso" data-paso-id="@id" data-estado="@estado">
+    <div class="paso-circulo @estadoClass">
+        @if (estado == "completado") {
+            <i class="bi bi-check-lg" style="font-size:0.8rem;"></i>
+        } else if (estado == "activo") {
+            <i class="bi bi-play-fill" style="font-size:0.7rem;margin-left:1px;"></i>
+        } else {
+            @orden
+        }
+    </div>
+    <div class="paso-card @estadoClass">
+        <div class="paso-header">
+            <i class="bi @icono text-muted"></i>
+            <span class="paso-nombre">@nombrePaso</span>
+            <span class="badge @badgeEstado ms-1">@estadoTexto</span>
+            <span class="paso-duracion @(estado == "activo" ? "vivo" : "")" id="duracion-@id">
+                <i class="bi bi-hourglass me-1"></i>@duracion
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-3 small text-muted mb-2">
+            @if (!string.IsNullOrEmpty(pacienteNombre))
+            {
+                <span><i class="bi bi-person me-1"></i>@pacienteNombre</span>
+            }
+            @if (!string.IsNullOrEmpty(salaNombre))
+            {
+                <span><i class="bi bi-geo-alt me-1"></i>@salaNombre</span>
+            }
+            <span><i class="bi bi-clock me-1"></i>@horaLlegada - @horaSalida</span>
+        </div>
+        <div class="paso-acciones">
+            @if (estado == "pendiente") {
+                <button class="btn btn-primary btn-sm btn-iniciar-paso" data-paso-id="@id">
+                    <i class="bi bi-play-fill me-1"></i>Iniciar
+                </button>
+                <button class="btn btn-outline-warning btn-sm btn-saltar-paso" data-paso-id="@id">
+                    <i class="bi bi-forward me-1"></i>Saltar
+                </button>
+            } else if (estado == "activo") {
+                <button class="btn btn-success btn-sm btn-finalizar-paso" data-paso-id="@id">
+                    <i class="bi bi-check-lg me-1"></i>Finalizar
+                </button>
+            }
+        </div>
+    </div>
+</div>

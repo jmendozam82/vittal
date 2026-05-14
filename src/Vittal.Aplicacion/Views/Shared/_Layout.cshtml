@@ -1,88 +1,396 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Vittal.Aplicacion</title>
+    <meta name="vittal-token" content="@Context.Session?.GetString("AccessToken")" />
+    <title>@ViewData["Title"] - Software Vittal</title>
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" />
     <link rel="icon" type="image/png" sizes="96x96" href="~/images/favicon-96x96.png" />
     <link rel="shortcut icon" href="~/images/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="~/images/apple-touch-icon.png" />
     <link rel="manifest" href="~/images/site.webmanifest" />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Vittal.Aplicacion.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/vittal-variables.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/vittal.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        body {
+            font-family: var(--vittal-font);
+            background: var(--vittal-bg);
+            overflow-x: hidden;
+        }
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        .vittal-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 1.5rem 2rem;
+            transition: margin-left 0.3s ease;
+        }
+        @@media (max-width: 992px) {
+            .vittal-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+        .page-header h4 {
+            font-weight: 700;
+            color: var(--vittal-text);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: 0.82rem;
+        }
+        .breadcrumb-item a {
+            color: var(--vittal-primary);
+            text-decoration: none;
+        }
+        .breadcrumb-item.active {
+            color: var(--vittal-text-muted);
+        }
+        .btn-vittal-primary {
+            background: var(--vittal-primary);
+            color: #fff;
+            border: none;
+        }
+        .btn-vittal-primary:hover {
+            background: var(--vittal-primary-dark);
+            color: #fff;
+        }
+        .btn-vittal-deactivate {
+            background: var(--vittal-warning);
+            color: #fff;
+            border: none;
+        }
+        .btn-vittal-deactivate:hover {
+            background: #D68910;
+            color: #fff;
+        }
+    </style>
 </head>
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/vittal-logo.png" alt="Vittal" height="38" class="me-2" loading="lazy" />
-                    <span class="d-none d-sm-inline fw-semibold">Software Vittal</span>
+    @{
+        var areaCorriente = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+        var controladorCorriente = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    }
+
+    <script>
+        window.VITTAL_API_URL = '@(Context.Request.Scheme)://@(Context.Request.Host)/api';
+        window.VITTAL_API_HUB_URL = '@(Configuration["VittalApi:BaseUrl"] ?? "")';
+        window.VITTAL_CLINICA_ID = '@(Context.Session?.GetString("ClinicaId") ?? "")';
+        window.VITTAL_SUPABASE_URL = '@(Configuration["Supabase:Url"] ?? "")';
+        window.VITTAL_SUPABASE_ANON_KEY = '@(Configuration["Supabase:AnonKey"] ?? "")';
+    </script>
+
+    <div class="wrapper">
+        <!-- ── Sidebar ─────────────────────────────────────────────── -->
+        <nav class="vittal-sidebar" id="mainSidebar">
+            <div class="p-3 border-bottom border-secondary border-opacity-25">
+                <a class="d-flex align-items-center text-decoration-none" href="/">
+                    <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
+                    <span class="fw-bold text-white" style="font-size:1.1rem;">Vittal</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
-                                    <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <form asp-area="Login" asp-controller="Auth" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                    </ul>
+            </div>
+
+            <div class="flex-grow-1 overflow-auto py-2">
+                <div class="px-3 mb-1">
+                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Navegación</small>
+                </div>
+
+                <ul class="nav flex-column">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Dashboard" ? "active" : "")"
+                           asp-area="Dashboard" asp-controller="Dashboard" asp-action="Index"
+                           title="Dashboard">
+                            <i class="bi bi-grid-fill"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <!-- Línea de Tiempo -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "LineaTiempo" ? "active" : "")"
+                           asp-area="LineaTiempo" asp-controller="LineaTiempo" asp-action="Index"
+                           title="Línea de Tiempo">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Línea de Tiempo</span>
+                        </a>
+                    </li>
+                    <!-- Cola de Espera -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "ColaEspera" ? "active" : "")"
+                           asp-area="ColaEspera" asp-controller="ColaEspera" asp-action="Index"
+                           title="Cola de Espera">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Cola de Espera</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <hr class="mx-3 text-secondary opacity-25" />
+
+                <div class="px-3 mb-1">
+                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Gestión</small>
+                </div>
+
+                <ul class="nav flex-column">
+                    <!-- Administración -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Administracion" ? "active" : "")"
+                           asp-area="Administracion" asp-controller="Perfil" asp-action="Index"
+                           title="Administración">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>Administración</span>
+                        </a>
+                    </li>
+                    <!-- Catálogos -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Catalogos" ? "active" : "")"
+                           asp-area="Catalogos" asp-controller="Paciente" asp-action="Index"
+                           title="Catálogos">
+                            <i class="bi bi-bookmark-fill"></i>
+                            <span>Catálogos</span>
+                        </a>
+                    </li>
+                    <!-- Agenda -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Agenda" ? "active" : "")"
+                           asp-area="Agenda" asp-controller="Citas" asp-action="Index"
+                           title="Agenda">
+                            <i class="bi bi-calendar-event-fill"></i>
+                            <span>Agenda</span>
+                        </a>
+                    </li>
+                    <!-- Expedientes -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Expedientes" ? "active" : "")"
+                           asp-area="Expedientes" asp-controller="Expedientes" asp-action="Index"
+                           title="Expedientes">
+                            <i class="bi bi-folder-fill"></i>
+                            <span>Expedientes</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <hr class="mx-3 text-secondary opacity-25" />
+
+                <div class="px-3 mb-1">
+                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Reportes & Alertas</small>
+                </div>
+
+                <ul class="nav flex-column">
+                    <!-- Reportes -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Reportes" ? "active" : "")"
+                           asp-area="Reportes" asp-controller="Reportes" asp-action="Index"
+                           title="Reportes">
+                            <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                            <span>Reportes</span>
+                        </a>
+                    </li>
+                    <!-- Alertas -->
+                    <li class="nav-item">
+                        <a class="nav-link @(areaCorriente == "Alertas" ? "active" : "")"
+                           asp-area="Alertas" asp-controller="Alertas" asp-action="Index"
+                           title="Alertas y Notificaciones">
+                            <i class="bi bi-bell-fill"></i>
+                            <span>Alertas</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="p-3 border-top border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                         style="width:32px;height:32px;font-size:0.75rem;font-weight:600;color:#fff;">
+                        @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                    </div>
+                    <div class="flex-grow-1 min-width-0">
+                        <div class="text-white small text-truncate fw-medium">@(User.Identity?.Name ?? "Usuario")</div>
+                        <form asp-area="Login" asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-link text-secondary p-0 border-0"
+                                    style="font-size:0.72rem;text-decoration:none;">
+                                <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
-            <h4 class="mb-0">@ViewData["Title"]</h4>
-            @await RenderSectionAsync("HeaderActions", required: false)
-        </div>
-        @if (ViewData["Breadcrumb"] != null)
-        {
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb small mb-3">
-                    @Html.Raw(ViewData["Breadcrumb"])
-                </ol>
-            </nav>
-        }
-        <main role="main" class="pb-3">
+
+        <!-- ── Main Content ────────────────────────────────────────── -->
+        <main class="vittal-content" id="mainContent">
+            <!-- Top Bar -->
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    @if (ViewData["Title"] != null)
+                    {
+                        <h4 class="mb-0">@ViewData["Title"]</h4>
+                    }
+                    @if (ViewData["Breadcrumb"] != null)
+                    {
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                @Html.Raw(ViewData["Breadcrumb"])
+                            </ol>
+                        </nav>
+                    }
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    @await RenderSectionAsync("HeaderActions", required: false)
+
+                    <!-- Notification Bell -->
+                    <div class="dropdown">
+                        <button class="btn btn-light border position-relative rounded-circle d-flex align-items-center justify-content-center"
+                                style="width:40px;height:40px;" type="button"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false" title="Notificaciones">
+                            <i class="bi bi-bell-fill" style="color:var(--vittal-text-muted);"></i>
+                            <span class="navbar-badge d-none" id="notifBadge">0</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow notificaciones-dropdown" aria-labelledby="notifDropdown">
+                            <div class="dropdown-header-custom">
+                                <span class="fw-semibold"><i class="bi bi-bell-fill me-2 text-warning"></i>Notificaciones</span>
+                                <span class="badge bg-danger rounded-pill d-none" id="notifDropdownBadge">0</span>
+                            </div>
+                            <div id="notificacionesLista">
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="bi bi-bell-slash d-block fs-4 mb-2 opacity-50"></i>
+                                    Sin notificaciones
+                                </div>
+                            </div>
+                            <div class="dropdown-header-custom border-top justify-content-center">
+                                <a href="/Alertas/Alertas/Index" class="small text-decoration-none">
+                                    <i class="bi bi-gear me-1"></i>Configurar alertas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Container -->
+            <div id="vittal-toast-container" class="vittal-toast-container"></div>
+
+            <!-- Alerts from TempData -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["Warning"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Vittal.Aplicacion - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/vittal-api.js" asp-append-version="true"></script>
+    <script src="~/js/vittal-alerts.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Notifications dropdown loader
+        document.addEventListener('DOMContentLoaded', function () {
+            const notifBtn = document.querySelector('[data-bs-toggle="dropdown"][title="Notificaciones"]');
+            if (notifBtn) {
+                notifBtn.addEventListener('shown.bs.dropdown', function () {
+                    cargarNotificacionesDropdown();
+                });
+            }
+        });
+
+        async function cargarNotificacionesDropdown() {
+            const lista = document.getElementById('notificacionesLista');
+            const badge = document.getElementById('notifDropdownBadge');
+            if (!lista) return;
+
+            try {
+                const res = await fetch('/Dashboard/Dashboard/JsonUltimasNotificaciones', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json();
+
+                if (!json.success || !json.data || json.data.length === 0) {
+                    lista.innerHTML =
+                        '<div class="text-center py-4 text-muted small"><i class="bi bi-bell-slash d-block fs-4 mb-2 opacity-50"></i>Sin notificaciones</div>';
+                    if (badge) badge.classList.add('d-none');
+                    return;
+                }
+
+                if (badge) {
+                    badge.textContent = json.data.length;
+                    badge.classList.remove('d-none');
+                }
+
+                lista.innerHTML = json.data.map(function (n) {
+                    const noLeida = n.leida ? '' : 'no-leida';
+                    const icono = n.icono || 'bi-bell';
+                    const titulo = n.titulo || 'Notificación';
+                    const mensaje = n.mensaje || '';
+                    const tiempo = n.tiempoRelativo || '';
+                    return '<div class="notif-item ' + noLeida + '">' +
+                        '<div class="d-flex align-items-start gap-2">' +
+                        '<i class="bi ' + icono + ' text-warning mt-1"></i>' +
+                        '<div>' +
+                        '<div class="notif-titulo">' + escapeHtml(titulo) + '</div>' +
+                        (mensaje ? '<div class="notif-mensaje">' + escapeHtml(mensaje) + '</div>' : '') +
+                        (tiempo ? '<div class="notif-tiempo"><i class="bi bi-clock me-1"></i>' + escapeHtml(tiempo) + '</div>' : '') +
+                        '</div></div></div>';
+                }).join('');
+
+            } catch (err) {
+                console.warn('Error cargando notificaciones:', err);
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>

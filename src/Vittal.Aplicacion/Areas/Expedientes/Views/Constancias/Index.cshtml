@@ -1,0 +1,419 @@
+﻿@{
+    ViewData["Title"] = "Gestión de Constancias Médicas";
+
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Expedientes'>Expedientes</a></li>" +
+                             "<li class='breadcrumb-item active'>Constancias Médicas</li>";
+
+    var jsonListarUrl = Url.Action("JsonListar");
+    var crearUrl = Url.Action("Create");
+    var jsonPacientesUrl = Url.Action("JsonListarPacientes");
+    var desactivarUrl = Url.Action("JsonDesactivar");
+}
+
+@section HeaderActions {
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Nueva Constancia
+    </a>
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text"
+                           id="buscarConstancia"
+                           class="form-control"
+                           placeholder="Buscar por paciente, doctor o contenido..."
+                           autocomplete="off" />
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            id="btnLimpiarBusqueda"
+                            style="display: none;"
+                            title="Limpiar búsqueda">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select id="filtroExpediente" class="form-select">
+                    <option value="">Todos los pacientes</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-center justify-content-between mt-2 mt-md-0">
+                <small class="text-muted" id="contadorResultados"></small>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggleInactivos">
+                    <label class="form-check-label small" for="toggleInactivos">
+                        Mostrar anuladas
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de datos -->
+        <div id="tablaContainer">
+            <div class="d-flex justify-content-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación de anular -->
+<div class="modal fade" id="modalAnular" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Confirmar anulación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    ¿Está seguro que desea anular esta constancia?
+                    <br><small class="text-muted">
+                        Esta acción es irreversible. La constancia quedará como anulada.
+                    </small>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarAnular">
+                    <i class="bi bi-slash-circle me-1"></i> Anular
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // URLs seguras desde el servidor
+    const URLS = {
+        listar: '@jsonListarUrl',
+        crear: '@crearUrl',
+        desactivar: '@desactivarUrl',
+        pacientes: '@jsonPacientesUrl'
+    };
+
+    let constancias = [];
+    let idSeleccionado = null;
+    let terminoBusqueda = '';
+    let mostrarInactivos = false;
+    let debounceTimer = null;
+    const modalAnular = new bootstrap.Modal(document.getElementById('modalAnular'));
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarConstancias();
+        inicializarBuscador();
+        inicializarFiltroExpediente();
+
+        // Toggle para mostrar/ocultar inactivos
+        document.getElementById('toggleInactivos').addEventListener('change', function() {
+            mostrarInactivos = this.checked;
+            aplicarFiltro();
+        });
+
+        // Cambio en filtro de expediente
+        document.getElementById('filtroExpediente').addEventListener('change', function() {
+            cargarConstancias();
+        });
+    });
+
+    function inicializarBuscador() {
+        const input = document.getElementById('buscarConstancia');
+        const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+
+        if (!input) return;
+
+        input.addEventListener('input', function() {
+            const valor = this.value.trim();
+            btnLimpiar.style.display = valor ? 'inline-block' : 'none';
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                terminoBusqueda = valor.toLowerCase();
+                aplicarFiltro();
+            }, 300);
+        });
+
+        btnLimpiar.addEventListener('click', function() {
+            input.value = '';
+            this.style.display = 'none';
+            terminoBusqueda = '';
+            aplicarFiltro();
+            input.focus();
+        });
+    }
+
+    async function inicializarFiltroExpediente() {
+        try {
+            const res = await fetch(URLS.pacientes);
+            const json = await res.json();
+
+            if (json.success && json.data) {
+                const select = document.getElementById('filtroExpediente');
+                json.data.forEach(function(exp) {
+                    const pacienteNombre = exp.pacienteNombre || 'Sin nombre';
+                    const option = document.createElement('option');
+                    option.value = exp.id;
+                    option.textContent = pacienteNombre;
+                    select.appendChild(option);
+                });
+            }
+        } catch (err) {
+            console.warn('Error al cargar pacientes para filtro:', err);
+        }
+    }
+
+    function aplicarFiltro() {
+        if (constancias.length === 0) return;
+
+        let filtrados = constancias;
+
+        // Filtro por estado (activo/inactivo)
+        if (!mostrarInactivos) {
+            filtrados = filtrados.filter(function(c) {
+                return c.activo !== false;
+            });
+        }
+
+        // Filtro por búsqueda
+        if (terminoBusqueda) {
+            filtrados = filtrados.filter(function(c) {
+                const paciente = (c.pacienteNombre || '').toLowerCase();
+                const doctor = (c.doctorNombre || '').toLowerCase();
+                const contenido = (c.contenido || '').toLowerCase();
+                const tipo = (c.tipoConstancia || '').toLowerCase();
+                return paciente.includes(terminoBusqueda) ||
+                       doctor.includes(terminoBusqueda) ||
+                       contenido.includes(terminoBusqueda) ||
+                       tipo.includes(terminoBusqueda);
+            });
+        }
+
+        renderTabla(filtrados);
+        actualizarContador(filtrados.length, constancias.length);
+    }
+
+    function actualizarContador(mostrados, total) {
+        const el = document.getElementById('contadorResultados');
+        if (!el) return;
+
+        if (!terminoBusqueda && mostrarInactivos) {
+            el.textContent = mostrados + ' de ' + total + ' constancias';
+            return;
+        }
+
+        if (!terminoBusqueda) {
+            el.textContent = '';
+            return;
+        }
+
+        el.textContent = mostrados + ' de ' + total + ' constancias mostradas';
+    }
+
+    async function cargarConstancias() {
+        try {
+            const expedienteId = document.getElementById('filtroExpediente').value;
+            let url = URLS.listar;
+            if (expedienteId) {
+                url += '?expedienteId=' + expedienteId;
+            }
+
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!res.ok) {
+                mostrarError('No se pudo conectar con el servidor.');
+                return;
+            }
+
+            const json = await res.json();
+
+            if (!json.success) {
+                mostrarError(json.message || 'Error al cargar las constancias.');
+                return;
+            }
+
+            constancias = json.data || [];
+            aplicarFiltro();
+        } catch (err) {
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+        }
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('tablaContainer').innerHTML = `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarConstancias()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+                </button>
+            </div>`;
+    }
+
+    function renderTabla(items) {
+        if (items.length === 0) {
+            const hayDatos = constancias.length > 0;
+            const mensaje = hayDatos
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron constancias registradas.';
+            const accion = hayDatos
+                ? ''
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera constancia</a>';
+
+            document.getElementById('tablaContainer').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    ${mensaje}
+                    ${accion}
+                </div>`;
+            return;
+        }
+
+        const filas = items.map(function(c) {
+            const activo = c.activo !== false;
+            const estadoBadge = activo
+                ? '<span class="badge bg-success">Activa</span>'
+                : '<span class="badge bg-secondary">Anulada</span>';
+
+            const rowClass = activo ? '' : 'opacity-75';
+
+            const tiposConstancia = {
+                'ASISTENCIA': 'Asistencia',
+                'INCAPACIDAD': 'Incapacidad',
+                'REFERENCIA': 'Referencia',
+                'JUSTIFICANTE': 'Justificante'
+            };
+            const tipoLabel = tiposConstancia[c.tipoConstancia] || c.tipoConstancia || '—';
+            const tipoBadge = '<span class="badge bg-info">' + escapeHtml(tipoLabel) + '</span>';
+
+            // Resumir contenido (máximo 80 caracteres)
+            const contenidoResumen = c.contenido
+                ? escapeHtml(c.contenido.length > 80 ? c.contenido.substring(0, 80) + '...' : c.contenido)
+                : '—';
+
+            const fechaEmision = c.fechaEmision
+                ? new Date(c.fechaEmision).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })
+                : '—';
+
+            return `
+            <tr class="${rowClass}">
+                <td><strong>${escapeHtml(c.pacienteNombre || '—')}</strong></td>
+                <td>${escapeHtml(c.doctorNombre || '—')}</td>
+                <td class="text-center">${tipoBadge}</td>
+                <td class="text-muted small">${fechaEmision}</td>
+                <td class="text-muted small">${contenidoResumen}</td>
+                <td class="text-center">${estadoBadge}</td>
+                <td class="text-end">
+                    <a href="/Expedientes/Constancias/Details/${c.id}"
+                       class="btn btn-outline-info btn-sm me-1" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    ${activo ? `
+                    <button class="btn btn-outline-warning btn-sm"
+                            onclick="confirmarAnular('${c.id}')"
+                            title="Anular constancia">
+                        <i class="bi bi-slash-circle"></i>
+                    </button>` : ''}
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('tablaContainer').innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Doctor</th>
+                            <th class="text-center">Tipo</th>
+                            <th>Fecha Emisión</th>
+                            <th>Contenido</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function confirmarAnular(id) {
+        idSeleccionado = id;
+        modalAnular.show();
+    }
+
+    document.getElementById('btnConfirmarAnular').addEventListener('click', async () => {
+        if (!idSeleccionado) return;
+
+        const btn = document.getElementById('btnConfirmarAnular');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Anulando...';
+
+        try {
+            const res = await fetch(URLS.desactivar + '?id=' + idSeleccionado, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast(json.message || 'Constancia anulada exitosamente.', 'success');
+                await cargarConstancias();
+            } else {
+                showToast(json.message || 'Error al anular la constancia.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión al anular.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Anular';
+            modalAnular.hide();
+            idSeleccionado = null;
+        }
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

@@ -1,0 +1,332 @@
+@{
+    ViewData["Title"] = "Alertas y Notificaciones";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item active'>Alertas</li>";
+
+    var config = ViewBag.ConfiguracionAlertas as Dictionary<string, object?>;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-alerts.css" asp-append-version="true" />
+}
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h4 class="mb-0 fw-bold">
+        <i class="bi bi-bell-fill text-warning me-2"></i>Alertas y Notificaciones
+    </h4>
+    <div>
+        <button class="btn btn-outline-primary btn-sm" id="btnVerificarAhora" title="Ejecutar verificación manual">
+            <i class="bi bi-shield-check me-1"></i>Verificar ahora
+        </button>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- ── Configuración ──────────────────────────────────────────── -->
+    <div class="col-lg-5">
+        <div class="config-alertas">
+            <div class="config-title">
+                <i class="bi bi-gear-fill"></i> Configuración de Alertas
+            </div>
+            <form id="formConfiguracion" novalidate>
+                <div class="mb-3">
+                    <label class="form-label fw-medium small">
+                        Tiempo máximo de espera <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" id="configTiempoMaximo" class="form-control"
+                               value="@(config?.GetValueOrDefault("tiempoEsperaMaximoMinutos")?.ToString() ?? "30")"
+                               min="1" max="999" required />
+                        <span class="input-group-text">minutos</span>
+                    </div>
+                    <div class="invalid-feedback">Ingrese un valor entre 1 y 999 minutos.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium small">Intervalo de revisión</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" id="configIntervalo" class="form-control"
+                               value="@(config?.GetValueOrDefault("intervaloRevisionSegundos")?.ToString() ?? "60")"
+                               min="10" max="300" />
+                        <span class="input-group-text">segundos</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="configActivo"
+                        @(config?.GetValueOrDefault("activo") is true ? "checked" : "") />
+                        <label class="form-check-label small" for="configActivo">
+                            Alertas activas
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="configSonido"
+                        @(config?.GetValueOrDefault("notificacionSonido") is true ? "checked" : "") />
+                        <label class="form-check-label small" for="configSonido">
+                            Notificación con sonido
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-vittal-primary w-100" id="btnGuardarConfig">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Configuración
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Alertas Activas ────────────────────────────────────────── -->
+    <div class="col-lg-7">
+        <div class="vittal-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Alertas Activas
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <select id="filtroAlertas" class="form-select form-select-sm" style="width:auto;">
+                        <option value="no-resueltas">No resueltas</option>
+                        <option value="todas">Todas</option>
+                        <option value="resueltas">Resueltas</option>
+                    </select>
+                    <span class="badge bg-danger rounded-pill" id="contadorAlertasNoResueltas">0</span>
+                </div>
+            </div>
+            <div id="listaAlertas" style="max-height:500px;overflow-y:auto;">
+                <div class="text-center py-5 text-muted">
+                    <div class="vittal-spinner mx-auto"></div>
+                    <p class="small mt-2">Cargando alertas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            'use strict';
+
+            const DOM = {
+                formConfig: document.getElementById('formConfiguracion'),
+                btnGuardarConfig: document.getElementById('btnGuardarConfig'),
+                configTiempoMaximo: document.getElementById('configTiempoMaximo'),
+                configIntervalo: document.getElementById('configIntervalo'),
+                configActivo: document.getElementById('configActivo'),
+                configSonido: document.getElementById('configSonido'),
+                listaAlertas: document.getElementById('listaAlertas'),
+                filtroAlertas: document.getElementById('filtroAlertas'),
+                contadorAlertas: document.getElementById('contadorAlertasNoResueltas'),
+                btnVerificarAhora: document.getElementById('btnVerificarAhora')
+            };
+
+            document.addEventListener('DOMContentLoaded', function() {
+                cargarAlertas();
+
+                DOM.formConfig.addEventListener('submit', guardarConfiguracion);
+
+                DOM.filtroAlertas.addEventListener('change', cargarAlertas);
+
+                DOM.btnVerificarAhora.addEventListener('click', verificarAlertas);
+            });
+
+            async function guardarConfiguracion(e) {
+                e.preventDefault();
+
+                if (!DOM.formConfig.checkValidity()) {
+                    DOM.formConfig.classList.add('was-validated');
+                    return;
+                }
+
+                const btn = DOM.btnGuardarConfig;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+                try {
+                    const res = await fetch('@Url.Action("JsonGuardarConfiguracion")', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tiempoEsperaMaximoMinutos: parseInt(DOM.configTiempoMaximo.value) || 30,
+                            activo: DOM.configActivo.checked,
+                            notificacionSonido: DOM.configSonido.checked,
+                            intervaloRevisionSegundos: parseInt(DOM.configIntervalo.value) || 60
+                        })
+                    });
+
+                    const json = await res.json();
+
+                    if (res.ok && json.success) {
+                        showToast(json.message || 'Configuración guardada exitosamente.', 'success');
+                    } else {
+                        showToast(json.message || 'Error al guardar configuración.', 'danger');
+                    }
+                } catch (err) {
+                    showToast('Error de conexión al guardar configuración.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Configuración';
+                }
+            }
+
+            async function cargarAlertas() {
+                const filtro = DOM.filtroAlertas.value;
+                let endpoint = '@Url.Action("JsonAlertas")';
+
+                if (filtro === 'no-resueltas') {
+                    endpoint = '@Url.Action("JsonAlertasActivas")';
+                } else if (filtro === 'resueltas') {
+                    endpoint += '?resuelta=true';
+                }
+
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const json = await res.json();
+
+                    if (!json.success) {
+                        DOM.listaAlertas.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p class="small">Error al cargar alertas.</p></div>';
+                        return;
+                    }
+
+                    const alertas = json.data || [];
+                    renderizarAlertas(alertas);
+                } catch (err) {
+                    DOM.listaAlertas.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p class="small">Error de conexión.</p></div>';
+                }
+            }
+
+            function renderizarAlertas(alertas) {
+                if (alertas.length === 0) {
+                    DOM.listaAlertas.innerHTML =
+                        '<div class="empty-state"><i class="bi bi-bell-slash"></i><p class="small">No hay alertas.</p></div>';
+                    DOM.contadorAlertas.textContent = '0';
+                    return;
+                }
+
+                const noResueltas = alertas.filter(function(a) { return !a.resuelta; });
+                DOM.contadorAlertas.textContent = noResueltas.length;
+
+                DOM.listaAlertas.innerHTML = alertas.map(function(a) {
+                    const resuelta = a.resuelta ? 'resuelta' : '';
+                    const minutos = a.minutosEspera || 0;
+                    const paciente = a.pacienteNombre || 'Paciente';
+                    const doctor = a.doctorNombre || '—';
+                    const sala = a.salaNombre || '—';
+                    var fecha = a.fechaAlerta ? new Date(a.fechaAlerta + 'Z').toLocaleString('es-MX') : '—';
+
+                    return `
+                        <div class="alerta-card ${resuelta}">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-bell-fill text-warning mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <div class="alerta-paciente">${escapeHtml(paciente)}</div>
+                                    <div class="alerta-detalle">
+                                        <i class="bi bi-clock me-1"></i>${minutos} min de espera
+                                        &middot; Dr. ${escapeHtml(doctor)}
+                                        ${sala !== '—' ? `&middot; ${escapeHtml(sala)}` : ''}
+                                    </div>
+                                    <div class="alerta-detalle">
+                                        <i class="bi bi-calendar me-1"></i>${fecha}
+                                    </div>
+                                    ${!a.resuelta ? `
+                                    <div class="alerta-accion">
+                                        <button class="btn btn-success btn-sm btn-resolver-alerta"
+                                                data-alerta-id="${escapeHtml(a.id)}">
+                                            <i class="bi bi-check-lg me-1"></i>Resolver
+                                        </button>
+                                    </div>` : `
+                                    <div class="alerta-detalle">
+                                        <span class="badge bg-secondary">Resuelta</span>
+                                    </div>`}
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                // Bind resolver buttons
+                document.querySelectorAll('.btn-resolver-alerta').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        resolverAlerta(this.dataset.alertaId, this);
+                    });
+                });
+            }
+
+            async function resolverAlerta(alertaId, btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+
+                try {
+                    const res = await fetch('@Url.Action("JsonResolverAlerta")?alertaId=' + alertaId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const json = await res.json();
+
+                    if (res.ok && json.success) {
+                        showToast('Alerta resuelta correctamente.', 'success');
+                        await cargarAlertas();
+                    } else {
+                        showToast(json.message || 'Error al resolver alerta.', 'danger');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Resolver';
+                    }
+                } catch (err) {
+                    showToast('Error de conexión.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Resolver';
+                }
+            }
+
+            async function verificarAlertas() {
+                const btn = DOM.btnVerificarAhora;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Verificando...';
+
+                try {
+                    const res = await fetch('@Url.Action("JsonVerificarAlertas")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const json = await res.json();
+
+                    if (res.ok && json.success) {
+                        showToast(json.message || 'Verificación completada.', 'success');
+                        await cargarAlertas();
+                    } else {
+                        showToast(json.message || 'Error al verificar.', 'danger');
+                    }
+                } catch (err) {
+                    showToast('Error de conexión.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-shield-check me-1"></i>Verificar ahora';
+                }
+            }
+
+            function showToast(message, type) {
+                var container = document.getElementById('vittal-toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'vittal-toast-container';
+                    container.className = 'vittal-toast-container';
+                    document.body.appendChild(container);
+                }
+                var toast = document.createElement('div');
+                toast.className = 'toast-item alert alert-' + (type === 'success' ? 'success' : 'danger') +
+                    ' alert-dismissible fade show shadow-sm';
+                var icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+                toast.innerHTML = '<i class="bi ' + icon + ' me-2"></i>' + escapeHtml(message) +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                container.appendChild(toast);
+                setTimeout(function() { toast.remove(); }, 5000);
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+            }
+        })();
+    </script>
+}

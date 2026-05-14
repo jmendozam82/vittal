@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Vittal.DTO\Vittal.DTO.csproj" />
     <ProjectReference Include="..\Vittal.Entity\Vittal.Entity.csproj" />
     <ProjectReference Include="..\Vittal.Utility\Vittal.Utility.csproj" />
   </ItemGroup>

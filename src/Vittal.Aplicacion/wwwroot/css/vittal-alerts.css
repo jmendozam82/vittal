@@ -1,0 +1,149 @@
+/* src/Vittal.Aplicacion/wwwroot/css/vittal-alerts.css */
+
+/* ─── Badge de notificaciones en navbar ──────────────────────── */
+.navbar-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--vittal-danger);
+    color: #fff;
+    font-weight: 700;
+    animation: badge-pop 0.3s ease;
+}
+@keyframes badge-pop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ─── Toast Container ─────────────────────────────────────────── */
+.vittal-toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+.vittal-toast-container .toast-item {
+    pointer-events: auto;
+    min-width: 320px;
+    max-width: 450px;
+    animation: toast-slideIn 0.3s ease;
+}
+@keyframes toast-slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* ─── Alerta card ─────────────────────────────────────────────── */
+.alerta-card {
+    border-left: 4px solid var(--vittal-warning);
+    border-radius: var(--vittal-radius);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.6rem;
+    background: #FFFBF0;
+    transition: all 0.2s ease;
+}
+.alerta-card:hover {
+    background: #FFF3D6;
+}
+.alerta-card.resuelta {
+    border-left-color: var(--vittal-secondary);
+    opacity: 0.6;
+}
+.alerta-card .alerta-paciente {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+.alerta-card .alerta-detalle {
+    font-size: 0.78rem;
+    color: var(--vittal-text-muted);
+    margin-top: 0.15rem;
+}
+.alerta-card .alerta-accion {
+    margin-top: 0.5rem;
+}
+
+/* ─── Config Section ──────────────────────────────────────────── */
+.config-alertas {
+    background: var(--vittal-bg-card);
+    border: 1px solid var(--vittal-border);
+    border-radius: var(--vittal-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--vittal-shadow);
+}
+.config-alertas .config-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.config-alertas .config-title i {
+    color: var(--vittal-warning);
+}
+
+/* ─── Contenedor del dropdown de notificaciones ───────────────── */
+.notificaciones-dropdown {
+    width: 380px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 0;
+}
+.notificaciones-dropdown .dropdown-header-custom {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--vittal-border);
+    font-weight: 600;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.notificaciones-dropdown .notif-item {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.notificaciones-dropdown .notif-item:hover {
+    background: var(--vittal-primary-light);
+}
+.notificaciones-dropdown .notif-item:last-child {
+    border-bottom: none;
+}
+.notificaciones-dropdown .notif-item .notif-titulo {
+    font-weight: 500;
+    font-size: 0.82rem;
+}
+.notificaciones-dropdown .notif-item .notif-mensaje {
+    font-size: 0.76rem;
+    color: var(--vittal-text-muted);
+}
+.notificaciones-dropdown .notif-item .notif-tiempo {
+    font-size: 0.7rem;
+    color: var(--vittal-text-muted);
+    margin-top: 0.15rem;
+}
+.notificaciones-dropdown .notif-item.no-leida {
+    background: #F0F7FF;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 576px) {
+    .notificaciones-dropdown {
+        width: 300px;
+    }
+}

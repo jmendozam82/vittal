@@ -1,0 +1,779 @@
+@{
+
+    ViewData["Title"] = "Gestión de Tipos de Antecedente";
+
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
+                             "<li class='breadcrumb-item'>Catálogos</li>" +
+
+                             "<li class='breadcrumb-item active'>Tipos de Antecedente</li>";
+
+    var jsonListarUrl = Url.Action("JsonListar");
+
+    var jsonSalasUrl = Url.Action("JsonSalas");
+
+    var crearTipoAntecedenteUrl = Url.Action("Create");
+
+}
+
+
+@section HeaderActions {
+
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Tipo de Antecedente
+
+    </a>
+
+}
+
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-body">
+
+        <!-- Selector de Sala -->
+
+        <div class="row mb-3">
+
+            <div class="col-md-6">
+
+                <label for="selectSala" class="form-label fw-semibold">
+
+                    <i class="bi bi-building me-1"></i> Sala / Especialidad <span class="text-danger">*</span>
+
+                </label>
+
+                <select id="selectSala" class="form-select" required>
+
+                    <option value="">-- Seleccione una sala --</option>
+
+                </select>
+
+                <small class="text-muted">Seleccione una sala para ver sus tipos de antecedente</small>
+
+            </div>
+
+        </div>
+
+        <!-- Buscador (visible solo cuando hay sala seleccionada) -->
+
+        <div class="row mb-3" id="filtrosRow" style="display:none;">
+
+            <div class="col-md-6">
+
+                <div class="input-group">
+
+                    <span class="input-group-text bg-white">
+
+                        <i class="bi bi-search text-muted"></i>
+
+                    </span>
+
+                    <input type="text"
+
+                           id="buscarTipoAntecedente"
+
+                           class="form-control"
+
+                           placeholder="Buscar por nombre o categoría..."
+
+                           autocomplete="off" />
+
+                    <button type="button"
+
+                            class="btn btn-outline-secondary"
+
+                            id="btnLimpiarBusqueda"
+
+                            style="display: none;"
+
+                            title="Limpiar búsqueda">
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6 d-flex align-items-center justify-content-between mt-2 mt-md-0">
+
+                <small class="text-muted" id="contadorResultados"></small>
+
+                <div class="form-check form-switch">
+
+                    <input class="form-check-input" type="checkbox" id="toggleInactivos">
+
+                    <label class="form-check-label small" for="toggleInactivos">
+
+                        Mostrar inactivos
+
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Tabla de datos -->
+
+        <div id="tablaContainer">
+
+            <div class="d-flex justify-content-center p-4">
+
+                <div class="text-center text-muted">
+
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+
+                    <p>Seleccione una sala para visualizar sus tipos de antecedente.</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Modal de confirmación de desactivar -->
+
+<div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header border-0 pb-0">
+
+                <h5 class="modal-title">
+
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+
+                    Confirmar desactivación
+
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <p class="mb-0">
+
+                    ¿Está seguro que desea desactivar el tipo de antecedente
+
+                    <strong id="nombreTipoAntecedenteDesactivar"></strong>?
+
+                    <br><small class="text-muted">
+
+                        El registro no será eliminado, solo quedará inactivo.
+
+                    </small>
+
+                </p>
+
+            </div>
+
+            <div class="modal-footer border-0">
+
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+                <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarDesactivar">
+
+                    <i class="bi bi-slash-circle me-1"></i> Desactivar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+<script>
+
+    // URLs seguras desde el servidor
+
+    const URLS = {
+
+        listar: '@jsonListarUrl',
+
+        salas: '@jsonSalasUrl',
+
+        crear: '@crearTipoAntecedenteUrl',
+
+        desactivar: '@Url.Action("JsonDesactivar")'
+
+    };
+
+
+    let tiposAntecedente = [];
+
+    let idSeleccionado = null;
+
+    let salaSeleccionada = '';
+
+    let terminoBusqueda = '';
+
+    let mostrarInactivos = false;
+
+    let debounceTimer = null;
+
+    const modalDesactivar = new bootstrap.Modal(document.getElementById('modalDesactivar'));
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        cargarSalas();
+
+        inicializarSelectorSala();
+
+        inicializarBuscador();
+
+
+        document.getElementById('toggleInactivos').addEventListener('change', function() {
+
+            mostrarInactivos = this.checked;
+
+            if (salaSeleccionada) {
+
+                cargarTiposAntecedente();
+
+            }
+
+        });
+
+    });
+
+
+    async function cargarSalas() {
+
+        try {
+
+            const res = await fetch(URLS.salas, {
+
+                headers: { 'Content-Type': 'application/json' }
+
+            });
+
+
+            if (!res.ok) {
+
+                console.error('Error al cargar salas');
+
+                return;
+
+            }
+
+
+            const json = await res.json();
+
+
+            if (!json.success) {
+
+                console.error(json.message || 'Error al cargar salas');
+
+                return;
+
+            }
+
+
+            const select = document.getElementById('selectSala');
+
+            const salas = json.data || [];
+
+            salas.forEach(function(s) {
+
+                const option = document.createElement('option');
+
+                option.value = s.id;
+
+                option.textContent = s.nombre || '';
+
+                select.appendChild(option);
+
+            });
+
+        } catch (err) {
+
+            console.error('Error de conexión al cargar salas');
+
+        }
+
+    }
+
+
+    function inicializarSelectorSala() {
+
+        document.getElementById('selectSala').addEventListener('change', function() {
+
+            salaSeleccionada = this.value;
+
+            document.getElementById('filtrosRow').style.display = salaSeleccionada ? 'flex' : 'none';
+
+            terminoBusqueda = '';
+
+            document.getElementById('buscarTipoAntecedente').value = '';
+
+            document.getElementById('btnLimpiarBusqueda').style.display = 'none';
+
+            if (salaSeleccionada) {
+
+                cargarTiposAntecedente();
+
+            } else {
+
+                document.getElementById('tablaContainer').innerHTML = `
+
+                    <div class="d-flex justify-content-center p-4">
+
+                        <div class="text-center text-muted">
+
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+
+                            <p>Seleccione una sala para visualizar sus tipos de antecedente.</p>
+
+                        </div>
+
+                    </div>`;
+
+            }
+
+        });
+
+    }
+
+
+    function inicializarBuscador() {
+
+        const input = document.getElementById('buscarTipoAntecedente');
+
+        const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+
+
+        if (!input) return;
+
+
+        input.addEventListener('input', function() {
+
+            const valor = this.value.trim();
+
+            btnLimpiar.style.display = valor ? 'inline-block' : 'none';
+
+
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(function() {
+
+                terminoBusqueda = valor.toLowerCase();
+
+                filtrarEnCliente();
+
+            }, 300);
+
+        });
+
+
+        btnLimpiar.addEventListener('click', function() {
+
+            input.value = '';
+
+            this.style.display = 'none';
+
+            terminoBusqueda = '';
+
+            filtrarEnCliente();
+
+            input.focus();
+
+        });
+
+    }
+
+
+    function filtrarEnCliente() {
+
+        if (!salaSeleccionada) return;
+
+        const filtrados = tiposAntecedente.filter(function(m) {
+
+            const nombre = (m.nombre || '').toLowerCase();
+
+            const categoria = (m.categoria || '').toLowerCase();
+
+            const coincideTexto = !terminoBusqueda || nombre.includes(terminoBusqueda) || categoria.includes(terminoBusqueda);
+
+            const coincideEstado = mostrarInactivos || m.activo !== false;
+
+            return coincideTexto && coincideEstado;
+
+        });
+
+        renderTabla(filtrados);
+
+        actualizarContador(filtrados.length, tiposAntecedente.length, !!terminoBusqueda);
+
+    }
+
+
+    function actualizarContador(mostrados, total, esBusqueda) {
+
+        const el = document.getElementById('contadorResultados');
+
+        if (!el) return;
+
+
+        if (esBusqueda && terminoBusqueda) {
+
+            el.textContent = mostrados + ' de ' + total + ' tipos de antecedente encontrados';
+
+        } else {
+
+            el.textContent = '';
+
+        }
+
+    }
+
+
+    async function cargarTiposAntecedente() {
+
+        try {
+
+            const url = `${URLS.listar}?salaId=${salaSeleccionada}`;
+
+            const res = await fetch(url, {
+
+                headers: { 'Content-Type': 'application/json' }
+
+            });
+
+
+            if (!res.ok) {
+
+                mostrarError('No se pudo conectar con el servidor.');
+
+                return;
+
+            }
+
+
+            const json = await res.json();
+
+
+            if (!json.success) {
+
+                mostrarError(json.message || 'Error al cargar los tipos de antecedente.');
+
+                return;
+
+            }
+
+
+            tiposAntecedente = json.data || [];
+
+            filtrarEnCliente();
+
+        } catch (err) {
+
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+
+        }
+
+    }
+
+
+    function mostrarError(mensaje) {
+
+        document.getElementById('tablaContainer').innerHTML = `
+
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+
+                <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+            </div>
+
+            <div class="text-center mt-3">
+
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarTiposAntecedente()">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+
+                </button>
+
+            </div>`;
+
+    }
+
+
+    function renderTabla(items) {
+
+        if (items.length === 0) {
+
+            const hayDatos = tiposAntecedente.length > 0;
+
+            const mensaje = hayDatos
+
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron tipos de antecedente registrados para esta sala.';
+
+            const accion = hayDatos
+
+                ? ''
+
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primer tipo de antecedente</a>';
+
+
+            document.getElementById('tablaContainer').innerHTML = `
+
+                <div class="text-center py-5 text-muted">
+
+                    ${mensaje}
+
+                    ${accion}
+
+                </div>`;
+
+            return;
+
+        }
+
+
+        const filas = items.map(m => {
+
+            const nombre = m.nombre || '';
+
+            const categoria = m.categoria || '—';
+
+            const tipoDato = m.tipoDato || '—';
+
+            const orden = m.orden || 0;
+
+            const estadoBadge = m.activo
+
+                ? '<span class="badge bg-success">Activo</span>'
+
+                : '<span class="badge bg-secondary">Inactivo</span>';
+
+
+            const rowClass = m.activo ? '' : 'opacity-75';
+
+
+            return `
+
+            <tr class="${rowClass}">
+
+                <td>
+
+                    <strong>${escapeHtml(nombre)}</strong>
+
+                    ${m.id ? '<br><small class="text-muted" style="font-size:0.7rem;">' + m.id.substring(0, 8) + '...</small>' : ''}
+
+                </td>
+
+                <td class="text-muted small">${escapeHtml(categoria)}</td>
+
+                <td class="text-center"><span class="badge bg-info text-dark">${escapeHtml(tipoDato)}</span></td>
+
+                <td class="text-center">${orden}</td>
+
+                <td class="text-center">${estadoBadge}</td>
+
+                <td class="text-end">
+
+                    <a href="/Catalogos/TipoAntecedente/Edit/${m.id}"
+
+                       class="btn btn-outline-primary btn-sm me-1" title="Editar">
+
+                        <i class="bi bi-pencil"></i>
+
+                    </a>
+
+                    ${m.activo ? `
+
+                    <button class="btn btn-outline-warning btn-sm"
+
+                            onclick="confirmarDesactivar('${m.id}', '${escapeHtml(nombre)}')"
+
+                            title="Desactivar">
+
+                        <i class="bi bi-slash-circle"></i>
+
+                    </button>` : ''}
+
+                </td>
+
+            </tr>`;
+
+        }).join('');
+
+
+        document.getElementById('tablaContainer').innerHTML = `
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Nombre</th>
+
+                            <th>Categoría</th>
+
+                            <th class="text-center">Tipo Dato</th>
+
+                            <th class="text-center">Orden</th>
+
+                            <th class="text-center">Estado</th>
+
+                            <th class="text-end">Acciones</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>${filas}</tbody>
+
+                </table>
+
+            </div>`;
+
+    }
+
+
+    function confirmarDesactivar(id, nombre) {
+
+        idSeleccionado = id;
+
+        document.getElementById('nombreTipoAntecedenteDesactivar').textContent = nombre;
+
+        modalDesactivar.show();
+
+    }
+
+
+    document.getElementById('btnConfirmarDesactivar').addEventListener('click', async () => {
+
+        if (!idSeleccionado) return;
+
+
+        const btn = document.getElementById('btnConfirmarDesactivar');
+
+        btn.disabled = true;
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Desactivando...';
+
+
+        try {
+
+            const res = await fetch(`${URLS.desactivar}?id=${idSeleccionado}`, {
+
+                method: 'PATCH',
+
+                headers: { 'Content-Type': 'application/json' }
+
+            });
+
+
+            const json = await res.json();
+
+
+            if (res.ok && json.success) {
+
+                showToast(json.message || 'Tipo de antecedente desactivado exitosamente.', 'success');
+
+                await cargarTiposAntecedente();
+
+            } else {
+
+                showToast(json.message || 'Error al desactivar el tipo de antecedente.', 'danger');
+
+            }
+
+        } catch (err) {
+
+            showToast('Error de conexión al desactivar.', 'danger');
+
+        } finally {
+
+            btn.disabled = false;
+
+            btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Desactivar';
+
+            modalDesactivar.hide();
+
+            idSeleccionado = null;
+
+        }
+
+    });
+
+
+    function escapeHtml(text) {
+
+        if (!text) return '';
+
+        const div = document.createElement('div');
+
+        div.textContent = text;
+
+        return div.innerHTML;
+
+    }
+
+
+    function showToast(message, type) {
+
+        const container = document.getElementById('toastContainer') || createToastContainer();
+
+        const toast = document.createElement('div');
+
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
+        container.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 5000);
+
+    }
+
+
+    function createToastContainer() {
+
+        const div = document.createElement('div');
+
+        div.id = 'toastContainer';
+
+        document.body.appendChild(div);
+
+        return div;
+
+    }
+
+</script>
+
+}

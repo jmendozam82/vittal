@@ -29,6 +29,12 @@ public class Cita
     /// <summary>Hora en que el paciente llegó a la clínica.</summary>
     public TimeSpan? HoraLlegada { get; set; }
 
+    /// <summary>Hora en que finalizó la atención médica (TIME nullable).</summary>
+    public TimeSpan? HoraFinAtencion { get; set; }
+
+    /// <summary>ID del paso activo actual en la línea de tiempo (nullable).</summary>
+    public Guid? LineaTiempoActivoId { get; set; }
+
     // ── Campos de negocio ─────────────────────────────────────────
     /// <summary>Lugar o sala física donde se atiende la cita.</summary>
     public string? Lugar { get; set; }
@@ -61,4 +67,8 @@ public class Cita
 
     /// <summary>Nombre de la sala (JOIN con salas).</summary>
     public string? SalaNombre { get; set; }
+
+    // ── Propiedades de agregación / Reportes (no se persisten) ───────────
+    /// <summary>Cantidad de citas (usado en GROUP BY de reportes HU22).</summary>
+    public int CitasCount { get; set; }
 }

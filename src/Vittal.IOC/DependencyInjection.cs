@@ -82,6 +82,27 @@ public static class DependencyInjection
         services.AddScoped<IHojaExamenService, HojaExamenService>();
         services.AddScoped<IExpedienteArchivoService, ExpedienteArchivoService>();
 
+        // ══════════════════════════════════════════════
+        // Sprint 7 — Dashboard, Reportes, Alertas, Línea de Tiempo
+        // ══════════════════════════════════════════════
+
+        // Repositories
+        services.AddScoped<ILineaTiempoRepository, LineaTiempoRepository>();
+        services.AddScoped<IConfiguracionAlertaRepository, ConfiguracionAlertaRepository>();
+        services.AddScoped<INotificacionRepository, NotificacionRepository>();
+        services.AddScoped<IDashboardConfigRepository, DashboardConfigRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IAlertaEsperaRepository, AlertaEsperaRepository>();
+        services.AddScoped<IReporteRepository, ReporteRepository>();
+
+        // Services
+        services.AddScoped<ILineaTiempoService, LineaTiempoService>();
+        services.AddScoped<IConfiguracionAlertaService, ConfiguracionAlertaService>();
+        services.AddScoped<INotificacionService, NotificacionService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAlertaEsperaService, AlertaEsperaService>();
+        services.AddScoped<IReporteService, ReporteService>();
+
         return services;
     }
 }

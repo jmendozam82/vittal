@@ -1,0 +1,226 @@
+﻿@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Detalle de Constancia Médica";
+
+    var constanciaIndexUrl = Url.Action("Index");
+
+    ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             $"<li class='breadcrumb-item'><a href='{constanciaIndexUrl}'>Constancias</a></li>" +
+                             "<li class='breadcrumb-item active'>Detalle</li>";
+
+    var desactivarUrl = Url.Action("JsonDesactivar");
+
+    // Datos de la constancia cargados server-side
+    var c = ViewBag.Constancia as System.Collections.Generic.IDictionary<string, object>;
+
+    var constanciaId = c != null && c.ContainsKey("id") ? c["id"]?.ToString() : string.Empty;
+    var pacienteNombre = c != null && c.ContainsKey("pacienteNombre") ? c["pacienteNombre"]?.ToString() : "—";
+    var doctorNombre = c != null && c.ContainsKey("doctorNombre") ? c["doctorNombre"]?.ToString() : "—";
+    var tipoConstancia = c != null && c.ContainsKey("tipoConstancia") ? c["tipoConstancia"]?.ToString() : string.Empty;
+    var contenido = c != null && c.ContainsKey("contenido") ? c["contenido"]?.ToString() : string.Empty;
+    var fechaEmision = c != null && c.ContainsKey("fechaEmision") ? c["fechaEmision"]?.ToString() : null;
+    var fechaCreacion = c != null && c.ContainsKey("fechaCreacion") ? c["fechaCreacion"]?.ToString() : null;
+    var fechaModificacion = c != null && c.ContainsKey("fechaModificacion") ? c["fechaModificacion"]?.ToString() : null;
+    var diasReposo = c != null && c.ContainsKey("diasReposo") ? c["diasReposo"] : null;
+    var especialistaReferido = c != null && c.ContainsKey("especialistaReferido") ? c["especialistaReferido"]?.ToString() : null;
+    var activo = c == null || !c.ContainsKey("activo") || Convert.ToBoolean(c["activo"]);
+
+    var tipoConstanciaLabel = tipoConstancia switch
+    {
+        "ASISTENCIA" => "Asistencia",
+        "INCAPACIDAD" => "Incapacidad",
+        "REFERENCIA" => "Referencia",
+        "JUSTIFICANTE" => "Justificante",
+        _ => tipoConstancia
+    };
+
+    var tipoConstanciaBadge = tipoConstancia switch
+    {
+        "ASISTENCIA" => "bg-primary",
+        "INCAPACIDAD" => "bg-warning text-dark",
+        "REFERENCIA" => "bg-info",
+        "JUSTIFICANTE" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <!-- Encabezado -->
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-text text-primary fs-4"></i>
+                        <h5 class="mb-0">Detalle de Constancia Médica</h5>
+                    </div>
+                    <div>
+                        @if (activo)
+                        {
+                            <span class="badge bg-success fs-6">Activa</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6">Anulada</span>
+                        }
+                    </div>
+                </div>
+
+                <hr class="text-muted" />
+
+                <!-- Datos principales -->
+                <dl class="row mb-4">
+                    <dt class="col-sm-4 text-muted">Paciente:</dt>
+                    <dd class="col-sm-8 fw-medium">@pacienteNombre</dd>
+
+                    <dt class="col-sm-4 text-muted">Doctor:</dt>
+                    <dd class="col-sm-8">@doctorNombre</dd>
+
+                    <dt class="col-sm-4 text-muted">Tipo de Constancia:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @tipoConstanciaBadge">@tipoConstanciaLabel</span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Fecha de Emisión:</dt>
+                    <dd class="col-sm-8">@(fechaEmision ?? "No especificada")</dd>
+
+                    @if (diasReposo != null && !string.IsNullOrEmpty(diasReposo.ToString()) && Convert.ToDouble(diasReposo) > 0)
+                    {
+                        <dt class="col-sm-4 text-muted">Días de Reposo:</dt>
+                        <dd class="col-sm-8"><strong>@diasReposo días</strong></dd>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(especialistaReferido))
+                    {
+                        <dt class="col-sm-4 text-muted">Especialista Referido:</dt>
+                        <dd class="col-sm-8"><strong>@especialistaReferido</strong></dd>
+                    }
+                </dl>
+
+                <!-- Contenido -->
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-card-text me-1"></i> Contenido de la Constancia
+                    </h6>
+                    <div class="bg-light p-3 rounded border" style="white-space: pre-wrap; font-family: inherit;">
+                        @(string.IsNullOrWhiteSpace(contenido) ? "Sin contenido." : contenido)
+                    </div>
+                </div>
+
+                <!-- Metadatos -->
+                <div class="col-12">
+                    <hr class="text-muted" />
+                    <dl class="row mb-0 small text-muted">
+                        <dt class="col-sm-5">Creado el:</dt>
+                        <dd class="col-sm-7">@(fechaCreacion ?? "No disponible")</dd>
+                        <dt class="col-sm-5">Última modificación:</dt>
+                        <dd class="col-sm-7">@(fechaModificacion ?? "Sin modificaciones")</dd>
+                    </dl>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between gap-2 pt-3 border-top mt-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Volver
+                    </a>
+                    @if (activo)
+                    {
+                        <button type="button" class="btn btn-warning btn-sm text-white"
+                                data-bs-toggle="modal" data-bs-target="#modalAnular">
+                            <i class="bi bi-slash-circle me-1"></i> Anular Constancia
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación de anular -->
+<div class="modal fade" id="modalAnular" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Confirmar anulación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    ¿Está seguro que desea anular esta constancia?
+                    <br><small class="text-muted">
+                        Esta acción es irreversible. La constancia quedará como anulada.
+                    </small>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-warning btn-sm text-white" id="btnConfirmarAnular">
+                    <i class="bi bi-slash-circle me-1"></i> Anular
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const constanciaId = '@constanciaId';
+    const desactivarUrl = '@desactivarUrl';
+
+    document.getElementById('btnConfirmarAnular')?.addEventListener('click', async () => {
+        if (!constanciaId) return;
+
+        const btn = document.getElementById('btnConfirmarAnular');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Anulando...';
+
+        try {
+            const res = await fetch(desactivarUrl + '?id=' + constanciaId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast(json.message || 'Constancia anulada exitosamente.', 'success');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1200);
+            } else {
+                showToast(json.message || 'Error al anular la constancia.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión al anular.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Anular';
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalAnular'));
+            if (modal) modal.hide();
+        }
+    });
+
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' alert-dismissible fade show shadow-sm';
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        container.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Reportes";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item active'>Reportes</li>";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-reportes.css" asp-append-version="true" />
+}
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h4 class="mb-0 fw-bold">
+        <i class="bi bi-file-earmark-bar-graph text-primary me-2"></i>Reportes
+    </h4>
+</div>
+
+<!-- ── Pestañas de tipos de reporte ────────────────────────────── -->
+<div class="reporte-tabs" id="reporteTabs">
+    <button class="reporte-tab active" data-tipo="citas_atendidas" title="Citas atendidas en el período">
+        <i class="bi bi-calendar-check"></i> Citas Atendidas
+    </button>
+    <button class="reporte-tab" data-tipo="pacientes_atendidos" title="Pacientes únicos atendidos">
+        <i class="bi bi-people"></i> Pacientes Atendidos
+    </button>
+    <button class="reporte-tab" data-tipo="ingresos" title="Ingresos por consulta">
+        <i class="bi bi-cash-stack"></i> Ingresos
+    </button>
+    <button class="reporte-tab" data-tipo="tiempos_espera" title="Tiempos de espera promedio">
+        <i class="bi bi-hourglass-split"></i> Tiempos de Espera
+    </button>
+</div>
+
+<!-- ── Filtros ──────────────────────────────────────────────────── -->
+<div class="reporte-filtros">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <div class="filtro-label">Fecha Desde</div>
+            <input type="date" id="filtroFechaInicio" class="form-control form-control-sm"
+                   value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <div class="filtro-label">Fecha Hasta</div>
+            <input type="date" id="filtroFechaFin" class="form-control form-control-sm"
+                   value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <div class="filtro-label">Doctor</div>
+            <select id="filtroDoctorId" class="form-select form-select-sm">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="filtro-label">Sala</div>
+            <select id="filtroSalaId" class="form-select form-select-sm">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button class="btn btn-vittal-primary btn-sm flex-grow-1" id="btnGenerarReporte">
+                <i class="bi bi-search me-1"></i> Generar
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnExportarCSV" title="Exportar a CSV">
+                <i class="bi bi-download"></i>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnImprimir" title="Imprimir reporte">
+                <i class="bi bi-printer"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Resultados ──────────────────────────────────────────────── -->
+<div class="reporte-resultados" id="reporteResultados">
+    <div class="empty-state">
+        <i class="bi bi-file-earmark-bar-graph"></i>
+        <p class="small">Seleccione un tipo de reporte y genere los datos.</p>
+    </div>
+</div>
+
+<!-- ── Historial ──────────────────────────────────────────────── -->
+<div class="vittal-card mt-3">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-clock-history text-muted me-2"></i>Historial de Reportes
+        </h5>
+        <span class="badge bg-light text-muted" id="historialCount">0 reportes</span>
+    </div>
+    <div id="historialContainer">
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p class="small">No hay reportes generados aún.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="~/js/modules/reportes.js"></script>
+}

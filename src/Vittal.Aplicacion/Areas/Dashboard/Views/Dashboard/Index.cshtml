@@ -1,0 +1,360 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item active'>Dashboard</li>";
+
+    var fechaHoy = ViewBag.FechaHoy as string ?? DateTime.Now.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"));
+    var nombreUsuario = ViewBag.NombreUsuario as string ?? "Usuario";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-dashboard.css" asp-append-version="true" />
+}
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="dashboard-header">
+    <div>
+        <h1><i class="bi bi-grid-fill text-primary me-2"></i>Dashboard</h1>
+        <span class="dashboard-date">
+            <i class="bi bi-calendar3 me-1"></i>@fechaHoy
+        </span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-primary btn-sm" id="btnRefrescar" title="Refrescar datos">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+        </button>
+        <span class="badge bg-light text-muted" id="contadorPacientes">
+            <i class="bi bi-people me-1"></i><span id="kpiPacientesCount">—</span>
+        </span>
+    </div>
+</div>
+
+<!-- ── KPIs ────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4" id="kpiContainer">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+</div>
+
+<!-- ── Gráfico y Alertas ────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="vittal-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-bar-chart-fill text-primary me-2"></i>Citas por Hora del Día
+                </h5>
+                <span class="badge bg-primary-light text-primary" id="totalCitasDia">0 citas</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartCitasPorHora"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="vittal-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-bell-fill text-warning me-2"></i>Últimas Alertas
+                </h5>
+                <span class="badge bg-danger rounded-pill d-none" id="badgeAlertas">0</span>
+            </div>
+            <div id="alertasContainer" class="overflow-auto" style="max-height:350px;">
+                <div class="empty-state">
+                    <i class="bi bi-bell-slash"></i>
+                    <p class="small">No hay alertas recientes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Pacientes del día (tabla rápida) ────────────────────────── -->
+<div class="vittal-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-people-fill text-primary me-2"></i>Resumen del Día
+        </h5>
+    </div>
+    <div id="resumenContainer">
+        <div class="d-flex justify-content-center p-4">
+            <div class="vittal-spinner" style="border-top-color:var(--vittal-primary);border:3px solid var(--vittal-border);"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            let chartInstance = null;
+            let pollingInterval = null;
+
+            const DOM = {
+                kpiContainer: document.getElementById('kpiContainer'),
+                alertasContainer: document.getElementById('alertasContainer'),
+                badgeAlertas: document.getElementById('badgeAlertas'),
+                resumenContainer: document.getElementById('resumenContainer'),
+                totalCitasDia: document.getElementById('totalCitasDia'),
+                btnRefrescar: document.getElementById('btnRefrescar'),
+                kpiPacientesCount: document.getElementById('kpiPacientesCount')
+            };
+
+            document.addEventListener('DOMContentLoaded', function() {
+                cargarDashboard();
+                iniciarPolling();
+
+                DOM.btnRefrescar.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    icon.classList.add('spinner-border', 'spinner-border-sm');
+                    icon.classList.remove('bi-arrow-clockwise');
+                    cargarDashboard().finally(function() {
+                        icon.classList.remove('spinner-border', 'spinner-border-sm');
+                        icon.classList.add('bi-arrow-clockwise');
+                    });
+                });
+            });
+
+            function iniciarPolling() {
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(cargarDashboard, 30000);
+            }
+
+            async function cargarDashboard() {
+                try {
+                    const res = await fetch('@Url.Action("JsonDashboardData")', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const json = await res.json();
+
+                    if (!json.success) {
+                        mostrarError('Error al cargar datos del dashboard.');
+                        return;
+                    }
+
+                    const data = json.data || {};
+                    renderizarKPIs(data);
+                    renderizarGrafico(data.citasPorHora || []);
+                    renderizarAlertas(data.ultimasAlertas || []);
+                    renderizarResumen(data);
+
+                } catch (err) {
+                    console.error('Error cargando dashboard:', err);
+                    mostrarError('Error de conexión al cargar el dashboard.');
+                }
+            }
+
+            function renderizarKPIs(data) {
+                const kpis = [
+                    {
+                        label: 'Pacientes Hoy',
+                        value: data.pacientesDelDia ?? 0,
+                        icon: 'bi-people',
+                        color: 'primary',
+                        bg: 'var(--vittal-primary-light)',
+                        trend: 'stable',
+                        trendText: 'vs. ayer'
+                    },
+                    {
+                        label: 'Citas Pendientes',
+                        value: data.citasPendientes ?? 0,
+                        icon: 'bi-clock',
+                        color: 'warning',
+                        bg: '#FFF8E7',
+                        trend: data.citasPendientes > 10 ? 'up' : 'stable',
+                        trendText: data.citasPendientes > 10 ? 'Alta demanda' : 'Normal'
+                    },
+                    {
+                        label: 'En Espera',
+                        value: data.pacientesEnEspera ?? 0,
+                        icon: 'bi-hourglass',
+                        color: 'info',
+                        bg: '#E8F4FD',
+                        trend: data.pacientesEnEspera > 5 ? 'up' : 'down',
+                        trendText: data.pacientesEnEspera > 5 ? 'Congestión' : 'Fluido'
+                    },
+                    {
+                        label: 'Tiempo Promedio',
+                        value: (data.tiempoPromedioEspera ?? 0) + ' min',
+                        icon: 'bi-speedometer2',
+                        color: 'success',
+                        bg: '#E8F8F0',
+                        trend: (data.tiempoPromedioEspera ?? 0) < 15 ? 'down' : 'up',
+                        trendText: (data.tiempoPromedioEspera ?? 0) < 15 ? 'Óptimo' : 'Elevado'
+                    }
+                ];
+
+                if (DOM.kpiPacientesCount) {
+                    DOM.kpiPacientesCount.textContent = data.pacientesDelDia ?? 0;
+                }
+
+                DOM.kpiContainer.innerHTML = kpis.map(function(kpi) {
+                    const trendClass = kpi.trend === 'up' ? 'up' : kpi.trend === 'down' ? 'down' : 'stable';
+                    const trendIcon = kpi.trend === 'up' ? 'bi-arrow-up' : kpi.trend === 'down' ? 'bi-arrow-down' : 'bi-dash';
+                    return `
+                        <div class="col-6 col-md-3">
+                            <div class="kpi-card">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="kpi-icon" style="background:${kpi.bg};color:var(--vittal-${kpi.color})">
+                                        <i class="bi ${kpi.icon}"></i>
+                                    </div>
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="kpi-value">${escapeHtml(kpi.value)}</div>
+                                        <div class="kpi-label">${escapeHtml(kpi.label)}</div>
+                                    </div>
+                                </div>
+                                <div class="kpi-trend ${trendClass}">
+                                    <i class="bi ${trendIcon}"></i>
+                                    <span>${escapeHtml(kpi.trendText)}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+
+            function renderizarGrafico(datos) {
+                if (!datos || datos.length === 0) {
+                    document.getElementById('chartCitasPorHora').parentElement.innerHTML =
+                        '<div class="empty-state"><i class="bi bi-bar-chart"></i><p class="small">Sin datos de citas para hoy</p></div>';
+                    return;
+                }
+
+                if (DOM.totalCitasDia) {
+                    const total = datos.reduce(function(sum, d) { return sum + (d.valor || 0); }, 0);
+                    DOM.totalCitasDia.textContent = total + ' cita' + (total !== 1 ? 's' : '');
+                }
+
+                const ctx = document.getElementById('chartCitasPorHora').getContext('2d');
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: datos.map(function(d) { return d.etiqueta || ''; }),
+                        datasets: [{
+                            label: 'Citas',
+                            data: datos.map(function(d) { return d.valor || 0; }),
+                            backgroundColor: datos.map(function(d) { return d.color || 'var(--vittal-primary)'; }),
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { size: 11 } },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                ticks: { font: { size: 10 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderizarAlertas(alertas) {
+                if (!alertas || alertas.length === 0) {
+                    DOM.alertasContainer.innerHTML =
+                        '<div class="empty-state"><i class="bi bi-bell-slash"></i><p class="small">No hay alertas recientes</p></div>';
+                    DOM.badgeAlertas.classList.add('d-none');
+                    return;
+                }
+
+                DOM.badgeAlertas.textContent = alertas.length;
+                DOM.badgeAlertas.classList.remove('d-none');
+
+                DOM.alertasContainer.innerHTML = alertas.map(function(a) {
+                    const titulo = a.titulo || 'Notificación';
+                    const mensaje = a.mensaje || '';
+                    const tiempo = a.tiempoRelativo || '';
+                    const icono = a.icono || 'bi-bell';
+                    const leida = a.leida ? 'opacity-50' : '';
+                    return `
+                        <div class="alerta-item ${leida}">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi ${icono} alerta-icon mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold small">${escapeHtml(titulo)}</div>
+                                    <div class="alerta-tiempo">${escapeHtml(mensaje)}</div>
+                                    ${tiempo ? `<div class="alerta-tiempo mt-1"><i class="bi bi-clock me-1"></i>${escapeHtml(tiempo)}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+
+            function renderizarResumen(data) {
+                const pacientes = data.pacientesDelDia ?? 0;
+                const pendientes = data.citasPendientes ?? 0;
+                const espera = data.pacientesEnEspera ?? 0;
+                const tiempo = data.tiempoPromedioEspera ?? 0;
+
+                DOM.resumenContainer.innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <div class="border-start border-4 border-primary ps-3">
+                                <div class="text-muted small text-uppercase">Pacientes Hoy</div>
+                                <div class="fs-3 fw-bold">${pacientes}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border-start border-4 border-warning ps-3">
+                                <div class="text-muted small text-uppercase">Pendientes</div>
+                                <div class="fs-3 fw-bold">${pendientes}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border-start border-4 border-info ps-3">
+                                <div class="text-muted small text-uppercase">En Espera</div>
+                                <div class="fs-3 fw-bold">${espera}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="border-start border-4 border-success ps-3">
+                                <div class="text-muted small text-uppercase">Tiempo Prom.</div>
+                                <div class="fs-3 fw-bold">${tiempo} <small class="fs-6 text-muted fw-normal">min</small></div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            function mostrarError(mensaje) {
+                DOM.kpiContainer.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>`;
+            }
+
+            function escapeHtml(text) {
+                if (!text && text !== 0) return '';
+                return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+            }
+        })();
+    </script>
+}

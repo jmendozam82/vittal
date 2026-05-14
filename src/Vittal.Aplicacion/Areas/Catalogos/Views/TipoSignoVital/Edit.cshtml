@@ -1,0 +1,453 @@
+@{
+
+    ViewData["Title"] = "Editar Tipo de Signo Vital";
+
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+
+                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoSignoVital'>Tipos de Signo Vital</a></li>" +
+
+                             "<li class='breadcrumb-item active'>Editar Tipo de Signo Vital</li>";
+
+    var jsonSalasUrl = Url.Action("JsonSalas");
+
+}
+
+
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-white py-3">
+
+        <h5 class="mb-0">
+
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Tipo de Signo Vital
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <form id="formTipoSignoVital" novalidate>
+
+            <input type="hidden" id="tipoSignoVitalId" value="" />
+
+
+
+            <!-- Datos del tipo de signo vital -->
+
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+
+                <i class="bi bi-info-circle me-2"></i>Información del Tipo de Signo Vital
+
+            </h6>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-6">
+
+                    <label for="salaId" class="form-label fw-semibold">Sala / Especialidad <span class="text-danger">*</span></label>
+
+                    <select class="form-select" id="salaId" name="salaId" required>
+
+                        <option value="">-- Seleccione una sala --</option>
+
+                    </select>
+
+                    <div class="invalid-feedback">Debe seleccionar una sala.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-6">
+
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+
+                           required maxlength="255" placeholder="Ej: Presión Arterial, Frecuencia Cardíaca">
+
+                    <div class="invalid-feedback">El nombre del tipo de signo vital es obligatorio.</div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label for="unidad" class="form-label fw-semibold">Unidad</label>
+
+                    <input type="text" class="form-control" id="unidad" name="unidad"
+
+                           maxlength="50" placeholder="Ej: mmHg, lpm, °C">
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label for="orden" class="form-label fw-semibold">Orden</label>
+
+                    <input type="number" class="form-control" id="orden" name="orden"
+
+                           min="0" value="0" placeholder="Posición">
+
+                </div>
+
+            </div>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-4">
+
+                    <label for="valorMin" class="form-label fw-semibold">Valor Mínimo</label>
+
+                    <input type="number" class="form-control" id="valorMin" name="valorMin"
+
+                           step="any" placeholder="Ej: 60">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="valorMax" class="form-label fw-semibold">Valor Máximo</label>
+
+                    <input type="number" class="form-control" id="valorMax" name="valorMax"
+
+                           step="any" placeholder="Ej: 100">
+
+                </div>
+
+                <div class="col-md-4 d-flex align-items-center pt-4">
+
+                    <div class="form-check">
+
+                        <input class="form-check-input" type="checkbox" id="esObligatorio" name="esObligatorio">
+
+                        <label class="form-check-label fw-semibold" for="esObligatorio">
+
+                            Es obligatorio
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Botones -->
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+
+                <a href="/Catalogos/TipoSignoVital" class="btn btn-outline-secondary">
+
+                    <i class="bi bi-x-lg me-1"></i> Cancelar
+
+                </a>
+
+                <button type="submit" class="btn btn-primary" id="btnGuardar">
+
+                    <i class="bi bi-floppy me-1"></i> Actualizar Tipo de Signo Vital
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+
+<script>
+
+    // Cargar salas al iniciar
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        cargarSalas().then(function() {
+
+            cargarDatosTipoSignoVital();
+
+        });
+
+    });
+
+
+    async function cargarSalas() {
+
+        try {
+
+            const res = await fetch('@jsonSalasUrl', {
+
+                headers: { 'Content-Type': 'application/json' }
+
+            });
+
+
+            if (!res.ok) {
+
+                console.error('Error al cargar salas');
+
+                return;
+
+            }
+
+
+            const json = await res.json();
+
+
+            if (!json.success) {
+
+                console.error(json.message || 'Error al cargar salas');
+
+                return;
+
+            }
+
+
+            const select = document.getElementById('salaId');
+
+            const salas = json.data || [];
+
+            salas.forEach(function(s) {
+
+                const option = document.createElement('option');
+
+                option.value = s.id;
+
+                option.textContent = s.nombre || '';
+
+                select.appendChild(option);
+
+            });
+
+        } catch (err) {
+
+            console.error('Error de conexión al cargar salas');
+
+        }
+
+    }
+
+
+    function cargarDatosTipoSignoVital() {
+
+        // Los datos vienen del servidor en ViewBag.TipoSignoVital
+
+        const t = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TipoSignoVital, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+
+
+        if (!t) {
+
+            showToast('danger', 'Error: No se encontraron datos del tipo de signo vital.');
+
+            return;
+
+        }
+
+
+
+        document.getElementById('tipoSignoVitalId').value = t.id || '';
+
+        document.getElementById('nombre').value = t.nombre || '';
+
+        document.getElementById('unidad').value = t.unidad || '';
+
+        document.getElementById('orden').value = t.orden || 0;
+
+        document.getElementById('valorMin').value = t.valorMin !== null && t.valorMin !== undefined ? t.valorMin : '';
+
+        document.getElementById('valorMax').value = t.valorMax !== null && t.valorMax !== undefined ? t.valorMax : '';
+
+        document.getElementById('esObligatorio').checked = t.esObligatorio === true;
+
+        if (t.salaId) {
+
+            document.getElementById('salaId').value = t.salaId;
+
+        }
+
+
+        // Nombre completo en el título
+
+        const nombreCompleto = t.nombre || '';
+
+        document.querySelector('h5').innerHTML = `<i class="bi bi-pencil-square me-2 text-primary"></i>Editando: ${escapeHtml(nombreCompleto)}`;
+
+    }
+
+
+    // Submit del formulario
+
+    document.getElementById('formTipoSignoVital').addEventListener('submit', async function(e) {
+
+        e.preventDefault();
+
+
+
+        const form = this;
+
+        if (!form.checkValidity()) {
+
+            form.classList.add('was-validated');
+
+            return;
+
+        }
+
+
+
+        const btn = document.getElementById('btnGuardar');
+
+        const textoOriginal = btn.innerHTML;
+
+        btn.disabled = true;
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+
+
+        const id = document.getElementById('tipoSignoVitalId').value;
+
+        const valorMin = document.getElementById('valorMin').value.trim();
+
+        const valorMax = document.getElementById('valorMax').value.trim();
+
+
+
+        const data = {
+
+            salaId: document.getElementById('salaId').value,
+
+            nombre: document.getElementById('nombre').value.trim(),
+
+            unidad: document.getElementById('unidad').value.trim() || null,
+
+            valorMin: valorMin !== '' ? parseFloat(valorMin) : null,
+
+            valorMax: valorMax !== '' ? parseFloat(valorMax) : null,
+
+            orden: parseInt(document.getElementById('orden').value) || 0,
+
+            esObligatorio: document.getElementById('esObligatorio').checked
+
+        };
+
+
+
+        try {
+
+            const res = await fetch(`@Url.Action("JsonActualizar")?id=${id}`, {
+
+                method: 'PUT',
+
+                headers: { 'Content-Type': 'application/json' },
+
+                body: JSON.stringify(data)
+
+            });
+
+
+
+            const json = await res.json();
+
+
+
+            if (res.ok && json.success) {
+
+                showToast('success', json.message || 'Tipo de signo vital actualizado exitosamente.');
+
+                setTimeout(() => {
+
+                    window.location.href = '/Catalogos/TipoSignoVital';
+
+                }, 1000);
+
+            } else {
+
+                showToast('danger', json.message || 'Error al actualizar el tipo de signo vital.');
+
+                btn.disabled = false;
+
+                btn.innerHTML = textoOriginal;
+
+            }
+
+        } catch (err) {
+
+            showToast('danger', 'Error de conexión al guardar.');
+
+            btn.disabled = false;
+
+            btn.innerHTML = textoOriginal;
+
+        }
+
+    });
+
+
+
+    function escapeHtml(text) {
+
+        if (!text) return '';
+
+        const div = document.createElement('div');
+
+        div.textContent = text;
+
+        return div.innerHTML;
+
+    }
+
+
+
+    function showToast(type, message) {
+
+        const container = document.getElementById('toastContainer') || createToastContainer();
+
+        const toast = document.createElement('div');
+
+        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+
+        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
+        container.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 5000);
+
+    }
+
+
+
+    function createToastContainer() {
+
+        const div = document.createElement('div');
+
+        div.id = 'toastContainer';
+
+        document.body.appendChild(div);
+
+        return div;
+
+    }
+
+</script>
+
+}

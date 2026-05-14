@@ -1,0 +1,120 @@
+/* src/Vittal.Aplicacion/wwwroot/css/vittal-dashboard.css */
+
+/* ── KPI Cards ────────────────────────────────────────────────── */
+.kpi-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--vittal-border);
+    border-radius: var(--vittal-radius-lg);
+    background: var(--vittal-bg-card);
+    box-shadow: var(--vittal-shadow);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--vittal-shadow-lg);
+}
+.kpi-card .kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+.kpi-card .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.kpi-card .kpi-label {
+    font-size: 0.82rem;
+    color: var(--vittal-text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.kpi-card .kpi-trend {
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.kpi-card .kpi-trend.up { color: var(--vittal-secondary); }
+.kpi-card .kpi-trend.down { color: var(--vittal-danger); }
+.kpi-card .kpi-trend.stable { color: var(--vittal-text-muted); }
+
+/* ── Skeleton loader ──────────────────────────────────────────── */
+.skeleton-pulse {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 6px;
+}
+@keyframes skeleton-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Chart Container ──────────────────────────────────────────── */
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+}
+
+/* ── Notificaciones / Alertas List ────────────────────────────── */
+.alerta-item {
+    border-left: 4px solid var(--vittal-warning);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 var(--vittal-radius) var(--vittal-radius) 0;
+    background: #FFFBF0;
+    transition: background 0.2s ease;
+}
+.alerta-item:hover {
+    background: #FFF3D6;
+}
+.alerta-item .alerta-tiempo {
+    font-size: 0.78rem;
+    color: var(--vittal-text-muted);
+}
+.alerta-item .alerta-icon {
+    color: var(--vittal-warning);
+}
+
+/* ── Dashboard Header ─────────────────────────────────────────── */
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.dashboard-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--vittal-text);
+}
+.dashboard-header .dashboard-date {
+    color: var(--vittal-text-muted);
+    font-size: 0.88rem;
+}
+
+/* ── Empty State ──────────────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--vittal-text-muted);
+}
+.empty-state i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    opacity: 0.3;
+}

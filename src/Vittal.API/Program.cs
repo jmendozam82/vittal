@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Vittal.API.Hubs;
 using Vittal.API.Middleware;
 using Vittal.IOC;
 
@@ -138,6 +139,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
+// SignalR hubs para tiempo real
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -152,6 +156,10 @@ app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+
+// SignalR Hubs
+app.MapHub<AlertasHub>("/hubs/alertas");
+app.MapHub<LineaTiempoHub>("/hubs/linea-tiempo");
 
 app.Run();
 

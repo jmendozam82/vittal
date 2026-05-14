@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "Línea de Tiempo";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item active'>Línea de Tiempo</li>";
+
+    var fechaHoy = ViewBag.FechaHoy as string ?? DateTime.Now.ToString("yyyy-MM-dd");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-timeline.css" asp-append-version="true" />
+}
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="mb-0 fw-bold">
+            <i class="bi bi-clock-history text-primary me-2"></i>Línea de Tiempo
+        </h4>
+        <small class="text-muted">
+            <i class="bi bi-calendar3 me-1"></i>
+            <span id="fechaDisplay">@fechaHoy</span>
+        </small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small text-muted fw-medium">Doctor:</label>
+            <select id="filtroDoctorId" class="form-select form-select-sm" style="min-width:180px;">
+                <option value="">Todos los doctores</option>
+            </select>
+        </div>
+        <input type="date" id="filtroFecha" class="form-control form-control-sm" style="max-width:160px;"
+               value="@fechaHoy" />
+        <button class="btn btn-outline-primary btn-sm" id="btnRefrescar" title="Actualizar">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+        </button>
+    </div>
+</div>
+
+<!-- ── Contenedor Principal ─────────────────────────────────────── -->
+<div id="timelineMainContainer">
+    <div class="text-center py-5">
+        <div class="vittal-spinner mx-auto"></div>
+        <p class="text-muted small mt-2">Cargando línea de tiempo...</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/modules/linea-tiempo.js"></script>
+}

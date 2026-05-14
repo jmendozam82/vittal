@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
 using Vittal.Entity.Models;
@@ -8,15 +9,19 @@ namespace Vittal.DAL.Repositories;
 /// <summary>
 /// Repositorio para la tabla public.citas.
 /// Implementa ICitaRepository con Dapper y PostgreSQL.
-/// Historia de Usuario: HU21 — Agenda (HU-E01 — hora_fin)
+/// Historia de Usuario: HU21 — Agenda (HU-E01 — hora_fin, HU22 — Reportes)
 /// </summary>
 public class CitaRepository : ICitaRepository
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
+    private readonly ILogger<CitaRepository> _logger;
 
-    public CitaRepository(DbConnectionFactory dbConnectionFactory)
+    public CitaRepository(
+        DbConnectionFactory dbConnectionFactory,
+        ILogger<CitaRepository> logger)
     {
         _dbConnectionFactory = dbConnectionFactory;
+        _logger = logger;
     }
 
     // ── Columnas SELECT con JOINs ──────────────────────────────────────
@@ -142,5 +147,129 @@ public class CitaRepository : ICitaRepository
 
         var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, ClinicaId = clinicaId });
         return rowsAffected > 0;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Sprint 7: Reportes y Dashboard (HU22, HU23)
+    // ════════════════════════════════════════════════════════════════════
+
+    // ────────────────────────────────────────────────────────────────────
+    // 6. GetByDateRangeAsync — Citas en rango de fechas con filtros
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Cita>> GetByDateRangeAsync(
+        Guid clinicaId,
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        Guid? doctorId = null,
+        Guid? salaId = null)
+    {
+        var sql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE c.clinica_id = @ClinicaId
+              AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+              AND c.activo = true
+              AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+              AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+            ORDER BY c.fecha_cita ASC, c.hora_cita ASC";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Cita>(sql, new
+            {
+                ClinicaId = clinicaId,
+                FechaInicio = DateOnly.FromDateTime(fechaInicio),
+                FechaFin = DateOnly.FromDateTime(fechaFin),
+                DoctorId = doctorId,
+                SalaId = salaId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener citas por rango de fechas de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 7. GetEstadisticasPorEstadoAsync — Conteo de citas agrupado por estado
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Cita>> GetEstadisticasPorEstadoAsync(
+        Guid clinicaId,
+        DateTime fechaInicio,
+        DateTime fechaFin)
+    {
+        const string sql = @"
+            SELECT
+                c.estado AS Estado,
+                COUNT(*)::int AS CitasCount
+            FROM public.citas c
+            WHERE c.clinica_id = @ClinicaId
+              AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+              AND c.activo = true
+            GROUP BY c.estado
+            ORDER BY c.estado ASC";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Cita>(sql, new
+            {
+                ClinicaId = clinicaId,
+                FechaInicio = DateOnly.FromDateTime(fechaInicio),
+                FechaFin = DateOnly.FromDateTime(fechaFin)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener estadísticas por estado de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 8. GetDoctoresMasActivosAsync — Top doctores por cantidad de citas
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Cita>> GetDoctoresMasActivosAsync(
+        Guid clinicaId,
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        int limit = 10)
+    {
+        const string sql = @"
+            SELECT
+                c.doctor_id AS DoctorId,
+                u.nombres || ' ' || u.apellidos AS DoctorNombre,
+                COUNT(*)::int AS CitasCount
+            FROM public.citas c
+            INNER JOIN public.usuarios u ON u.id = c.doctor_id
+            WHERE c.clinica_id = @ClinicaId
+              AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+              AND c.estado = 'atendida'
+              AND c.activo = true
+            GROUP BY c.doctor_id, u.nombres, u.apellidos
+            ORDER BY COUNT(*) DESC
+            LIMIT @Limit";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Cita>(sql, new
+            {
+                ClinicaId = clinicaId,
+                FechaInicio = DateOnly.FromDateTime(fechaInicio),
+                FechaFin = DateOnly.FromDateTime(fechaFin),
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener doctores más activos de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
     }
 }
