@@ -108,7 +108,11 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                     };
                     Response.Cookies.Append("vittal_jwt", user.AccessToken, cookieOptions);
 
-                    _logger.LogInformation("Usuario {Email} inició sesión correctamente. JWT guardado en cookie.", user.Email);
+                    // Guardar en Session para que _Layout.cshtml pueda acceder (token + clinica_id)
+                    HttpContext.Session.SetString("AccessToken", user.AccessToken);
+                    HttpContext.Session.SetString("ClinicaId", user.ClinicaId.ToString());
+
+                    _logger.LogInformation("Usuario {Email} inició sesión correctamente. JWT guardado en cookie y session.", user.Email);
 
                     return RedirectToAction("Index", "Home", new { area = "" });
                 }
