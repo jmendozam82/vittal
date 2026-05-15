@@ -136,7 +136,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("AllowAll", p => p.WithOrigins("https://localhost:5001", "http://localhost:5000", "https://app.vittal.com").AllowAnyMethod().AllowAnyHeader().AllowCredentials());
 });
 
 // SignalR hubs para tiempo real

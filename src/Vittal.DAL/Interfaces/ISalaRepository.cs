@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vittal.Entity.Models;
 
-namespace Vittal.DAL.Repositories;
+namespace Vittal.DAL.Interfaces;
 
 /// <summary>
 /// Contrato de acceso a datos para la entidad Sala.

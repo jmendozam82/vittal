@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Exceptions;
-using Vittal.DAL.Repositories;
+using Vittal.DAL.Interfaces;
 using Vittal.DTO.Sala;
 using Vittal.Entity.Models;
 using Vittal.Utility.Results;

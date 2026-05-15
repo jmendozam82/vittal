@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Vittal.DAL.Repositories;
+using Vittal.DAL.Interfaces;
 using Vittal.DTO.Permiso;
 using Vittal.Utility;
 using Vittal.Utility.Results;

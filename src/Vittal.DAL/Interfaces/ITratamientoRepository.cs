@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vittal.Entity.Models;
 
-namespace Vittal.DAL.Repositories;
+namespace Vittal.DAL.Interfaces;
 
 /// <summary>
 /// Interface para repositorio de tratamientos. Tabla: public.tratamientos

@@ -45,4 +45,5 @@ public class Notificacion
     // ── Campos de estado y auditoría ──────────────────────────────
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime? FechaModificacion { get; set; }
 }

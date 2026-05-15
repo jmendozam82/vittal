@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Vittal.DAL.Repositories;
+namespace Vittal.DAL.Interfaces;
 
 /// <summary>
 /// Repositorio para verificar y gestionar permisos de un perfil sobre módulos del sistema.

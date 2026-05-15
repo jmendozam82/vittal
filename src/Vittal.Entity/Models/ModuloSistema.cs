@@ -26,4 +26,10 @@ public class ModuloSistema
 
     [Column("activo")]
     public bool Activo { get; set; } = true;
+
+    [Column("fecha_creacion")]
+    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+    [Column("fecha_modificacion")]
+    public DateTime? FechaModificacion { get; set; }
 }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
+using Vittal.DAL.Interfaces;
 
 namespace Vittal.DAL.Repositories;
 

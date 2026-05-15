@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
-using Vittal.DAL.Repositories;
 using Vittal.DTO.ConfiguracionAlerta;
 using Vittal.Entity.Models;
 using Vittal.Utility.Results;

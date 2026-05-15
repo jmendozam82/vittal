@@ -32,8 +32,14 @@ public class Permiso
     [Column("puede_actualizar")]
     public bool PuedeActualizar { get; set; } = false;
 
+    [Column("activo")]
+    public bool Activo { get; set; } = true;
+
+    [Column("fecha_creacion")]
+    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
     [Column("fecha_modificacion")]
-    public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
+    public DateTime? FechaModificacion { get; set; }
 
     [Column("modificado_por")]
     public Guid? ModificadoPor { get; set; }
