@@ -13,7 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddVittalServices(this IServiceCollection services, IConfiguration configuration)
     {
         // DAL Setup
-        services.AddSingleton<DbConnectionFactory>();
+        services.AddScoped<DbConnectionFactory>();
         
         // Repositories
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<ITratamientoRepository, TratamientoRepository>();
         
         services.AddScoped<IPlantillaEspecialidadRepository, PlantillaEspecialidadRepository>();
+        services.AddScoped<IModuloSistemaRepository, ModuloSistemaRepository>();
         services.AddScoped<ITipoAntecedenteRepository, TipoAntecedenteRepository>();
         services.AddScoped<ITipoSignoVitalRepository, TipoSignoVitalRepository>();
         services.AddScoped<ICitaRepository, CitaRepository>();
@@ -47,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ISalaService, SalaService>();
         services.AddScoped<IMedicamentoService, MedicamentoService>();
         services.AddScoped<IClinicaService, ClinicaService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ITipoCirugiaService, TipoCirugiaService>();
         services.AddScoped<ICirugiaService, CirugiaService>();
         services.AddScoped<ITipoDiagnosticoService, TipoDiagnosticoService>();

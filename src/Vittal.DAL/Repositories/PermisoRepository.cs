@@ -5,6 +5,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
+using Npgsql;
 
 namespace Vittal.DAL.Repositories;
 
@@ -127,6 +128,59 @@ public class PermisoRepository : IPermisoRepository
         {
             _logger.LogError(ex, "Error al upsert permiso para perfil {PerfilId} módulo {ModuloId}",
                 perfilId, moduloId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 4. SeedAllPermissionsAsync — Seed de permisos totales para un perfil
+    // ────────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Otorga READ + CREATE + UPDATE para TODOS los módulos activos del sistema
+    /// a un perfil específico de una clínica. Usado en provisionamiento de nuevas
+    /// clínicas para el perfil administrador.
+    /// </summary>
+    /// <returns>Número de permisos insertados/actualizados.</returns>
+    public async Task<int> SeedAllPermissionsAsync(Guid clinicaId, Guid perfilId, Guid modificadoPor)
+    {
+        const string sql = @"
+            INSERT INTO public.permisos (clinica_id, perfil_id, modulo_id, puede_leer, puede_crear, puede_actualizar, fecha_modificacion, modificado_por)
+            SELECT
+                @ClinicaId,
+                @PerfilId,
+                m.id,
+                true,  -- puede_leer
+                true,  -- puede_crear
+                true,  -- puede_actualizar
+                NOW(),
+                @ModificadoPor
+            FROM public.modulos_sistema m
+            WHERE m.activo = true
+            ON CONFLICT (clinica_id, perfil_id, modulo_id)
+            DO UPDATE SET
+                puede_leer = true,
+                puede_crear = true,
+                puede_actualizar = true,
+                fecha_modificacion = NOW(),
+                modificado_por = EXCLUDED.modificado_por;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var rows = await connection.ExecuteAsync(sql, new
+            {
+                ClinicaId = clinicaId,
+                PerfilId = perfilId,
+                ModificadoPor = modificadoPor
+            });
+            _logger.LogInformation("Seed de permisos completado para clínica {ClinicaId} perfil {PerfilId}: {Count} módulos",
+                clinicaId, perfilId, rows);
+            return rows;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al seedear permisos para clínica {ClinicaId} perfil {PerfilId}",
+                clinicaId, perfilId);
             throw;
         }
     }

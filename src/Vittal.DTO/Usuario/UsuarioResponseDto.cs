@@ -19,10 +19,10 @@ public class UsuarioResponseDto
     public string? Sexo { get; set; }
     public string? Celular { get; set; }
     public string? Direccion { get; set; }
-    public bool EsDoctor { get; set; }
-    
-    public string PerfilNombre { get; set; } = string.Empty;
-    public bool EsAdmin { get; set; }
+    public bool EsDoctor { get; set; }
+    public string PerfilNombre { get; set; } = string.Empty;
+    public bool EsAdmin { get; set; }
+    public bool EsSuperAdmin { get; set; }
     public bool Activo { get; set; }
     public DateTime FechaCreacion { get; set; }
     public DateTime? FechaModificacion { get; set; }

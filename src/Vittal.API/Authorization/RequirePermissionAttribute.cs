@@ -28,7 +28,13 @@ public class RequirePermissionAttribute : Attribute, IAuthorizationFilter
     {
         var user = context.HttpContext.User;
 
-        // Admin bypass: los administradores siempre tienen acceso
+        // Super Admin bypass: los Super Admins Globales SIEMPRE tienen acceso
+        if (user.EsSuperAdmin())
+        {
+            return;
+        }
+
+        // Admin bypass: los administradores de clínica siempre tienen acceso
         if (user.EsAdmin())
         {
             return;

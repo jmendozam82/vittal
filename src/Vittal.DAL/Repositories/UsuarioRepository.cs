@@ -39,6 +39,7 @@ public class UsuarioRepository : IUsuarioRepository
         u.direccion           AS Direccion,
         u.celular             AS Celular,
         u.es_doctor           AS EsDoctor,
+        u.es_super_admin      AS EsSuperAdmin,
         u.activo              AS Activo,
         u.fecha_creacion      AS FechaCreacion,
         u.fecha_modificacion  AS FechaModificacion,

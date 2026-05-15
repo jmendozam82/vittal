@@ -75,29 +75,40 @@ public class DbConnectionFactory
     }
 
     private readonly IConfiguration _configuration;
+    private Guid? _currentClinicaId;
 
     public DbConnectionFactory(IConfiguration configuration)
     {
         _configuration = configuration;
     }
 
-    public IDbConnection CreateConnection()
+    /// <summary>
+    /// Establece el tenant activo para el resto del request actual.
+    /// Llamado desde TenantMiddleware. El valor se usa en cada conexión
+    /// creada durante el request para activar las políticas RLS.
+    /// </summary>
+    public void SetTenantContext(Guid clinicaId)
     {
-        var connectionString = _configuration.GetConnectionString("Supabase");
-        return new NpgsqlConnection(connectionString);
+        _currentClinicaId = clinicaId;
     }
 
     /// <summary>
-    /// Establece el contexto de tenant (clinica_id) en la sesión de PostgreSQL
-    /// mediante set_config. Esto permite que las políticas RLS filtren
-    /// automáticamente los datos por clínica.
+    /// Crea una conexión a PostgreSQL. Si hay un tenant activo,
+    /// establece app.current_clinica_id en la sesión para activar RLS.
     /// </summary>
-    public async Task SetTenantContextAsync(Guid clinicaId)
+    public IDbConnection CreateConnection()
     {
-        using var connection = CreateConnection();
-        connection.Open();
+        var connectionString = _configuration.GetConnectionString("Supabase");
+        var connection = new NpgsqlConnection(connectionString);
 
-        const string sql = "SELECT set_config('app.current_clinica_id', @ClinicaId::text, true);";
-        await connection.ExecuteAsync(sql, new { ClinicaId = clinicaId.ToString() });
+        if (_currentClinicaId.HasValue)
+        {
+            connection.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT set_config('app.current_clinica_id', '{_currentClinicaId.Value}', true);";
+            cmd.ExecuteNonQuery();
+        }
+
+        return connection;
     }
 }

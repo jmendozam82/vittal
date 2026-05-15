@@ -654,6 +654,7 @@ public class UsuarioService : IUsuarioService
             EsDoctor = u.EsDoctor,
             PerfilNombre = u.PerfilNombre,
             EsAdmin = u.EsAdmin,
+            EsSuperAdmin = u.EsSuperAdmin,
             Activo = u.Activo,
             FechaCreacion = u.FechaCreacion,
             FechaModificacion = u.FechaModificacion

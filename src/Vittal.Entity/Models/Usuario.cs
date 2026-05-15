@@ -27,6 +27,7 @@ public class Usuario
     public string? Direccion { get; set; }
     public string? Celular { get; set; }
     public bool EsDoctor { get; set; }
+    public bool EsSuperAdmin { get; set; }
 
     // ── Campos de estado y auditoría ──────────────────────────────
     public bool Activo { get; set; } = true;

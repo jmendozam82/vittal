@@ -29,6 +29,12 @@ public static class ClaimsPrincipalExtensions
         return claim != null && bool.TryParse(claim.Value, out var isAdmin) && isAdmin;
     }
 
+    public static bool EsSuperAdmin(this ClaimsPrincipal user)
+    {
+        var claim = user.FindFirst("app_es_super_admin");
+        return claim != null && bool.TryParse(claim.Value, out var isSuper) && isSuper;
+    }
+
     public static Guid GetInternalPerfilId(this ClaimsPrincipal user)
     {
         var claim = user.FindFirst("app_perfil_id");

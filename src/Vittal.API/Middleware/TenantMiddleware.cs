@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Vittal.API.Extensions;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
+using Vittal.DAL.Context;
 
 namespace Vittal.API.Middleware;
 
@@ -26,7 +27,6 @@ public class TenantMiddleware
             
             if (authUserId != Guid.Empty)
             {
-                // Resolve scoped service
                 using var scope = context.RequestServices.CreateScope();
                 var usuarioService = scope.ServiceProvider.GetRequiredService<IUsuarioService>();
                 
@@ -39,14 +39,18 @@ public class TenantMiddleware
                         new Claim("app_usuario_id", result.Data.UsuarioId.ToString()),
                         new Claim("app_clinica_id", result.Data.ClinicaId.ToString()),
                         new Claim("app_es_admin", result.Data.EsAdmin.ToString()),
+                        new Claim("app_es_super_admin", result.Data.EsSuperAdmin.ToString()),
                         new Claim("app_perfil_id", result.Data.PerfilId.ToString())
                     });
 
                     context.User.AddIdentity(appIdentity);
+
+                    // Establecer contexto de tenant en PostgreSQL para activar RLS
+                    var dbFactory = scope.ServiceProvider.GetRequiredService<DbConnectionFactory>();
+                    dbFactory.SetTenantContext(result.Data.ClinicaId);
                 }
                 else
                 {
-                    // Si el usuario no existe en la base de datos interna, cerramos sesión/devolvemos 401
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     await context.Response.WriteAsJsonAsync(new { Success = false, Message = "Usuario no autorizado o inactivo en el sistema" });
                     return;

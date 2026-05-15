@@ -9,6 +9,7 @@ using Vittal.API.Models;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.Clinica;
+using Vittal.DTO.Auth;
 
 namespace Vittal.API.Controllers;
 
@@ -25,11 +26,16 @@ namespace Vittal.API.Controllers;
 public class ClinicasController : ControllerBase
 {
     private readonly IClinicaService _service;
+    private readonly IAdminService _adminService;
     private readonly ILogger<ClinicasController> _logger;
 
-    public ClinicasController(IClinicaService service, ILogger<ClinicasController> logger)
+    public ClinicasController(
+        IClinicaService service,
+        IAdminService adminService,
+        ILogger<ClinicasController> logger)
     {
         _service = service;
+        _adminService = adminService;
         _logger = logger;
     }
 
@@ -76,10 +82,10 @@ public class ClinicasController : ControllerBase
     /// <summary>Crea una nueva clínica en el sistema.</summary>
     /// <remarks>
     /// El nombre de la clínica debe ser único en todo el sistema.
-    /// Esta operacion normalmente es reservada para Administradores del Sistema (SaaS).
+    /// Esta operación está restringida exclusivamente al Super Admin Global.
     /// </remarks>
     [HttpPost]
-    [RequirePermission("clinicas", PermissionType.Create)]
+    [RequireSuperAdmin]
     [ProducesResponseType(typeof(ApiResponse<ClinicaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -96,6 +102,50 @@ public class ClinicasController : ControllerBase
                 Data = result.Data
             };
             return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, response);
+        }
+
+        return result.ToActionResult();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // PROVISIONAR — Creación completa de clínica + admin + permisos
+    // ────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Crea una nueva clínica con provisionamiento completo:
+    /// clínica + perfil admin + permisos + usuario Supabase Auth + config por defecto.
+    /// Exclusivo del Super Admin Global.
+    /// </summary>
+    /// <remarks>
+    /// Este endpoint orquesta la creación completa de una clínica en una sola llamada:
+    /// 1. Crea la clínica
+    /// 2. Crea el perfil Administrador para esa clínica
+    /// 3. Seedear permisos READ + CREATE + UPDATE para todos los módulos
+    /// 4. Crea el usuario en Supabase Auth (email + password)
+    /// 5. Crea el usuario local en la tabla usuarios
+    /// 6. Seedear configuracion_alertas y dashboard_config por defecto
+    ///
+    /// Si algún paso falla, se realiza rollback automático (desactivación de clínica,
+    /// eliminación de usuario en Supabase Auth).
+    /// </remarks>
+    [HttpPost("provisionar")]
+    [RequireSuperAdmin]
+    [ProducesResponseType(typeof(ApiResponse<ClinicaProvisionResponseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Provisionar([FromBody] ClinicaProvisionRequestDto dto)
+    {
+        var superAdminUsuarioId = User.GetInternalUserId();
+        var result = await _adminService.ProvisionClinicaAsync(dto, superAdminUsuarioId);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            return CreatedAtAction(nameof(GetById), new { id = result.Data.ClinicaId },
+                new ApiResponse<ClinicaProvisionResponseDto>
+                {
+                    Success = true,
+                    Message = result.Message,
+                    Data = result.Data
+                });
         }
 
         return result.ToActionResult();
