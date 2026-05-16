@@ -5,7 +5,7 @@
 
 ## Quick Overview
 - **Project**: Vittal Medical System (SaaS + BaaS)
-- **Client**: COA (Centro Oftalmológico Avanzado)
+- **Client**: MedicCore (Clínicas Médicas)
 - **Stack**: .NET 8, ASP.NET Core MVC + Web API, Supabase (PostgreSQL)
 - **Architecture**: N-Tier + MVC, strict layer separation
 - **Language**: Spanish (UI/DB), English (code)

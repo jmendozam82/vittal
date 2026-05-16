@@ -11,7 +11,7 @@
 | Campo | Valor |
 |---|---|
 | **Nombre del sistema** | Software Vittal |
-| **Cliente** | COA (Centro Oftalmológico Avanzado) |
+| **Cliente** | MedicCore (Clínicas Médicas) |
 | **Tipo de sistema** | Sistema web de control de citas y expedientes médicos |
 | **Modelo de negocio** | SaaS (Software as a Service) + BaaS (Backend as a Service) |
 | **Versión inicial** | v1.0.0 |
@@ -20,7 +20,7 @@
 
 ### Descripción del sistema
 
-Vittal es una plataforma médica web multi-tenant que centraliza la gestión de citas, expedientes clínicos, diagnósticos, tratamientos, cirugías y toda la información médica de los pacientes. Está diseñada para ser adoptada por múltiples clínicas oftalmológicas como servicio SaaS, y expone su API como BaaS para que sistemas externos puedan integrarse.
+Vittal es una plataforma médica web multi-tenant que centraliza la gestión de citas, expedientes clínicos, diagnósticos, tratamientos, cirugías y toda la información médica de los pacientes. Está diseñada para ser adoptada por múltiples clínicas médicas como servicio SaaS, y expone su API como BaaS para que sistemas externos puedan integrarse.
 
 ---
 
@@ -192,10 +192,10 @@ Una clínica puede tener múltiples salas con **distintas especialidades médica
 
 ```
 Ejemplo:
-  Clínica COA
-  ├── Sala 1 = Oftalmología  → antecedentes: Glaucoma, Miopía, Cirugía ocular previa
-  ├── Sala 2 = Cardiología   → antecedentes: HTA, Diabetes, IAM previo, Tabaquismo
-  └── Sala 3 = Dermatología  → antecedentes: Alergias cutáneas, Psoriasis, Acné
+  Clínica MedicCore
+  ├── Sala 1 = Medicina General → antecedentes: HTA, Diabetes, Cirugía previa
+  ├── Sala 2 = Cardiología      → antecedentes: HTA, Diabetes, IAM previo, Tabaquismo
+  └── Sala 3 = Dermatología     → antecedentes: Alergias cutáneas, Psoriasis, Acné
 ```
 
 ### Regla de discriminadores
@@ -309,7 +309,7 @@ public async Task<IActionResult> Create([FromBody] PacienteRequestDto dto) { ...
 
 - **Administrador del sistema:** tiene acceso completo a todos los módulos y permisos sin restricciones.
 - **Doctor:** acceso a módulos de su clínica asignada, filtrado por su `doctor_id`.
-- **Gerente COA:** acceso a reportes, dashboard y gestión administrativa de su clínica.
+- **Gerente de Clínica:** acceso a reportes, dashboard y gestión administrativa de su clínica.
 
 ---
 

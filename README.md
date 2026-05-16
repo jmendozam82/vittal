@@ -1,6 +1,6 @@
 # Vittal — Sistema Médico SaaS Multi-Tenant
 
-> Plataforma integral para la gestión de citas, expedientes clínicos y operaciones médicas, diseñada para clínicas oftalmológicas bajo modelo SaaS.
+> Plataforma integral para la gestión de citas, expedientes clínicos y operaciones médicas, diseñada para clínicas médicas bajo modelo SaaS.
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-MVC%20%2B%20Web%20API-512BD4?style=for-the-badge&logo=aspdotnetcore&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet)
@@ -23,7 +23,7 @@ Cada clínica opera con **aislamiento total de datos** mediante Row Level Securi
 
 | Campo | Valor |
 |-------|-------|
-| **Cliente** | COA — Centro Oftalmológico Avanzado |
+| **Cliente** | MedicCore — Clínicas Médicas |
 | **Tipo** | Clínica oftalmológica multi-sala |
 | **Modelo** | SaaS + BaaS (Backend as a Service) |
 
@@ -459,7 +459,7 @@ Este proyecto está configurado para desarrollo orquestado con **Claude Code Age
 
 **Propiedad privada** — Todos los derechos reservados.
 
-Este software es propiedad del **Centro Oftalmológico Avanzado (COA)**. Su uso, distribución y modificación están restringidos a los términos del contrato de desarrollo establecido.
+Este software es propiedad de **MedicCore**. Su uso, distribución y modificación están restringidos a los términos del contrato de desarrollo establecido.
 
 ---
 
@@ -467,7 +467,7 @@ Este software es propiedad del **Centro Oftalmológico Avanzado (COA)**. Su uso,
 
 | Rol | Descripción |
 |-----|-------------|
-| **Cliente** | COA — Centro Oftalmológico Avanzado |
+| **Cliente** | MedicCore — Clínicas Médicas |
 | **Desarrollo** | Claude Code Agent Teams (IA orquestada) |
 | **Arquitectura** | N-Tier + MVC + Repository Pattern |
 | **Base de Datos** | Supabase (PostgreSQL 15) |
