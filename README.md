@@ -15,7 +15,7 @@
 
 ## 📋 Descripción
 
-**Vittal** es una plataforma SaaS (Software as a Service) multi-tenant que centraliza toda la operación clínica de centros oftalmológicos: desde la gestión de pacientes y citas médicas, hasta expedientes clínicos completos con diagnósticos, tratamientos, cirugías, exámenes y resultados.
+**Vittal** es una plataforma SaaS (Software as a Service) multi-tenant que centraliza toda la operación clínica de centros médicos: desde la gestión de pacientes y citas médicas, hasta expedientes clínicos completos con diagnósticos, tratamientos, cirugías, exámenes y resultados.
 
 Cada clínica opera con **aislamiento total de datos** mediante Row Level Security (RLS) en PostgreSQL, mientras un **Super Admin Global** puede provisionar nuevas clínicas de forma automatizada.
 
@@ -24,7 +24,7 @@ Cada clínica opera con **aislamiento total de datos** mediante Row Level Securi
 | Campo | Valor |
 |-------|-------|
 | **Cliente** | MedicCore — Clínicas Médicas |
-| **Tipo** | Clínica oftalmológica multi-sala |
+| **Tipo** | Clínica médica multi-sala |
 | **Modelo** | SaaS + BaaS (Backend as a Service) |
 
 ---
