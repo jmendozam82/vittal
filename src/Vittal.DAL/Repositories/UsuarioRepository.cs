@@ -38,6 +38,7 @@ public class UsuarioRepository : IUsuarioRepository
         u.sexo                AS Sexo,
         u.direccion           AS Direccion,
         u.celular             AS Celular,
+        u.foto_url            AS FotoUrl,
         u.es_doctor           AS EsDoctor,
         u.es_super_admin      AS EsSuperAdmin,
         u.activo              AS Activo,
@@ -193,6 +194,7 @@ public class UsuarioRepository : IUsuarioRepository
                 sexo               = @Sexo,
                 direccion          = @Direccion,
                 celular            = @Celular,
+                foto_url           = @FotoUrl,
                 es_doctor          = @EsDoctor,
                 fecha_modificacion = NOW(),
                 modificado_por     = @ModificadoPor

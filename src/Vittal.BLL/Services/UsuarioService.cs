@@ -399,6 +399,55 @@ public class UsuarioService : IUsuarioService
         }
     }
 
+    public async Task<ServiceResult<UsuarioResponseDto>> UpdateProfileAsync(
+        Guid id, MiPerfilUpdateRequestDto dto, Guid clinicaId, Guid modificadoPor)
+    {
+        try
+        {
+            _logger.LogInformation("Actualizando perfil del usuario {Id} en clínica {ClinicaId}", id, clinicaId);
+
+            var existing = await _repo.GetByIdAsync(id, clinicaId);
+            if (existing == null)
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "Usuario no encontrado", ServiceErrorType.NotFound);
+            }
+
+            // Actualizar solo campos editables por el propio usuario
+            existing.Nombres = dto.Nombres;
+            existing.Apellidos = dto.Apellidos;
+            existing.Email = dto.Email;
+            existing.Sexo = dto.Sexo;
+            existing.Celular = dto.Celular;
+            existing.Direccion = dto.Direccion;
+            existing.FotoUrl = dto.FotoUrl;
+            existing.ModificadoPor = modificadoPor;
+            existing.FechaModificacion = DateTime.UtcNow;
+
+            var updated = await _repo.UpdateAsync(existing);
+            if (!updated)
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "No se pudo actualizar el perfil.", ServiceErrorType.InternalError);
+            }
+
+            var refreshed = await _repo.GetByIdAsync(id, clinicaId);
+            if (refreshed == null)
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "Perfil actualizado pero no se pudo recuperar.", ServiceErrorType.InternalError);
+            }
+
+            return ServiceResult<UsuarioResponseDto>.Success(
+                MapUsuarioToDto(refreshed), "Perfil actualizado exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar perfil del usuario {Id}", id);
+            return ServiceResult<UsuarioResponseDto>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
     public async Task<ServiceResult<IEnumerable<UsuarioResponseDto>>> GetDoctoresAsync(Guid clinicaId)
     {
         try
@@ -651,6 +700,7 @@ public class UsuarioService : IUsuarioService
             Sexo = u.Sexo,
             Celular = u.Celular,
             Direccion = u.Direccion,
+            FotoUrl = u.FotoUrl,
             EsDoctor = u.EsDoctor,
             PerfilNombre = u.PerfilNombre,
             EsAdmin = u.EsAdmin,

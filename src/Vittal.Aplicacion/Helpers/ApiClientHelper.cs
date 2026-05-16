@@ -259,6 +259,50 @@ namespace Vittal.Aplicacion.Helpers
         /// <summary>
         /// PATCH autenticado (actualizaci\u00f3n parcial).
         /// </summary>
+        /// <summary>
+        /// POST multipart/form-data autenticado (para subida de archivos).
+        /// </summary>
+        public async Task<(bool Success, T? Data, string? ErrorMessage)> PostFileAsync<T>(
+            string endpoint,
+            string fileName,
+            Stream fileStream,
+            string contentType,
+            string fieldName = "file")
+        {
+            try
+            {
+                using var formContent = new MultipartFormDataContent();
+                using var streamContent = new StreamContent(fileStream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                formContent.Add(streamContent, fieldName, fileName);
+
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Post, endpoint, formContent);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    return (true, result, null);
+                }
+
+                var errorMsg = ExtractErrorMessage(responseBody);
+                return (false, default, errorMsg);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error de conexión al subir archivo a {Endpoint}", endpoint);
+                return (false, default, "No se pudo conectar con el servidor.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al subir archivo a {Endpoint}", endpoint);
+                return (false, default, "Ocurrió un error inesperado.");
+            }
+        }
+
+        /// <summary>
+        /// PATCH autenticado (actualizaci\u00f3n parcial).
+        /// </summary>
         public async Task<(bool Success, T? Data, string? ErrorMessage)> PatchAsync<T>(
             string endpoint,
             object? payload)

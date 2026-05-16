@@ -1,0 +1,149 @@
+@model Vittal.DTO.Usuario.UsuarioResponseDto
+@{
+    ViewData["Title"] = "Mi Perfil";
+    var fotoUrl = Model?.FotoUrl;
+    var inicial = !string.IsNullOrEmpty(Model?.Nombres)
+        ? Model.Nombres.Substring(0, 1).ToUpper()
+        : "U";
+}
+
+<div class="container-fluid">
+    <div class="row g-4">
+        @* ── Columna izquierda: Foto de perfil ── *@
+        <div class="col-lg-4">
+            <div class="vittal-card text-center">
+                <div class="mb-3">
+                    @if (!string.IsNullOrEmpty(fotoUrl))
+                    {
+                        <img src="@fotoUrl" alt="Avatar"
+                             class="rounded-circle border border-3 border-primary shadow-sm"
+                             style="width:150px;height:150px;object-fit:cover;"
+                             id="avatarPreview" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto border border-3 border-white shadow-sm"
+                             style="width:150px;height:150px;font-size:4rem;font-weight:700;color:#fff;background:var(--vittal-primary);">
+                            @inicial
+                        </div>
+                    }
+                </div>
+
+                <h5 class="mb-1">@(Model?.NombreCompleto ?? "Usuario")</h5>
+                <p class="text-muted small mb-3">@(Model?.PerfilNombre ?? "")</p>
+
+                <form asp-action="UploadAvatar" asp-controller="Perfil" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Foto de perfil</label>
+                        <input type="file" name="avatarFile" id="avatarFile"
+                               class="form-control form-control-sm"
+                               accept="image/jpeg,image/png,image/webp" />
+                    </div>
+                    <button type="submit" class="btn btn-vittal-primary btn-sm w-100">
+                        <i class="bi bi-upload me-1"></i>Subir foto
+                    </button>
+                </form>
+
+                <hr class="my-3" />
+
+                <div class="text-start small text-muted">
+                    <div class="mb-1"><strong>Usuario:</strong> @Model?.Username</div>
+                    <div class="mb-1"><strong>Email:</strong> @Model?.Email</div>
+                    <div class="mb-1"><strong>Rol:</strong> @(Model?.EsAdmin == true ? "Administrador" : Model?.PerfilNombre)</div>
+                    <div class="mb-1"><strong>Doctor:</strong> @(Model?.EsDoctor == true ? "Sí" : "No")</div>
+                    <div><strong>Registrado:</strong> @(Model?.FechaCreacion.ToString("dd/MM/yyyy") ?? "")</div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Columna derecha: Formulario de edición ── *@
+        <div class="col-lg-8">
+            <div class="vittal-card">
+                <h5 class="mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar perfil</h5>
+
+                <form asp-action="MiPerfil" asp-controller="Perfil" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Nombres</label>
+                            <input type="text" name="Nombres" value="@Model?.Nombres"
+                                   class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Apellidos</label>
+                            <input type="text" name="Apellidos" value="@Model?.Apellidos"
+                                   class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Correo electrónico</label>
+                            <input type="email" name="Email" value="@Model?.Email"
+                                   class="form-control" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Sexo</label>
+                            <select name="Sexo" class="form-select">
+                                <option value="">Seleccionar</option>
+                                <option value="M" selected="@(Model?.Sexo == "M")">Masculino</option>
+                                <option value="F" selected="@(Model?.Sexo == "F")">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Celular</label>
+                            <input type="text" name="Celular" value="@Model?.Celular"
+                                   class="form-control" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Dirección</label>
+                            <input type="text" name="Direccion" value="@Model?.Direccion"
+                                   class="form-control" />
+                        </div>
+
+                        @* Hidden field for FotoUrl to preserve it *@
+                        <input type="hidden" name="FotoUrl" value="@Model?.FotoUrl" />
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="/" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-vittal-primary">
+                            <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Vista previa de la foto seleccionada
+        document.getElementById('avatarFile')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const preview = document.getElementById('avatarPreview');
+                    if (!preview) {
+                        // Crear preview si no existe
+                        const container = document.querySelector('.vittal-card .mb-3');
+                        if (container) {
+                            const img = document.createElement('img');
+                            img.src = ev.target.result;
+                            img.className = 'rounded-circle border border-3 border-primary shadow-sm';
+                            img.style.cssText = 'width:150px;height:150px;object-fit:cover;';
+                            img.id = 'avatarPreview';
+                            // Remove existing avatar or initial
+                            const existing = container.querySelector('img, div.rounded-circle');
+                            if (existing) existing.remove();
+                            container.prepend(img);
+                        }
+                    } else {
+                        preview.src = ev.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+}

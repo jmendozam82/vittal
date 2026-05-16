@@ -66,7 +66,114 @@ body {
   display: flex;
   flex-direction: column;
   z-index: 100;
+  transition: width 0.3s ease;
 }
+
+/* Scroll solo en el área del menú, no en el header/footer */
+.vittal-sidebar .sidebar-header,
+.vittal-sidebar .sidebar-footer {
+  flex-shrink: 0;
+}
+
+/* ── Sidebar COLLAPSED ── */
+.vittal-sidebar.collapsed {
+  width: 62px;
+}
+.vittal-sidebar.collapsed .sidebar-brand-text,
+.vittal-sidebar.collapsed .nav-text,
+.vittal-sidebar.collapsed .section-arrow,
+.vittal-sidebar.collapsed .section-label,
+.vittal-sidebar.collapsed .sub-nav,
+.vittal-sidebar.collapsed .sidebar-user-text,
+.vittal-sidebar.collapsed .user-info,
+.vittal-sidebar.collapsed .sidebar-footer .dropdown-toggle::after {
+  display: none !important;
+}
+.vittal-sidebar.collapsed .sidebar-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 0;
+  width: 100%;
+}
+.vittal-sidebar.collapsed .sidebar-logo img {
+  margin-right: 0 !important;
+}
+.vittal-sidebar.collapsed .sidebar-header {
+  padding: 0.65rem 0;
+  justify-content: center;
+}
+.vittal-sidebar.collapsed .sidebar-toggle {
+  right: -17px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 44px;
+  background: var(--vittal-sidebar-bg);
+  border-radius: 0 8px 8px 0;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: none;
+  font-size: 1rem;
+}
+.vittal-sidebar.collapsed .sidebar-toggle:hover {
+  color: #fff !important;
+  background: var(--vittal-primary, #1a6fa8);
+}
+.vittal-sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0.65rem 0;
+  margin: 2px 4px;
+  gap: 0;
+}
+.vittal-sidebar.collapsed .nav-link i {
+  font-size: 1.15rem;
+  margin: 0;
+}
+.vittal-sidebar.collapsed .user-dropdown .dropdown-toggle {
+  justify-content: center;
+  padding: 0.75rem 0 !important;
+}
+.vittal-sidebar.collapsed .user-dropdown .user-avatar {
+  margin: 0 auto;
+}
+
+/* Sidebar header with logo + toggle */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+}
+.sidebar-logo {
+  /* Ocupa todo el espacio del header. El toggle flota sobre él. */
+  width: 100%;
+}
+.sidebar-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.3rem;
+  color: rgba(255,255,255,0.6) !important;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  z-index: 2;
+}
+.sidebar-toggle:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Nav links */
 .vittal-sidebar .nav-link {
   color: var(--vittal-sidebar-text);
   padding: 0.65rem 1.25rem;
@@ -77,13 +184,97 @@ body {
   align-items: center;
   gap: 0.6rem;
   transition: background 0.15s;
+  white-space: nowrap;
 }
 .vittal-sidebar .nav-link:hover,
 .vittal-sidebar .nav-link.active {
   background: var(--vittal-sidebar-active);
   color: #fff;
 }
-.vittal-content { margin-left: 260px; padding: 2rem; background: var(--vittal-bg); }
+
+/* ── Sidebar: Nav-section colapsable ── */
+.vittal-sidebar .nav-section {
+  cursor: pointer;
+  user-select: none;
+}
+.vittal-sidebar .nav-section .section-arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  transition: transform 0.25s ease;
+}
+.vittal-sidebar .nav-section[aria-expanded="true"] .section-arrow {
+  transform: rotate(180deg);
+}
+
+/* ── Sidebar: Sub-nav (sub-módulos colapsados) ── */
+.vittal-sidebar .sub-nav {
+  padding-left: 0;
+  list-style: none;
+}
+.vittal-sidebar .sub-nav .nav-link {
+  padding: 0.45rem 1.25rem 0.45rem 2.6rem;
+  margin: 1px 8px;
+  font-size: 0.82rem;
+  gap: 0.2rem;
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+}
+.vittal-sidebar .sub-nav .nav-link:hover,
+.vittal-sidebar .sub-nav .nav-link.active {
+  border-left-color: var(--vittal-primary);
+  background: var(--vittal-sidebar-active);
+  color: #fff;
+}
+.vittal-sidebar .sub-nav .nav-link .bi-dot {
+  font-size: 1rem;
+  margin-right: 0.2rem;
+}
+
+/* ── Sidebar Footer: User Dropdown ── */
+.sidebar-footer {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.user-dropdown .dropdown-toggle {
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s;
+}
+.user-dropdown .dropdown-toggle:hover,
+.user-dropdown .dropdown-toggle:focus {
+  background: rgba(255,255,255,0.05);
+}
+.user-dropdown .dropdown-toggle::after {
+  margin-left: auto;
+  color: rgba(255,255,255,0.4);
+}
+.user-dropdown .user-avatar {
+  flex-shrink: 0;
+}
+.user-dropdown .user-info {
+  min-width: 0;
+  overflow: hidden;
+}
+.user-dropdown .dropdown-menu {
+  border-radius: 10px;
+  border: none;
+  overflow: hidden;
+  font-size: 0.88rem;
+}
+.user-dropdown .dropdown-item {
+  padding: 0.6rem 1rem;
+}
+.user-dropdown .dropdown-item:hover {
+  background: var(--vittal-primary-light);
+  color: var(--vittal-primary-dark);
+}
+.user-dropdown .dropdown-item i {
+  font-size: 1rem;
+}
+
+/* ── Main content ── */
+.vittal-content { margin-left: 260px; padding: 2rem; background: var(--vittal-bg); transition: margin-left 0.3s ease; }
 
 /* ── Loading spinner ────────────────────────────────────────────── */
 .vittal-spinner {

@@ -1,20 +1,5 @@
 @{
     ViewData["Title"] = "Panel Principal";
-
-    // Helper para verificar si el usuario puede ver un módulo
-    bool PuedeVer(string clave)
-    {
-        if (ViewBag.EsAdmin == true) return true;
-        var modulos = ViewBag.ModulosPermitidos as System.Collections.Generic.HashSet<string>;
-        return modulos?.Contains(clave) == true;
-    }
-
-    // Contar módulos visibles por sección para decidir si mostrar el card
-    var adminModulos = new[] { "perfiles", "usuarios", "permisos", "salas" };
-    var catalogosModulos = new[] { "pacientes", "medicamentos", "clinicas", "tipos_cirugia", "cirugias",
-                                   "tipos_dx", "diagnosticos", "tratamientos", "recomendaciones", "examenes" };
-    bool hayAdmin = adminModulos.Any(PuedeVer);
-    bool hayCatalogos = catalogosModulos.Any(PuedeVer);
 }
 
 @section HeaderActions {
@@ -27,15 +12,20 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card bg-primary text-white border-0 shadow-sm">
-            <div class="card-body py-4">
+            <div class="card-body py-5">
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="bi bi-heart-pulse" style="font-size: 2.5rem;"></i>
+                        <div class="flex-shrink-0 me-4">
+                            <i class="bi bi-heart-pulse" style="font-size: 3rem;"></i>
                         </div>
                         <div>
-                            <h4 class="mb-1">Bienvenido al Sistema Vittal</h4>
-                            <p class="mb-0 opacity-75">Sistema de gestión de citas y expedientes médicos</p>
+                            <h3 class="mb-1 fw-bold">Bienvenido al Sistema Vittal</h3>
+                            <p class="mb-0 opacity-75 fs-6">Sistema de gestión de citas y expedientes médicos</p>
+                            <p class="mb-0 mt-2 small opacity-50">
+                                <i class="bi bi-person-circle me-1"></i>@User.Identity?.Name
+                                &nbsp;·&nbsp;
+                                <i class="bi bi-layers me-1"></i>Utilice el menú lateral para navegar entre los módulos
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -44,389 +34,48 @@
     </div>
 </div>
 
-<!-- Módulos disponibles -->
-<h5 class="mb-3">
-    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Módulos del Sistema
-</h5>
-
+<!-- Quick stats row -->
 <div class="row g-3 mb-4">
-    @if (hayAdmin)
-    {
-    <!-- Administración -->
-    <div class="col-12">
+    <div class="col-md-3 col-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-3">
-                <h6 class="mb-0">
-                    <i class="bi bi-gear-wide-connected text-primary me-2"></i>Administración
-                </h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="row g-0">
-                    @if (PuedeVer("perfiles"))
-                    {
-                    <!-- Perfiles -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Administracion/Perfil" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
-                                    <i class="bi bi-person-badge"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Perfiles</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Gestión de perfiles y roles del sistema</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("usuarios"))
-                    {
-                    <!-- Usuarios -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Administracion/Usuario" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Usuarios</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Gestión de usuarios del sistema</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("permisos"))
-                    {
-                    <!-- Permisos -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Administracion/Permiso" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
-                                    <i class="bi bi-key"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Permisos</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Configuración de permisos por módulo</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("salas"))
-                    {
-                    <!-- Asignar Salas -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Administracion/Sala" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
-                                    <i class="bi bi-door-open"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Asignar Salas</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Asignación de salas y áreas médicas</div>
-                        </a>
-                    </div>
-                    }
-                </div>
+            <div class="card-body text-center py-4">
+                <div class="display-6 text-primary mb-2"><i class="bi bi-people"></i></div>
+                <div class="small text-muted">Pacientes</div>
             </div>
         </div>
     </div>
-    }
-</div>
-
-@if (hayCatalogos)
-{
-<div class="row g-3 mb-4">
-    <!-- Catálogos -->
-    <div class="col-12">
+    <div class="col-md-3 col-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-3">
-                <h6 class="mb-0">
-                    <i class="bi bi-book text-success me-2"></i>Catálogos
-                </h6>
+            <div class="card-body text-center py-4">
+                <div class="display-6 text-success mb-2"><i class="bi bi-calendar-check"></i></div>
+                <div class="small text-muted">Citas</div>
             </div>
-            <div class="card-body p-0">
-                <div class="row g-0">
-                    @if (PuedeVer("pacientes"))
-                    {
-                    <!-- Pacientes -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Paciente" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Pacientes</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Gestión de pacientes de la clínica</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("medicamentos"))
-                    {
-                    <!-- Medicamentos -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Medicamento" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-capsule"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Medicamentos</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de medicamentos</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("clinicas"))
-                    {
-                    <!-- Clínicas -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Clinica" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-building"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Clínicas</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Gestión de clínicas y sucursales</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("tipos_cirugia"))
-                    {
-                    <!-- Tipos de Cirugía -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/TipoCirugia" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-scissors"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Tipos de Cirugía</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de tipos de cirugías</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("cirugias"))
-                    {
-                    <!-- Cirugías -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Cirugia" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-scissors"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Cirugías</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Cirugías específicas por tipo</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("tipos_diagnostico"))
-                    {
-                    <!-- Tipos de Diagnóstico -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/TipoDiagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-clipboard2-pulse"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Tipos de Diagnóstico</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de tipos de diagnóstico</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("diagnosticos"))
-                    {
-                    <!-- Diagnósticos -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Diagnostico" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-clipboard2-plus"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Diagnósticos</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Diagnósticos asignados a citas médicas</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("tratamientos"))
-                    {
-                    <!-- Tratamientos -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Tratamiento" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-heart-pulse"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Tratamientos</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de tratamientos médicos</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("examenes"))
-                    {
-                    <!-- Exámenes -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Examen" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-eyedropper"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Exámenes</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de exámenes médicos</div>
-                        </a>
-                    </div>
-                    }
-
-                    @if (PuedeVer("recomendaciones"))
-                    {
-                    <!-- Recomendaciones -->
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="/Catalogos/Recomendacion" class="module-card d-block p-3 text-decoration-none text-dark">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="module-icon bg-success bg-opacity-10 text-success rounded-circle p-2 me-2">
-                                    <i class="bi bi-chat-square-text"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold small">Recomendaciones</div>
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Activo</span>
-                                </div>
-                            </div>
-                            <div class="text-muted small">Catálogo de recomendaciones médicas</div>
-                        </a>
-                    </div>
-                    }
-                    }
-                </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <div class="display-6 text-warning mb-2"><i class="bi bi-clock-history"></i></div>
+                <div class="small text-muted">Cola de Espera</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <div class="display-6 text-info mb-2"><i class="bi bi-folder-medical"></i></div>
+                <div class="small text-muted">Expedientes</div>
             </div>
         </div>
     </div>
 </div>
-}
 
-@if (ViewBag.EsAdmin == true)
-{
-<!-- Próximamente: módulos avanzados (solo visible para admin) -->
-<div class="row g-3 mt-1">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-4">
-                <div class="row g-2">
-                    <div class="col-md-8">
-                        <h6 class="text-muted mb-2">
-                            <i class="bi bi-cone-striped me-2"></i>Módulos en construcción
-                        </h6>
-                        <div class="d-flex flex-wrap gap-2">
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Agenda</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Cola de Espera</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Expedientes</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Línea de Tiempo</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Dashboard</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Reportes</span>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">Alertas</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-md-end text-muted small align-self-center">
-                        <i class="bi bi-info-circle me-1"></i>BD lista, código en desarrollo
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Footer hint -->
+<div class="row">
+    <div class="col-12 text-center">
+        <p class="text-muted small mb-0">
+            <i class="bi bi-arrow-left me-1"></i>
+            Seleccione un módulo en el menú lateral para comenzar
+        </p>
     </div>
 </div>
-}
-
-@section Scripts {
-<style>
-    /* Module card hover effects */
-    .module-card {
-        transition: all 0.2s ease-in-out;
-        border-radius: 0.5rem;
-    }
-
-    .module-card:hover {
-        background-color: #f8f9fa;
-        transform: translateY(-2px);
-        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
-    }
-
-    .module-icon {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-    }
-
-    /* Disabled module card */
-    .text-muted .module-card {
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-
-    .text-muted .module-card:hover {
-        transform: none;
-        box-shadow: none;
-        background-color: transparent;
-    }
-
-    /* Banner logo watermark */
-    .banner-logo {
-        max-width: 45px;
-        height: auto;
-        opacity: 0.15;
-        filter: brightness(0) invert(1);
-    }
-</style>
-}

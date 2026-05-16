@@ -26,6 +26,7 @@ public class Usuario
     public string? Sexo { get; set; }                  // 'M' | 'F'
     public string? Direccion { get; set; }
     public string? Celular { get; set; }
+    public string? FotoUrl { get; set; }
     public bool EsDoctor { get; set; }
     public bool EsSuperAdmin { get; set; }
 

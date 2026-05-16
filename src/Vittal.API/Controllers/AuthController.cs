@@ -9,6 +9,7 @@ using Vittal.API.Models;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.Auth;
+using Vittal.Utility;
 
 namespace Vittal.API.Controllers;
 
@@ -19,13 +20,15 @@ public class AuthController : ControllerBase
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IUsuarioService _usuarioService;
+    private readonly IPermisoService _permisoService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUsuarioService usuarioService, ILogger<AuthController> logger)
+    public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUsuarioService usuarioService, IPermisoService permisoService, ILogger<AuthController> logger)
     {
         _httpClient = httpClientFactory.CreateClient("SupabaseAuth");
         _configuration = configuration;
         _usuarioService = usuarioService;
+        _permisoService = permisoService;
         _logger = logger;
     }
 
@@ -65,6 +68,29 @@ public class AuthController : ControllerBase
 
         if (!userResult.IsSuccess || userResult.Data == null)
             return Unauthorized(new ApiResponse { Success = false, Message = userResult.Message });
+
+        // ── Verificar permiso "Acceso al sistema" ──────────────────────
+        // Los administradores y super administradores siempre pueden ingresar.
+        // Para el resto, se verifica que el perfil tenga READ en el módulo "login".
+        if (!userResult.Data.EsAdmin && !userResult.Data.EsSuperAdmin)
+        {
+            var permisoResult = await _permisoService.HasPermissionAsync(
+                userResult.Data.ClinicaId,
+                userResult.Data.PerfilId,
+                "login",
+                PermissionType.Read);
+
+            if (!permisoResult.IsSuccess || !permisoResult.Data)
+            {
+                _logger.LogWarning("Acceso denegado para {Email}: perfil {Perfil} no tiene permiso 'Acceso al sistema'",
+                    request.Email, userResult.Data.PerfilNombre);
+                return Unauthorized(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Su perfil no tiene acceso al sistema. Consulte con un administrador."
+                });
+            }
+        }
 
         var loginResponse = new LoginResponseDto
         {

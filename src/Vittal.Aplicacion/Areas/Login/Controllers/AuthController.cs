@@ -120,13 +120,16 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                 var errorMsg = errorMessage ?? response?.Message ?? "Credenciales inválidas.";
                 _logger.LogWarning("Login fallido para {Email}: {Error}", model.Email, errorMsg);
                 ModelState.AddModelError(string.Empty, errorMsg);
+                ViewData["LoginError"] = errorMsg;
                 ViewData["ReturnUrl"] = returnUrl;
                 return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error inesperado durante el login para {Email}", model.Email);
-                ModelState.AddModelError(string.Empty, "Ocurrió un error inesperado. Intente nuevamente.");
+                var errMsg = "Ocurrió un error inesperado. Intente nuevamente.";
+                ModelState.AddModelError(string.Empty, errMsg);
+                ViewData["LoginError"] = errMsg;
                 return View(model);
             }
         }

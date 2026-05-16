@@ -95,9 +95,23 @@
     <h4 class="text-center mb-4">Bienvenido</h4>
     
     <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
-    @if (!ViewData.ModelState.IsValid)
+    @if (ViewData["LoginError"] is string errorMsg && !string.IsNullOrEmpty(errorMsg))
     {
-        <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3 bg-transparent border-danger text-danger" role="alert"></div>
+        <div class="alert alert-danger py-2 small mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i> @errorMsg
+        </div>
+    }
+    else if (!ViewData.ModelState.IsValid)
+    {
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            if (!string.IsNullOrEmpty(error.ErrorMessage))
+            {
+                <div class="alert alert-danger py-2 small mb-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i> @error.ErrorMessage
+                </div>
+            }
+        }
     }
         
         <div class="form-floating mb-3">

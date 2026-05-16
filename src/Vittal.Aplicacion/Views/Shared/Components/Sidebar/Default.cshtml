@@ -1,0 +1,221 @@
+@model SidebarViewModel
+
+@{
+    var area = Model.CurrentArea;
+    var userName = User.Identity?.Name ?? "Usuario";
+    var userInitial = userName.Substring(0, 1).ToUpper();
+}
+
+<nav class="vittal-sidebar" id="mainSidebar">
+    @* ── Sidebar Header: Logo + Toggle ── *@
+    <div class="sidebar-header">
+        <a class="d-flex align-items-center text-decoration-none sidebar-logo" href="/">
+            <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
+            <span class="fw-bold text-white sidebar-brand-text" style="font-size:1.1rem;">Vittal</span>
+        </a>
+        <button class="sidebar-toggle btn btn-link text-white p-0 border-0" id="sidebarToggle"
+                title="Colapsar menú" type="button">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+
+    <div class="flex-grow-1 overflow-auto py-2" id="sidebarMenuContainer">
+
+        @* ── Navegación (links simples) ── *@
+        @if (Model.PuedeVerDashboard || Model.PuedeVerLineaTiempo || Model.PuedeVerColaEspera)
+        {
+            <div class="px-3 mb-1 mt-1 section-label">
+                <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Navegación</small>
+            </div>
+            <ul class="nav flex-column mb-1">
+                @if (Model.PuedeVerDashboard)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "Dashboard" ? "active" : "")"
+                           asp-area="Dashboard" asp-controller="Dashboard" asp-action="Index" title="Dashboard">
+                            <i class="bi bi-grid-fill"></i><span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                }
+                @if (Model.PuedeVerLineaTiempo)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "LineaTiempo" ? "active" : "")"
+                           asp-area="LineaTiempo" asp-controller="LineaTiempo" asp-action="Index" title="Línea de Tiempo">
+                            <i class="bi bi-clock-history"></i><span class="nav-text">Línea de Tiempo</span>
+                        </a>
+                    </li>
+                }
+                @if (Model.PuedeVerColaEspera)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "ColaEspera" ? "active" : "")"
+                           asp-area="ColaEspera" asp-controller="ColaEspera" asp-action="Index" title="Cola de Espera">
+                            <i class="bi bi-people-fill"></i><span class="nav-text">Cola de Espera</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+
+        @* ── Sección: GESTIÓN (colapsables) ── *@
+        @if (Model.PuedeVerAdministracion || Model.PuedeVerCatalogos || Model.PuedeVerAgenda || Model.PuedeVerExpedientes)
+        {
+            <hr class="mx-3 text-secondary opacity-25" />
+            <div class="px-3 mb-1 section-label">
+                <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Gestión</small>
+            </div>
+            <ul class="nav flex-column mb-1">
+
+                @* ─────────────────── Administración (colapsable) ─────────────────── *@
+                @if (Model.PuedeVerAdministracion)
+                {
+                    var adminExpanded = area == "Administracion";
+                    <li class="nav-item">
+                        <a class="nav-link nav-section @(area == "Administracion" ? "active" : "")"
+                           data-bs-toggle="collapse" data-bs-target="#subAdmin" role="button"
+                           aria-expanded="@adminExpanded.ToString().ToLower()" title="Administración">
+                            <i class="bi bi-gear-fill"></i><span class="nav-text">Administración</span>
+                            <i class="bi bi-chevron-down ms-auto section-arrow"></i>
+                        </a>
+                        <ul class="nav flex-column sub-nav collapse @(adminExpanded ? "show" : "")" id="subAdmin">
+                            @if (Model.PuedeVerPerfiles)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Perfil" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="Perfil" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Perfiles</span></a></li>
+                            }
+                            @if (Model.PuedeVerUsuarios)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Usuario" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="Usuario" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Usuarios</span></a></li>
+                            }
+                            @if (Model.PuedeVerPermisos)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Permiso" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="Permiso" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Permisos</span></a></li>
+                            }
+                            @if (Model.PuedeVerSalas)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Sala" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="Sala" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Asignar Salas</span></a></li>
+                            }
+                        </ul>
+                    </li>
+                }
+
+                @* ─────────────────── Catálogos (colapsable) ─────────────────── *@
+                @if (Model.PuedeVerCatalogos)
+                {
+                    var catExpanded = area == "Catalogos";
+                    <li class="nav-item">
+                        <a class="nav-link nav-section @(area == "Catalogos" ? "active" : "")"
+                           data-bs-toggle="collapse" data-bs-target="#subCatalogos" role="button"
+                           aria-expanded="@catExpanded.ToString().ToLower()" title="Catálogos">
+                            <i class="bi bi-bookmark-fill"></i><span class="nav-text">Catálogos</span>
+                            <i class="bi bi-chevron-down ms-auto section-arrow"></i>
+                        </a>
+                        <ul class="nav flex-column sub-nav collapse @(catExpanded ? "show" : "")" id="subCatalogos">
+                            @if (Model.PuedeVerPacientes)      { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Paciente" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Pacientes</span></a></li> }
+                            @if (Model.PuedeVerMedicamentos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Medicamento" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Medicamentos</span></a></li> }
+                            @if (Model.PuedeVerClinicas)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Clinica" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Clínicas</span></a></li> }
+                            @if (Model.PuedeVerTiposCirugia)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoCirugia" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Cirugía</span></a></li> }
+                            @if (Model.PuedeVerCirugias)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Cirugia" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Cirugías</span></a></li> }
+                            @if (Model.PuedeVerTiposDiagnostico){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoDiagnostico" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Diagnóstico</span></a></li> }
+                            @if (Model.PuedeVerDiagnosticos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Diagnostico" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Diagnósticos</span></a></li> }
+                            @if (Model.PuedeVerTratamientos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Tratamiento" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tratamientos</span></a></li> }
+                            @if (Model.PuedeVerRecomendaciones){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Recomendacion" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Recomendaciones</span></a></li> }
+                            @if (Model.PuedeVerExamenes)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Examen" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Exámenes</span></a></li> }
+                            @if (Model.PuedeVerTiposAntecedente){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoAntecedente" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Antecedente</span></a></li> }
+                            @if (Model.PuedeVerTiposSignoVital){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoSignoVital" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Signo Vital</span></a></li> }
+                        </ul>
+                    </li>
+                }
+
+                @* ─────────────────── Agenda ─────────────────── *@
+                @if (Model.PuedeVerAgenda)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "Agenda" ? "active" : "")"
+                           asp-area="Agenda" asp-controller="Agenda" asp-action="Index" title="Agenda">
+                            <i class="bi bi-calendar-event-fill"></i><span class="nav-text">Agenda</span>
+                        </a>
+                    </li>
+                }
+
+                @* ─────────────────── Expedientes ─────────────────── *@
+                @if (Model.PuedeVerExpedientes)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "Expedientes" ? "active" : "")"
+                           asp-area="Expedientes" asp-controller="Expedientes" asp-action="Index" title="Expedientes">
+                            <i class="bi bi-folder-fill"></i><span class="nav-text">Expedientes</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+
+        @* ── Reportes & Alertas ── *@
+        @if (Model.PuedeVerReportes || Model.PuedeVerAlertas)
+        {
+            <hr class="mx-3 text-secondary opacity-25" />
+            <div class="px-3 mb-1 section-label">
+                <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Reportes &amp; Alertas</small>
+            </div>
+            <ul class="nav flex-column mb-1">
+                @if (Model.PuedeVerReportes)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "Reportes" ? "active" : "")"
+                           asp-area="Reportes" asp-controller="Reportes" asp-action="Index" title="Reportes">
+                            <i class="bi bi-file-earmark-bar-graph-fill"></i><span class="nav-text">Reportes</span>
+                        </a>
+                    </li>
+                }
+                @if (Model.PuedeVerAlertas)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(area == "Alertas" ? "active" : "")"
+                           asp-area="Alertas" asp-controller="Alertas" asp-action="Index" title="Alertas y Notificaciones">
+                            <i class="bi bi-bell-fill"></i><span class="nav-text">Alertas</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    @* ── Sidebar Footer: Usuario Dropdown ── *@
+    <div class="sidebar-footer">
+        <div class="dropdown user-dropdown">
+            <button class="btn dropdown-toggle d-flex align-items-center w-100 p-3 border-0 text-white"
+                    type="button" data-bs-toggle="dropdown" data-bs-auto-close="true"
+                    aria-expanded="false" id="userDropdownBtn">
+                <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:34px;height:34px;font-size:0.85rem;font-weight:700;color:#fff;background:var(--vittal-primary, #1a6fa8);">
+                    @userInitial
+                </div>
+                <div class="user-info text-start ms-2 flex-grow-1 min-width-0 sidebar-user-text">
+                    <div class="text-white small text-truncate fw-medium">@userName</div>
+                    <div class="text-secondary" style="font-size:0.7rem;">@(User.FindFirst(ClaimTypes.Role)?.Value ?? "")</div>
+                </div>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdownBtn"
+                style="min-width:200px;margin-bottom:8px;">
+                <li>
+                    <a class="dropdown-item" href="/Perfil/MiPerfil">
+                        <i class="bi bi-person-circle me-2"></i>Mi Perfil
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form asp-area="Login" asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-box-arrow-right me-2 text-danger"></i>Cerrar Sesión
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

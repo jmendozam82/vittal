@@ -89,11 +89,6 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <body>
-    @{
-        var areaCorriente = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
-        var controladorCorriente = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    }
-
     <script>
         window.VITTAL_API_URL = '@(Context.Request.Scheme)://@(Context.Request.Host)/api';
         window.VITTAL_API_HUB_URL = '@(Configuration["VittalApi:BaseUrl"] ?? "")';
@@ -103,142 +98,8 @@
     </script>
 
     <div class="wrapper">
-        <!-- ── Sidebar ─────────────────────────────────────────────── -->
-        <nav class="vittal-sidebar" id="mainSidebar">
-            <div class="p-3 border-bottom border-secondary border-opacity-25">
-                <a class="d-flex align-items-center text-decoration-none" href="/">
-                    <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
-                    <span class="fw-bold text-white" style="font-size:1.1rem;">Vittal</span>
-                </a>
-            </div>
-
-            <div class="flex-grow-1 overflow-auto py-2">
-                <div class="px-3 mb-1">
-                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Navegación</small>
-                </div>
-
-                <ul class="nav flex-column">
-                    <!-- Dashboard -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Dashboard" ? "active" : "")"
-                           asp-area="Dashboard" asp-controller="Dashboard" asp-action="Index"
-                           title="Dashboard">
-                            <i class="bi bi-grid-fill"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <!-- Línea de Tiempo -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "LineaTiempo" ? "active" : "")"
-                           asp-area="LineaTiempo" asp-controller="LineaTiempo" asp-action="Index"
-                           title="Línea de Tiempo">
-                            <i class="bi bi-clock-history"></i>
-                            <span>Línea de Tiempo</span>
-                        </a>
-                    </li>
-                    <!-- Cola de Espera -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "ColaEspera" ? "active" : "")"
-                           asp-area="ColaEspera" asp-controller="ColaEspera" asp-action="Index"
-                           title="Cola de Espera">
-                            <i class="bi bi-people-fill"></i>
-                            <span>Cola de Espera</span>
-                        </a>
-                    </li>
-                </ul>
-
-                <hr class="mx-3 text-secondary opacity-25" />
-
-                <div class="px-3 mb-1">
-                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Gestión</small>
-                </div>
-
-                <ul class="nav flex-column">
-                    <!-- Administración -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Administracion" ? "active" : "")"
-                           asp-area="Administracion" asp-controller="Perfil" asp-action="Index"
-                           title="Administración">
-                            <i class="bi bi-gear-fill"></i>
-                            <span>Administración</span>
-                        </a>
-                    </li>
-                    <!-- Catálogos -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Catalogos" ? "active" : "")"
-                           asp-area="Catalogos" asp-controller="Paciente" asp-action="Index"
-                           title="Catálogos">
-                            <i class="bi bi-bookmark-fill"></i>
-                            <span>Catálogos</span>
-                        </a>
-                    </li>
-                    <!-- Agenda -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Agenda" ? "active" : "")"
-                           asp-area="Agenda" asp-controller="Citas" asp-action="Index"
-                           title="Agenda">
-                            <i class="bi bi-calendar-event-fill"></i>
-                            <span>Agenda</span>
-                        </a>
-                    </li>
-                    <!-- Expedientes -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Expedientes" ? "active" : "")"
-                           asp-area="Expedientes" asp-controller="Expedientes" asp-action="Index"
-                           title="Expedientes">
-                            <i class="bi bi-folder-fill"></i>
-                            <span>Expedientes</span>
-                        </a>
-                    </li>
-                </ul>
-
-                <hr class="mx-3 text-secondary opacity-25" />
-
-                <div class="px-3 mb-1">
-                    <small class="text-uppercase text-secondary" style="font-size:0.65rem;letter-spacing:0.08em;font-weight:600;">Reportes & Alertas</small>
-                </div>
-
-                <ul class="nav flex-column">
-                    <!-- Reportes -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Reportes" ? "active" : "")"
-                           asp-area="Reportes" asp-controller="Reportes" asp-action="Index"
-                           title="Reportes">
-                            <i class="bi bi-file-earmark-bar-graph-fill"></i>
-                            <span>Reportes</span>
-                        </a>
-                    </li>
-                    <!-- Alertas -->
-                    <li class="nav-item">
-                        <a class="nav-link @(areaCorriente == "Alertas" ? "active" : "")"
-                           asp-area="Alertas" asp-controller="Alertas" asp-action="Index"
-                           title="Alertas y Notificaciones">
-                            <i class="bi bi-bell-fill"></i>
-                            <span>Alertas</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Sidebar Footer -->
-            <div class="p-3 border-top border-secondary border-opacity-25">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
-                         style="width:32px;height:32px;font-size:0.75rem;font-weight:600;color:#fff;">
-                        @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
-                    </div>
-                    <div class="flex-grow-1 min-width-0">
-                        <div class="text-white small text-truncate fw-medium">@(User.Identity?.Name ?? "Usuario")</div>
-                        <form asp-area="Login" asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-link text-secondary p-0 border-0"
-                                    style="font-size:0.72rem;text-decoration:none;">
-                                <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <!-- ── Sidebar (inteligente: filtrado por permisos) ─────────── -->
+        @await Component.InvokeAsync("Sidebar")
 
         <!-- ── Main Content ────────────────────────────────────────── -->
         <main class="vittal-content" id="mainContent">

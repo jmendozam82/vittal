@@ -17,8 +17,9 @@ public class UsuarioResponseDto
     public string Apellidos { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? Sexo { get; set; }
-    public string? Celular { get; set; }
-    public string? Direccion { get; set; }
+    public string? Celular { get; set; }
+    public string? Direccion { get; set; }
+    public string? FotoUrl { get; set; }
     public bool EsDoctor { get; set; }
     public string PerfilNombre { get; set; } = string.Empty;
     public bool EsAdmin { get; set; }

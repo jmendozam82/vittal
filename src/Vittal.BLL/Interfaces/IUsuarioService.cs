@@ -45,4 +45,7 @@ public interface IUsuarioService
 
     /// <summary>Lista solo doctores activos de la clínica (para dropdowns).</summary>
     Task<ServiceResult<IEnumerable<UsuarioResponseDto>>> GetDoctoresAsync(Guid clinicaId);
+
+    /// <summary>Actualiza el perfil del usuario autenticado (solo campos editables por él mismo).</summary>
+    Task<ServiceResult<UsuarioResponseDto>> UpdateProfileAsync(Guid id, MiPerfilUpdateRequestDto dto, Guid clinicaId, Guid modificadoPor);
 }
