@@ -35,84 +35,104 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        var supabaseUrl = _configuration["Supabase:Url"];
-        var supabaseKey = _configuration["Supabase:AnonKey"];
-
-        var authRequest = new
+        try
         {
-            email = request.Email,
-            password = request.Password
-        };
+            var supabaseUrl = _configuration["Supabase:Url"];
+            var supabaseKey = _configuration["Supabase:AnonKey"];
 
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{supabaseUrl}/auth/v1/token?grant_type=password")
-        {
-            Content = JsonContent.Create(authRequest)
-        };
-        req.Headers.Add("apikey", supabaseKey);
+            _logger.LogInformation("Login attempt for {Email}. SupabaseUrl configured: {HasUrl}, AnonKey configured: {HasKey}",
+                request.Email, supabaseUrl != null, supabaseKey != null);
 
-        var response = await _httpClient.SendAsync(req);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            return BadRequest(new ApiResponse { Success = false, Message = "Credenciales inválidas" });
-        }
-
-        var authResponse = await response.Content.ReadFromJsonAsync<SupabaseAuthResponse>();
-        if (authResponse == null || string.IsNullOrEmpty(authResponse.AccessToken))
-            return BadRequest(new ApiResponse { Success = false, Message = "Error al obtener el token" });
-
-        // Fetch internal user details via DTO
-        var authUserId = Guid.Parse(authResponse.User.Id);
-
-        var userResult = await _usuarioService.GetByAuthUserIdAsync(authUserId);
-
-        if (!userResult.IsSuccess || userResult.Data == null)
-            return Unauthorized(new ApiResponse { Success = false, Message = userResult.Message });
-
-        // ── Verificar permiso "Acceso al sistema" ──────────────────────
-        // Los administradores y super administradores siempre pueden ingresar.
-        // Para el resto, se verifica que el perfil tenga READ en el módulo "login".
-        if (!userResult.Data.EsAdmin && !userResult.Data.EsSuperAdmin)
-        {
-            var permisoResult = await _permisoService.HasPermissionAsync(
-                userResult.Data.ClinicaId,
-                userResult.Data.PerfilId,
-                "login",
-                PermissionType.Read);
-
-            if (!permisoResult.IsSuccess || !permisoResult.Data)
+            var authRequest = new
             {
-                _logger.LogWarning("Acceso denegado para {Email}: perfil {Perfil} no tiene permiso 'Acceso al sistema'",
-                    request.Email, userResult.Data.PerfilNombre);
-                return Unauthorized(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Su perfil no tiene acceso al sistema. Consulte con un administrador."
-                });
+                email = request.Email,
+                password = request.Password
+            };
+
+            var req = new HttpRequestMessage(HttpMethod.Post, $"{supabaseUrl}/auth/v1/token?grant_type=password")
+            {
+                Content = JsonContent.Create(authRequest)
+            };
+            req.Headers.Add("apikey", supabaseKey);
+
+            var response = await _httpClient.SendAsync(req);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Supabase Auth failed for {Email}: {StatusCode} - {Error}",
+                    request.Email, response.StatusCode, errorBody);
+                return BadRequest(new ApiResponse { Success = false, Message = "Credenciales inválidas" });
             }
+
+            var authResponse = await response.Content.ReadFromJsonAsync<SupabaseAuthResponse>();
+            if (authResponse == null || string.IsNullOrEmpty(authResponse.AccessToken))
+                return BadRequest(new ApiResponse { Success = false, Message = "Error al obtener el token" });
+
+            _logger.LogInformation("Supabase Auth success for {Email}. User.Id: {UserId}", request.Email, authResponse.User?.Id);
+
+            if (!Guid.TryParse(authResponse.User?.Id, out var authUserId))
+                return BadRequest(new ApiResponse { Success = false, Message = "ID de usuario inválido en respuesta de autenticación" });
+
+            var userResult = await _usuarioService.GetByAuthUserIdAsync(authUserId);
+
+            if (!userResult.IsSuccess || userResult.Data == null)
+            {
+                _logger.LogWarning("Usuario no encontrado en BD para AuthUserId: {AuthUserId}. Message: {Msg}", authUserId, userResult.Message);
+                return Unauthorized(new ApiResponse { Success = false, Message = userResult.Message });
+            }
+
+            if (!userResult.Data.EsAdmin && !userResult.Data.EsSuperAdmin)
+            {
+                var permisoResult = await _permisoService.HasPermissionAsync(
+                    userResult.Data.ClinicaId,
+                    userResult.Data.PerfilId,
+                    "login",
+                    PermissionType.Read);
+
+                if (!permisoResult.IsSuccess || !permisoResult.Data)
+                {
+                    _logger.LogWarning("Acceso denegado para {Email}: perfil {Perfil} no tiene permiso 'Acceso al sistema'",
+                        request.Email, userResult.Data.PerfilNombre);
+                    return Unauthorized(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Su perfil no tiene acceso al sistema. Consulte con un administrador."
+                    });
+                }
+            }
+
+            var loginResponse = new LoginResponseDto
+            {
+                AccessToken = authResponse.AccessToken,
+                RefreshToken = authResponse.RefreshToken,
+                ExpiresIn = authResponse.ExpiresIn,
+                UsuarioId = userResult.Data.UsuarioId,
+                ClinicaId = userResult.Data.ClinicaId,
+                Nombres = userResult.Data.Nombres,
+                Apellidos = userResult.Data.Apellidos,
+                Email = userResult.Data.Email,
+                Perfil = userResult.Data.PerfilNombre,
+                PerfilId = userResult.Data.PerfilId,
+                EsAdmin = userResult.Data.EsAdmin
+            };
+
+            return Ok(new ApiResponse<LoginResponseDto>
+            {
+                Success = true,
+                Message = "Login exitoso",
+                Data = loginResponse
+            });
         }
-
-        var loginResponse = new LoginResponseDto
+        catch (Exception ex)
         {
-            AccessToken = authResponse.AccessToken,
-            RefreshToken = authResponse.RefreshToken,
-            ExpiresIn = authResponse.ExpiresIn,
-            UsuarioId = userResult.Data.UsuarioId,
-            ClinicaId = userResult.Data.ClinicaId,
-            Nombres = userResult.Data.Nombres,
-            Apellidos = userResult.Data.Apellidos,
-            Email = userResult.Data.Email,
-            Perfil = userResult.Data.PerfilNombre,
-            PerfilId = userResult.Data.PerfilId,
-            EsAdmin = userResult.Data.EsAdmin
-        };
-
-        return Ok(new ApiResponse<LoginResponseDto>
-        {
-            Success = true,
-            Message = "Login exitoso",
-            Data = loginResponse
-        });
+            _logger.LogError(ex, "Error inesperado en Login para {Email}", request.Email);
+            return StatusCode(500, new ApiResponse
+            {
+                Success = false,
+                Message = $"Error interno del servidor: {ex.GetType().Name} - {ex.Message}"
+            });
+        }
     }
 
     [HttpPost("refresh")]
