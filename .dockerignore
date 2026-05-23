@@ -1,0 +1,16 @@
+**/.git
+**/.gitignore
+**/.gitattributes
+**/.github
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/node_modules
+**/supabase
+**/docs
+**/tests
+**/*.md
+**/appsettings.Development.json
+**/appsettings.Staging.json
+**/launchSettings.json

@@ -134,9 +134,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (corsOrigins == null || corsOrigins.Length == 0)
+{
+    corsOrigins = new[] { "https://localhost:5001", "http://localhost:5000", "https://app.vittal.com" };
+}
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", p => p.WithOrigins("https://localhost:5001", "http://localhost:5000", "https://app.vittal.com").AllowAnyMethod().AllowAnyHeader().AllowCredentials());
+    options.AddPolicy("AllowAll", p => p.WithOrigins(corsOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials());
 });
 
 // SignalR hubs para tiempo real
