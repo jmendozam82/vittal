@@ -166,6 +166,7 @@ app.MapControllers();
 // SignalR Hubs
 app.MapHub<AlertasHub>("/hubs/alertas");
 app.MapHub<LineaTiempoHub>("/hubs/linea-tiempo");
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
 
@@ -195,3 +196,4 @@ static List<SecurityKey> FetchJwksKeys(string jwksUrl)
     }
     return keys;
 }
+
