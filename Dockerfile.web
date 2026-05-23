@@ -10,7 +10,7 @@ COPY src/Vittal.DTO/Vittal.DTO.csproj src/Vittal.DTO/
 COPY src/Vittal.Entity/Vittal.Entity.csproj src/Vittal.Entity/
 COPY src/Vittal.IOC/Vittal.IOC.csproj src/Vittal.IOC/
 COPY src/Vittal.Utility/Vittal.Utility.csproj src/Vittal.Utility/
-RUN dotnet restore
+RUN dotnet restore src/Vittal.Aplicacion/Vittal.Aplicacion.csproj
 
 COPY . .
 RUN dotnet publish src/Vittal.Aplicacion/Vittal.Aplicacion.csproj -c Release -o /app/out
