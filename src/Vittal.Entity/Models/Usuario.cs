@@ -41,4 +41,8 @@ public class Usuario
     public bool EsAdmin { get; set; }
     public string NombreCompleto => $"{Nombres} {Apellidos}";
     public string PerfilNombre { get; set; } = string.Empty;
+    /// <summary>
+    /// Nombre de la clínica a la que pertenece el usuario (via JOIN).
+    /// </summary>
+    public string ClinicaNombre { get; set; } = string.Empty;
 }

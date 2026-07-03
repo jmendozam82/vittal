@@ -64,8 +64,55 @@ public class AdminController : ControllerBase
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Usuarios (multi-tenant)
+    // Usuarios (multi-tenant) - Creación y consulta
     // ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Crea un usuario en una clínica específica (solo Super Admin).
+    /// A diferencia de POST /api/Usuarios, aquí se especifica la clínica en el body.
+    /// Crea el usuario en Supabase Auth y en la BD de la clínica destino.
+    /// </summary>
+    [HttpPost("usuarios")]
+    [ProducesResponseType(typeof(ApiResponse<UsuarioResponseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateUsuario([FromBody] AdminCreateUsuarioRequestDto dto)
+    {
+        if (dto.ClinicaId == Guid.Empty)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Debe especificar la clínica para el nuevo usuario."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Password))
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "La contraseña es obligatoria para crear un usuario.",
+                Errors = new List<string> { "La contraseña es obligatoria." }
+            });
+        }
+
+        var creadoPor = User.GetInternalUserId();
+        var result = await _adminService.CreateUsuarioAsync(dto, creadoPor);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            var response = new ApiResponse<UsuarioResponseDto>
+            {
+                Success = true,
+                Message = result.Message,
+                Data = result.Data
+            };
+            return CreatedAtAction(nameof(GetUsuariosByClinica), new { clinicaId = dto.ClinicaId }, response);
+        }
+
+        return result.ToActionResult();
+    }
 
     /// <summary>Obtiene los usuarios de una clínica específica.</summary>
     /// <param name="clinicaId">ID de la clínica a consultar.</param>

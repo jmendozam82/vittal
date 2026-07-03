@@ -472,7 +472,8 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexion. Verifique su red e intente nuevamente.');
+            console.error('Error al cargar usuarios:', err);
+            mostrarError('No se pudieron cargar los datos. Si el problema persiste, contacte al administrador.');
 
         }
 
@@ -730,7 +731,8 @@
 
         } catch (err) {
 
-            showToast('Error de conexion al desactivar.', 'danger');
+            console.error('Error al desactivar usuario:', err);
+            showToast('Error al desactivar el usuario. Intente nuevamente.', 'danger');
 
         } finally {
 
@@ -792,7 +794,8 @@
 
         } catch (err) {
 
-            showToast('Error de conexion al reactivar.', 'danger');
+            console.error('Error al reactivar usuario:', err);
+            showToast('Error al reactivar el usuario. Intente nuevamente.', 'danger');
 
         } finally {
 

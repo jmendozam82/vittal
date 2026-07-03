@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
 using Vittal.Utility;
+using Vittal.Utility.Results;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
@@ -42,6 +44,20 @@ public class UsuariosController : ControllerBase
     {
         var clinicaId = User.GetClinicaId();
         var result = await _service.GetAllAsync(clinicaId, inactivos);
+
+        // Los admins de clínica NO deben ver Super Admins
+        if (result.IsSuccess && result.Data != null)
+        {
+            var esSuperAdmin = User.FindFirst("app_es_super_admin") is System.Security.Claims.Claim c
+                && bool.TryParse(c.Value, out var esSA) && esSA;
+            if (!esSuperAdmin)
+            {
+                var filtered = ServiceResult<IEnumerable<UsuarioResponseDto>>.Success(
+                    result.Data.Where(u => !u.EsSuperAdmin), result.Message);
+                return filtered.ToActionResult();
+            }
+        }
+
         return result.ToActionResult();
     }
 

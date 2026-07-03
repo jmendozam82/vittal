@@ -17,4 +17,6 @@ public class LoginResponseDto
     public string Perfil { get; set; } = string.Empty;
     public Guid PerfilId { get; set; }
     public bool EsAdmin { get; set; }
+    public bool EsSuperAdmin { get; set; }
+    public string ClinicaNombre { get; set; } = string.Empty;
 }

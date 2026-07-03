@@ -21,6 +21,7 @@ public class UsuarioResponseDto
     public string? Direccion { get; set; }
     public string? FotoUrl { get; set; }
     public bool EsDoctor { get; set; }
+    public string ClinicaNombre { get; set; } = string.Empty;
     public string PerfilNombre { get; set; } = string.Empty;
     public bool EsAdmin { get; set; }
     public bool EsSuperAdmin { get; set; }

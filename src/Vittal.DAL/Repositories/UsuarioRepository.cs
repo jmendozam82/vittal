@@ -47,11 +47,13 @@ public class UsuarioRepository : IUsuarioRepository
         u.creado_por          AS CreadoPor,
         u.modificado_por      AS ModificadoPor,
         p.nombre              AS PerfilNombre,
-        p.es_admin            AS EsAdmin";
+        p.es_admin            AS EsAdmin,
+        c.nombre              AS ClinicaNombre";
 
     private const string FromJoin = @"
         FROM public.usuarios u
-        INNER JOIN public.perfiles p ON u.perfil_id = p.id";
+        INNER JOIN public.perfiles p ON u.perfil_id = p.id
+        INNER JOIN public.clinicas c ON u.clinica_id = c.id";
 
     // ────────────────────────────────────────────────────────────────────────
     // 1. GetByAuthUserIdAsync — Obtiene usuario por su ID de Supabase Auth

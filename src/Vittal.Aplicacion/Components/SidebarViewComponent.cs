@@ -52,9 +52,72 @@ public class SidebarViewComponent : ViewComponent
         var esSuperAdmin = claimsUser?.FindFirst("app_es_super_admin") is System.Security.Claims.Claim superAdminClaim
             && bool.TryParse(superAdminClaim.Value, out var isSuperAdmin) && isSuperAdmin;
 
+        model.EsSuperAdmin = esSuperAdmin;
+
+        // ── Super Admin: Cargar lista de clínicas para workspace switcher ──
+        if (esSuperAdmin)
+        {
+            try
+            {
+                var httpContext = ViewContext.HttpContext;
+                var overrideClinicaId = httpContext.Session.GetString("ClinicaOverride");
+
+                var (success, responseJson, error) = await _apiClient.GetAsync<JsonElement>("api/Admin/clinicas?incluirInactivos=false");
+                if (success && responseJson.ValueKind == JsonValueKind.Object)
+                {
+                    if (responseJson.TryGetProperty("data", out var dataArray) && dataArray.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in dataArray.EnumerateArray())
+                        {
+                            var id = item.TryGetProperty("id", out var idProp) ? idProp.GetGuid() : Guid.Empty;
+                            var nombre = item.TryGetProperty("nombre", out var nomProp) ? nomProp.GetString() ?? "" : "";
+
+                            // Determinar cuál es la clínica actual
+                            var clinicaIdActual = !string.IsNullOrEmpty(overrideClinicaId) && Guid.TryParse(overrideClinicaId, out var parsedOverride)
+                                ? parsedOverride
+                                : (claimsUser?.FindFirst("app_clinica_id") is System.Security.Claims.Claim c && Guid.TryParse(c.Value, out var origId) ? origId : Guid.Empty);
+
+                            model.Clinicas.Add(new ClinicaItem
+                            {
+                                Id = id,
+                                Nombre = nombre,
+                                EsActual = id == clinicaIdActual
+                            });
+
+                            if (id == clinicaIdActual)
+                            {
+                                model.ClinicaActualNombre = nombre;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No se pudo cargar lista de clínicas para sidebar: {Error}", error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar lista de clínicas para el sidebar");
+            }
+        }
+
         if (esAdmin || esSuperAdmin)
         {
             MostrarTodo(model);
+
+            // Solo Super Admin puede ver el catálogo de Clínicas
+            if (esAdmin && !esSuperAdmin)
+            {
+                model.PuedeVerClinicas = false;
+            }
+
+            // Cargar nombre de clínica desde claims si no lo tiene (Admin no pasa por el bloque de Super Admin)
+            if (string.IsNullOrEmpty(model.ClinicaActualNombre))
+            {
+                model.ClinicaActualNombre = claimsUser?.FindFirst("app_clinica_nombre")?.Value ?? "Clínica";
+            }
+
             return View(model);
         }
 
@@ -100,6 +163,12 @@ public class SidebarViewComponent : ViewComponent
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al cargar permisos para el sidebar");
+        }
+
+        // ── Para no-Super Admin: leer nombre de la clínica desde claims ──
+        if (!esSuperAdmin && string.IsNullOrEmpty(model.ClinicaActualNombre))
+        {
+            model.ClinicaActualNombre = claimsUser?.FindFirst("app_clinica_nombre")?.Value ?? "Clínica";
         }
 
         return View(model);
@@ -220,4 +289,19 @@ public class SidebarViewModel
     // ── Contexto de navegación actual ──
     public string CurrentArea { get; set; } = string.Empty;
     public string CurrentController { get; set; } = string.Empty;
+
+    // ── Super Admin: Lista de clínicas para el workspace switcher ──
+    public bool EsSuperAdmin { get; set; }
+    public string ClinicaActualNombre { get; set; } = string.Empty;
+    public List<ClinicaItem> Clinicas { get; set; } = new();
+}
+
+/// <summary>
+/// Item de clínica para el workspace switcher del Super Admin.
+/// </summary>
+public class ClinicaItem
+{
+    public Guid Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public bool EsActual { get; set; }
 }

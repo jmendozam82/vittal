@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -45,9 +46,25 @@ public class TenantMiddleware
 
                     context.User.AddIdentity(appIdentity);
 
+                    // Determinar el clinica_id efectivo para el tenant context
+                    var effectiveClinicaId = result.Data.ClinicaId;
+
+                    // Si el usuario es Super Admin y envía header X-Clinica-Override, usar ese clinica_id
+                    var overrideHeader = context.Request.Headers["X-Clinica-Override"].FirstOrDefault();
+                    if (result.Data.EsSuperAdmin && !string.IsNullOrEmpty(overrideHeader) && Guid.TryParse(overrideHeader, out var parsedOverrideId))
+                    {
+                        effectiveClinicaId = parsedOverrideId;
+
+                        // Agregar claim de override para que los controllers puedan detectarlo
+                        context.User.AddIdentity(new ClaimsIdentity(new[]
+                        {
+                            new Claim("app_clinica_override", effectiveClinicaId.ToString())
+                        }));
+                    }
+
                     // Establecer contexto de tenant en PostgreSQL para activar RLS
                     var dbFactory = scope.ServiceProvider.GetRequiredService<DbConnectionFactory>();
-                    dbFactory.SetTenantContext(result.Data.ClinicaId);
+                    dbFactory.SetTenantContext(effectiveClinicaId);
                 }
                 else
                 {

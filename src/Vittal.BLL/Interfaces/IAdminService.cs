@@ -26,4 +26,12 @@ public interface IAdminService
     /// </summary>
     Task<ServiceResult<IEnumerable<UsuarioResponseDto>>> GetUsuariosByClinicaAsync(
         Guid clinicaId, bool incluirInactivos = false);
+
+    /// <summary>
+    /// Crea un usuario en una clínica específica (Super Admin).
+    /// A diferencia de UsuarioService.CreateAsync, el clinicaId se recibe del DTO,
+    /// no del JWT del usuario autenticado.
+    /// </summary>
+    Task<ServiceResult<UsuarioResponseDto>> CreateUsuarioAsync(
+        AdminCreateUsuarioRequestDto dto, Guid creadoPor);
 }

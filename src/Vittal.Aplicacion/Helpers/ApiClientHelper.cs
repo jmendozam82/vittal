@@ -90,6 +90,7 @@ namespace Vittal.Aplicacion.Helpers
         {
             var client = _httpClientFactory.CreateClient("VittalApi");
             var jwt = GetJwtFromCookieOrClaim();
+            var httpContext = _httpContextAccessor.HttpContext;
 
             var request = new HttpRequestMessage(method, endpoint);
 
@@ -104,6 +105,14 @@ namespace Vittal.Aplicacion.Helpers
             {
                 _logger.LogWarning("SendAuthenticatedRequest - No JWT para {Method} {Endpoint}",
                     method, endpoint);
+            }
+
+            // Si el Super Admin tiene una clínica override en sesión, agregar header
+            var overrideClinicaId = httpContext?.Session?.GetString("ClinicaOverride");
+            if (!string.IsNullOrEmpty(overrideClinicaId) && Guid.TryParse(overrideClinicaId, out _))
+            {
+                request.Headers.Add("X-Clinica-Override", overrideClinicaId);
+                _logger.LogInformation("SendAuthenticatedRequest - X-Clinica-Override: {ClinicaId}", overrideClinicaId);
             }
 
             if (content != null)

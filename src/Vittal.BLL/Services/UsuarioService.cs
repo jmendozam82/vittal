@@ -703,6 +703,7 @@ public class UsuarioService : IUsuarioService
             FotoUrl = u.FotoUrl,
             EsDoctor = u.EsDoctor,
             PerfilNombre = u.PerfilNombre,
+            ClinicaNombre = u.ClinicaNombre,
             EsAdmin = u.EsAdmin,
             EsSuperAdmin = u.EsSuperAdmin,
             Activo = u.Activo,

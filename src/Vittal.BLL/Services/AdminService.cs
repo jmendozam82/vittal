@@ -288,7 +288,115 @@ public class AdminService : IAdminService
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 2. GetUsuariosByClinicaAsync — Usuarios de una clínica (Super Admin)
+    // 2. CreateUsuarioAsync — Crear usuario en una clínica específica (Super Admin)
+    // ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Crea un usuario en una clínica específica (Super Admin).
+    /// A diferencia de UsuarioService.CreateAsync, el clinicaId viene del DTO explícitamente.
+    /// Incluye creación en Supabase Auth + BD con rollback automático.
+    /// </summary>
+    public async Task<ServiceResult<UsuarioResponseDto>> CreateUsuarioAsync(
+        AdminCreateUsuarioRequestDto dto, Guid creadoPor)
+    {
+        try
+        {
+            _logger.LogInformation("Super Admin creando usuario '{Username}' en clínica {ClinicaId}",
+                dto.Username, dto.ClinicaId);
+
+            // ── Validar unicidad de username ────────────────────────
+            if (await _usuarioRepo.ExistsByUsernameAsync(dto.ClinicaId, dto.Username))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "El nombre de usuario ya está en uso en esta clínica.", ServiceErrorType.Conflict);
+            }
+
+            // ── Validar unicidad de email ───────────────────────────
+            if (await _usuarioRepo.ExistsByEmailAsync(dto.ClinicaId, dto.Email))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "El correo electrónico ya está registrado en esta clínica.", ServiceErrorType.Conflict);
+            }
+
+            // ── PASO 1: Crear en Supabase Auth ─────────────────────
+            string? authUserId = null;
+            try
+            {
+                authUserId = await CreateSupabaseAuthUserAsync(dto.Email, dto.Password ?? "TempPass123!");
+                _logger.LogInformation("Usuario creado en Supabase Auth: {AuthUserId}", authUserId);
+            }
+            catch (Exception authEx)
+            {
+                _logger.LogError(authEx, "Error al crear usuario en Supabase Auth");
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    $"Error al crear la cuenta de autenticación: {authEx.Message}");
+            }
+
+            // ── PASO 2: Crear en BD ────────────────────────────────
+            try
+            {
+                var entity = new Usuario
+                {
+                    ClinicaId = dto.ClinicaId,
+                    PerfilId = dto.PerfilId,
+                    AuthUserId = Guid.TryParse(authUserId, out var parsedId) ? parsedId : null,
+                    Username = dto.Username,
+                    Nombres = dto.Nombres,
+                    Apellidos = dto.Apellidos,
+                    Email = dto.Email,
+                    Sexo = dto.Sexo,
+                    Direccion = dto.Direccion,
+                    Celular = dto.Celular,
+                    EsDoctor = dto.EsDoctor,
+                    CreadoPor = creadoPor,
+                    Activo = true
+                };
+
+                var newId = await _usuarioRepo.CreateAsync(entity);
+                _logger.LogInformation("Usuario creado en BD con ID: {NewId}", newId);
+
+                // Recuperar la entidad creada para retornar el DTO completo
+                var created = await _usuarioRepo.GetByIdAsync(newId, dto.ClinicaId);
+                if (created == null)
+                {
+                    return ServiceResult<UsuarioResponseDto>.Failure(
+                        "Usuario creado pero no se pudo recuperar la información.");
+                }
+
+                return ServiceResult<UsuarioResponseDto>.Success(
+                    MapUsuarioToDto(created), "Usuario creado exitosamente en la clínica especificada.");
+            }
+            catch (Exception dbEx)
+            {
+                _logger.LogError(dbEx, "Error al crear usuario en BD, realizando rollback en Supabase Auth");
+
+                // Rollback en Supabase Auth
+                if (!string.IsNullOrEmpty(authUserId))
+                {
+                    try
+                    {
+                        await DeleteSupabaseAuthUserAsync(authUserId);
+                        _logger.LogInformation("Rollback exitoso: usuario eliminado de Supabase Auth");
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        _logger.LogError(rollbackEx, "Error en rollback de Supabase Auth");
+                    }
+                }
+
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    $"Error al guardar el usuario: {dbEx.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al crear usuario como Super Admin");
+            return ServiceResult<UsuarioResponseDto>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // 3. GetUsuariosByClinicaAsync — Usuarios de una clínica (Super Admin)
     // ────────────────────────────────────────────────────────────────
     public async Task<ServiceResult<IEnumerable<UsuarioResponseDto>>> GetUsuariosByClinicaAsync(
         Guid clinicaId, bool incluirInactivos = false)
@@ -466,6 +574,7 @@ public class AdminService : IAdminService
             Direccion = u.Direccion,
             EsDoctor = u.EsDoctor,
             PerfilNombre = u.PerfilNombre,
+            ClinicaNombre = u.ClinicaNombre,
             EsAdmin = u.EsAdmin,
             EsSuperAdmin = u.EsSuperAdmin,
             Activo = u.Activo,

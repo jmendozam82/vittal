@@ -19,6 +19,47 @@
         </button>
     </div>
 
+    @* ── Workspace Switcher (solo Super Admin) ── *@
+    @if (Model.EsSuperAdmin)
+    {
+        <div class="px-3 py-2 border-bottom border-secondary" style="border-color:rgba(255,255,255,0.1)!important;">
+            <div class="dropdown w-100">
+                <button class="btn btn-sm btn-outline-light dropdown-toggle w-100 text-start d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="true"
+                        aria-expanded="false" style="font-size:0.8rem;">
+                    <i class="bi bi-building me-2"></i>
+                    <span class="flex-grow-1 text-truncate">@Model.ClinicaActualNombre</span>
+                </button>
+                <ul class="dropdown-menu shadow-sm w-100" style="min-width:220px;">
+                    @foreach (var clinica in Model.Clinicas)
+                    {
+                        if (clinica.EsActual)
+                        {
+                            <li><span class="dropdown-item active fw-semibold"><i class="bi bi-check-lg me-2"></i>@clinica.Nombre</span></li>
+                        }
+                        else
+                        {
+                            <li><a class="dropdown-item" href="@Url.Action("SwitchClinica", "Admin", new { area = "Administracion", id = clinica.Id })">@clinica.Nombre</a></li>
+                        }
+                    }
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="@Url.Action("VolverClinicaOriginal", "Admin", new { area = "Administracion" })"><i class="bi bi-arrow-left-circle me-2"></i>Volver a mi clínica</a></li>
+                </ul>
+            </div>
+        </div>
+    }
+
+    @* ── Clínica actual (solo no-Super Admin) ── *@
+    @if (!Model.EsSuperAdmin && !string.IsNullOrEmpty(Model.ClinicaActualNombre))
+    {
+        <div class="px-3 py-2 border-bottom border-secondary" style="border-color:rgba(255,255,255,0.1)!important;">
+            <div class="d-flex align-items-center text-white-50" style="font-size:0.82rem;">
+                <i class="bi bi-building me-2"></i>
+                <span class="text-truncate">@Model.ClinicaActualNombre</span>
+            </div>
+        </div>
+    }
+
     <div class="flex-grow-1 overflow-auto py-2" id="sidebarMenuContainer">
 
         @* ── Navegación (links simples) ── *@

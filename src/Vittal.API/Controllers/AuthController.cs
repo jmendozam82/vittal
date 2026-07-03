@@ -112,9 +112,11 @@ public class AuthController : ControllerBase
                 Nombres = userResult.Data.Nombres,
                 Apellidos = userResult.Data.Apellidos,
                 Email = userResult.Data.Email,
+                ClinicaNombre = userResult.Data.ClinicaNombre,
                 Perfil = userResult.Data.PerfilNombre,
                 PerfilId = userResult.Data.PerfilId,
-                EsAdmin = userResult.Data.EsAdmin
+                EsAdmin = userResult.Data.EsAdmin,
+                EsSuperAdmin = userResult.Data.EsSuperAdmin
             };
 
             return Ok(new ApiResponse<LoginResponseDto>
