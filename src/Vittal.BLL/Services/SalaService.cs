@@ -1,6 +1,7 @@
 using Vittal.BLL.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Exceptions;
@@ -13,16 +14,27 @@ namespace Vittal.BLL.Services;
 
 /// <summary>
 /// Implementación de lógica de negocio para Sala.
-/// Historia de Usuario: HU06 — Gestión de Salas
+/// Historia de Usuario: HU06 — Gestión de Salas | HU-E02 — Plantillas de Especialidad
 /// </summary>
 public class SalaService : ISalaService
 {
     private readonly ISalaRepository _salaRepository;
+    private readonly IPlantillaItemRepository _plantillaItemRepository;
+    private readonly ITipoAntecedenteRepository _tipoAntecedenteRepository;
+    private readonly ITipoSignoVitalRepository _tipoSignoVitalRepository;
     private readonly ILogger<SalaService> _logger;
 
-    public SalaService(ISalaRepository salaRepository, ILogger<SalaService> logger)
+    public SalaService(
+        ISalaRepository salaRepository,
+        IPlantillaItemRepository plantillaItemRepository,
+        ITipoAntecedenteRepository tipoAntecedenteRepository,
+        ITipoSignoVitalRepository tipoSignoVitalRepository,
+        ILogger<SalaService> logger)
     {
         _salaRepository = salaRepository;
+        _plantillaItemRepository = plantillaItemRepository;
+        _tipoAntecedenteRepository = tipoAntecedenteRepository;
+        _tipoSignoVitalRepository = tipoSignoVitalRepository;
         _logger = logger;
     }
 
@@ -183,6 +195,128 @@ public class SalaService : ISalaService
         {
             _logger.LogError(ex, "Error al reactivar sala {Id}", id);
             return ServiceResult<bool>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    // ── Aplicar Plantilla de Especialidad a Sala ──────────────────────────
+
+    public async Task<ServiceResult<AplicarPlantillaResponseDto>> AplicarPlantillaAsync(
+        Guid salaId, Guid plantillaId, Guid clinicaId, Guid usuarioId)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Aplicando plantilla {PlantillaId} a sala {SalaId} en clínica {ClinicaId}",
+                plantillaId, salaId, clinicaId);
+
+            // 1. Validar sala
+            var sala = await _salaRepository.GetByIdAsync(salaId, clinicaId);
+            if (sala == null)
+                return ServiceResult<AplicarPlantillaResponseDto>.Failure(
+                    "Sala no encontrada en esta clínica.", ServiceErrorType.NotFound);
+
+            if (!sala.Activo)
+                return ServiceResult<AplicarPlantillaResponseDto>.Failure(
+                    "No se puede aplicar una plantilla a una sala desactivada. Reactive la sala primero.",
+                    ServiceErrorType.Validation);
+
+            // 2. Obtener items de la plantilla
+            var items = await _plantillaItemRepository.GetByPlantillaIdAsync(plantillaId);
+            if (items == null || !items.Any())
+                return ServiceResult<AplicarPlantillaResponseDto>.Failure(
+                    "La plantilla no tiene items o no existe.", ServiceErrorType.NotFound);
+
+            // 3. Procesar items por tipo
+            var response = new AplicarPlantillaResponseDto();
+
+            foreach (var item in items.Where(i => i.TipoItem == "antecedente" && i.Activo))
+            {
+                var existente = await _tipoAntecedenteRepository.GetBySalaAndNameAsync(
+                    clinicaId, salaId, item.Nombre);
+
+                if (existente == null)
+                {
+                    // Crear nuevo antecedente
+                    var nuevo = new TipoAntecedente
+                    {
+                        ClinicaId = clinicaId,
+                        SalaId = salaId,
+                        Nombre = item.Nombre,
+                        Categoria = item.Categoria,
+                        TipoDato = item.TipoDato,
+                        Orden = item.Orden,
+                        Activo = true,
+                        FechaCreacion = DateTime.UtcNow,
+                        CreadoPor = usuarioId
+                    };
+                    await _tipoAntecedenteRepository.CreateAsync(nuevo);
+                    response.AntecedentesCreados++;
+                }
+                else if (!existente.Activo)
+                {
+                    // Reactivar antecedente desactivado
+                    await _tipoAntecedenteRepository.ReactivateAsync(clinicaId, existente.Id);
+                    response.AntecedentesReactivados++;
+                }
+                else
+                {
+                    // Ya existe y está activo — saltar
+                    response.AntecedentesSaltados++;
+                }
+            }
+
+            foreach (var item in items.Where(i => i.TipoItem == "signo_vital" && i.Activo))
+            {
+                var existente = await _tipoSignoVitalRepository.GetBySalaAndNameAsync(
+                    clinicaId, salaId, item.Nombre);
+
+                if (existente == null)
+                {
+                    // Crear nuevo signo vital
+                    var nuevo = new TipoSignoVital
+                    {
+                        ClinicaId = clinicaId,
+                        SalaId = salaId,
+                        Nombre = item.Nombre,
+                        Unidad = item.Unidad,
+                        ValorMin = item.ValorMin,
+                        ValorMax = item.ValorMax,
+                        EsObligatorio = item.EsObligatorio,
+                        Orden = item.Orden,
+                        Activo = true,
+                        FechaCreacion = DateTime.UtcNow,
+                        CreadoPor = usuarioId
+                    };
+                    await _tipoSignoVitalRepository.CreateAsync(nuevo);
+                    response.SignosVitalesCreados++;
+                }
+                else if (!existente.Activo)
+                {
+                    // Reactivar signo vital desactivado
+                    await _tipoSignoVitalRepository.ReactivateAsync(clinicaId, existente.Id);
+                    response.SignosVitalesReactivados++;
+                }
+                else
+                {
+                    // Ya existe y está activo — saltar
+                    response.SignosVitalesSaltados++;
+                }
+            }
+
+            _logger.LogInformation(
+                "Plantilla {PlantillaId} aplicada a sala {SalaId}: {Resumen}",
+                plantillaId, salaId, response.Resumen);
+
+            return ServiceResult<AplicarPlantillaResponseDto>.Success(
+                response, $"Plantilla aplicada exitosamente. {response.Resumen}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al aplicar plantilla {PlantillaId} a sala {SalaId}",
+                plantillaId, salaId);
+            return ServiceResult<AplicarPlantillaResponseDto>.Failure(
+                $"Error interno al aplicar plantilla: {ex.Message}");
         }
     }
 

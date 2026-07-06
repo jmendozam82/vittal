@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Vittal.Entity.Models;
 
 /// <summary>
@@ -9,11 +11,13 @@ namespace Vittal.Entity.Models;
 public class PlantillaItem
 {
     public Guid Id { get; set; }
+    [Column("plantilla_id")]
     public Guid PlantillaId { get; set; }
     
     /// <summary>
     /// Valores: 'antecedente' o 'signo_vital'
     /// </summary>
+    [Column("tipo_item")]
     public string TipoItem { get; set; } = string.Empty;
     
     public string Nombre { get; set; } = string.Empty;
@@ -26,6 +30,7 @@ public class PlantillaItem
     /// <summary>
     /// Valores: 'boolean', 'texto', 'numero'
     /// </summary>
+    [Column("tipo_dato")]
     public string TipoDato { get; set; } = "boolean";
     
     /// <summary>
@@ -33,15 +38,20 @@ public class PlantillaItem
     /// </summary>
     public string? Unidad { get; set; }
     
+    [Column("valor_min")]
     public decimal? ValorMin { get; set; }
+    [Column("valor_max")]
     public decimal? ValorMax { get; set; }
-    
+
+    [Column("es_obligatorio")]
     public bool EsObligatorio { get; set; } = false;
     public int Orden { get; set; } = 0;
     
     // Auditoría base
     public bool Activo { get; set; } = true;
+    [Column("fecha_creacion")]
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    [Column("fecha_modificacion")]
     public DateTime? FechaModificacion { get; set; }
     
     // Relaciones

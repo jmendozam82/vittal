@@ -32,6 +32,13 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
         return await connection.QuerySingleOrDefaultAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, Id = id });
     }
 
+    public async Task<TipoAntecedente?> GetBySalaAndNameAsync(Guid clinicaId, Guid salaId, string nombre)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var sql = "SELECT * FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND LOWER(nombre) = LOWER(@Nombre)";
+        return await connection.QuerySingleOrDefaultAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, SalaId = salaId, Nombre = nombre });
+    }
+
     public async Task<Guid> CreateAsync(TipoAntecedente entity)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
@@ -63,6 +70,14 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = "UPDATE tipos_antecedente SET activo = false, fecha_modificacion = CURRENT_TIMESTAMP WHERE clinica_id = @ClinicaId AND id = @Id";
+        var result = await connection.ExecuteAsync(sql, new { ClinicaId = clinicaId, Id = id });
+        return result > 0;
+    }
+
+    public async Task<bool> ReactivateAsync(Guid clinicaId, Guid id)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var sql = "UPDATE tipos_antecedente SET activo = true, fecha_modificacion = CURRENT_TIMESTAMP WHERE clinica_id = @ClinicaId AND id = @Id";
         var result = await connection.ExecuteAsync(sql, new { ClinicaId = clinicaId, Id = id });
         return result > 0;
     }

@@ -10,6 +10,10 @@
                              "<li class='breadcrumb-item active'>Editar</li>";
 
     var jsonActualizarUrl = Url.Action("JsonActualizar");
+    var jsonListarItemsUrl = Url.Action("JsonListarItems");
+    var jsonCrearItemUrl = Url.Action("JsonCrearItem");
+    var jsonActualizarItemUrl = Url.Action("JsonActualizarItem");
+    var jsonDesactivarItemUrl = Url.Action("JsonDesactivarItem");
 
     // Datos de la plantilla cargados server-side
     var plantilla = ViewBag.Plantilla as System.Collections.Generic.IDictionary<string, object>;
@@ -23,7 +27,7 @@
     var plantillaFechaModificacion = plantilla != null && plantilla.ContainsKey("fechaModificacion") ? plantilla["fechaModificacion"]?.ToString() : null;
 }
 
-<div class="row justify-content-center">
+<div class="row">
     <div class="col-lg-7">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
@@ -117,13 +121,172 @@
             </div>
         </div>
     </div>
+
+    @* ─── COLUMNA DERECHA: GESTIÓN DE ITEMS ─── *@
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-list-check text-primary fs-5"></i>
+                        <h5 class="mb-0">Items de la Plantilla</h5>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="btnAgregarItem"
+                            title="Agregar nuevo item">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar
+                    </button>
+                </div>
+                <p class="text-muted small mb-3">
+                    Los items definen los antecedentes y signos vitales que se copiarán a las salas
+                    cuando se aplique esta plantilla.
+                </p>
+
+                <div id="itemsLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <span class="text-muted small">Cargando items...</span>
+                </div>
+                <div id="itemsContainer" class="d-none"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ─── MODAL: AGREGAR/EDITAR ITEM ─── *@
+<div class="modal fade" id="modalItem" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="modalItemTitle">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>
+                    <span id="modalItemTitleText">Nuevo Item</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalItemAlert" class="alert alert-danger d-none"></div>
+                <form id="frmItem" novalidate>
+                    <input type="hidden" id="itemId" value="" />
+                    <input type="hidden" id="itemPlantillaId" value="@plantillaId" />
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-medium">
+                                Tipo <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoItem"
+                                           id="tipoAntecedente" value="antecedente" checked>
+                                    <label class="form-check-label" for="tipoAntecedente">
+                                        <i class="bi bi-clipboard2-pulse me-1"></i>Antecedente
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoItem"
+                                           id="tipoSignoVital" value="signo_vital">
+                                    <label class="form-check-label" for="tipoSignoVital">
+                                        <i class="bi bi-activity me-1"></i>Signo Vital
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="itemNombre" class="form-label fw-medium">
+                                Nombre <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="itemNombre" name="nombre"
+                                   class="form-control" maxlength="150"
+                                   placeholder="Ej: Hipertensión Arterial, Frecuencia Cardíaca"
+                                   required />
+                            <div class="invalid-feedback">El nombre es obligatorio.</div>
+                        </div>
+
+                        <div class="col-6">
+                            <label for="itemCategoria" class="form-label fw-medium">Categoría</label>
+                            <select id="itemCategoria" class="form-select">
+                                <option value="">Sin categoría</option>
+                                <option value="sistemico">Sistémico</option>
+                                <option value="ocular">Ocular</option>
+                                <option value="quirurgico">Quirúrgico</option>
+                                <option value="familiar">Familiar</option>
+                                <option value="alergias">Alergias</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label for="itemTipoDato" class="form-label fw-medium">Tipo de dato</label>
+                            <select id="itemTipoDato" class="form-select">
+                                <option value="boolean">Sí/No (booleano)</option>
+                                <option value="texto">Texto libre</option>
+                                <option value="numero">Valor numérico</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6" id="unidadGroup">
+                            <label for="itemUnidad" class="form-label fw-medium">Unidad</label>
+                            <input type="text" id="itemUnidad" class="form-control" maxlength="20"
+                                   placeholder="Ej: mmHg, bpm, kg" />
+                            <div class="form-text">Solo para signos vitales.</div>
+                        </div>
+
+                        <div class="col-3">
+                            <label for="itemValorMin" class="form-label fw-medium">Valor Min</label>
+                            <input type="number" id="itemValorMin" class="form-control" step="any"
+                                   placeholder="0" />
+                        </div>
+
+                        <div class="col-3">
+                            <label for="itemValorMax" class="form-label fw-medium">Valor Max</label>
+                            <input type="number" id="itemValorMax" class="form-control" step="any"
+                                   placeholder="0" />
+                        </div>
+
+                        <div class="col-6">
+                            <label for="itemOrden" class="form-label fw-medium">Orden</label>
+                            <input type="number" id="itemOrden" class="form-control" value="0" min="0" />
+                        </div>
+
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="itemObligatorio">
+                                <label class="form-check-label" for="itemObligatorio">
+                                    Obligatorio
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnGuardarItem">
+                    <span id="btnItemSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                    <i class="bi bi-check-lg me-1" id="btnItemIcon"></i>
+                    Guardar Item
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
 <script>
+    // ── URLs ──
     const plantillaId = document.getElementById('plantillaId').value;
     const jsonActualizarUrl = '@jsonActualizarUrl';
+    const jsonListarItemsUrl = '@jsonListarItemsUrl';
+    const jsonCrearItemUrl = '@jsonCrearItemUrl';
+    const jsonActualizarItemUrl = '@jsonActualizarItemUrl';
+    const jsonDesactivarItemUrl = '@jsonDesactivarItemUrl';
 
+    let items = [];
+    let editingItemId = null;
+
+    // ─── HEADER: GUARDAR PLANTILLA ───
     document.getElementById('frmPlantilla').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -155,17 +318,248 @@
 
         if (res.ok && json.success) {
             showToast('Plantilla actualizada exitosamente.', 'success');
-            setTimeout(() => window.location.href = '@plantillaIndexUrl', 1200);
         } else {
             const errs = json.errors || [json.message || 'Error al actualizar la plantilla.'];
             mostrarErrores(errs);
         }
     });
 
+    // ─── ITEMS: CARGAR ───
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarItems();
+    });
+
+    async function cargarItems() {
+        document.getElementById('itemsLoading').classList.remove('d-none');
+        document.getElementById('itemsContainer').classList.add('d-none');
+
+        try {
+            const res = await fetch(`${jsonListarItemsUrl}?plantillaId=${plantillaId}`);
+            const json = await res.json();
+
+            if (json.success) {
+                items = json.data || [];
+                renderItems();
+            } else {
+                document.getElementById('itemsContainer').innerHTML =
+                    `<div class="alert alert-warning">${json.message || 'Error al cargar items'}</div>`;
+                document.getElementById('itemsContainer').classList.remove('d-none');
+            }
+        } catch (err) {
+            document.getElementById('itemsContainer').innerHTML =
+                `<div class="alert alert-danger">Error de conexión al cargar items.</div>`;
+            document.getElementById('itemsContainer').classList.remove('d-none');
+        } finally {
+            document.getElementById('itemsLoading').classList.add('d-none');
+        }
+    }
+
+    function renderItems() {
+        const container = document.getElementById('itemsContainer');
+        container.classList.remove('d-none');
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    <p class="mb-0">No hay items en esta plantilla.</p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="abrirModalNuevo()">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar primer item
+                    </button>
+                </div>`;
+            return;
+        }
+
+        const antecedentes = items.filter(i => i.tipoItem === 'antecedente');
+        const signosVitales = items.filter(i => i.tipoItem === 'signo_vital');
+
+        let html = '';
+
+        // Antecedentes
+        html += renderItemGroup('Antecedentes', 'clipboard2-pulse', antecedentes);
+
+        // Signos Vitales
+        html += renderItemGroup('Signos Vitales', 'activity', signosVitales);
+
+        container.innerHTML = html;
+    }
+
+    function renderItemGroup(titulo, icono, grupoItems) {
+        if (grupoItems.length === 0) return '';
+
+        const itemsHtml = grupoItems.map(item => {
+            const tipoDatoLabel = { boolean: 'Sí/No', texto: 'Texto', numero: 'Num' }[item.tipoDato] || item.tipoDato;
+            const unidadStr = item.unidad ? ` (${item.unidad})` : '';
+            const rangoStr = (item.valorMin != null || item.valorMax != null)
+                ? ` [${item.valorMin ?? '—'} – ${item.valorMax ?? '—'}]`
+                : '';
+            const obligatorioStr = item.esObligatorio ? ' <span class="text-danger">*</span>' : '';
+
+            return `
+                <div class="d-flex align-items-center justify-content-between py-1 border-bottom border-light item-row" data-id="${item.id}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small">${item.orden}</span>
+                        <span>${escapeHtml(item.nombre)}${obligatorioStr}</span>
+                        <span class="badge bg-light text-muted" style="font-size:0.65rem;">${tipoDatoLabel}${unidadStr}${rangoStr}</span>
+                        ${item.categoria ? `<span class="badge bg-light text-muted" style="font-size:0.65rem;">${escapeHtml(item.categoria)}</span>` : ''}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="editarItem('${item.id}')" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="desactivarItem('${item.id}')" title="Desactivar">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>`;
+        }).join('');
+
+        return `
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-${icono} text-primary"></i>
+                    <strong class="small">${titulo}</strong>
+                    <span class="badge bg-secondary rounded-pill">${grupoItems.length}</span>
+                </div>
+                <div class="ps-2">${itemsHtml}</div>
+            </div>`;
+    }
+
+    // ─── MODAL: AGREGAR/EDITAR ITEM ───
+    document.getElementById('btnAgregarItem').addEventListener('click', abrirModalNuevo);
+
+    function abrirModalNuevo() {
+        editingItemId = null;
+        document.getElementById('modalItemTitleText').textContent = 'Nuevo Item';
+        document.getElementById('frmItem').reset();
+        document.getElementById('itemId').value = '';
+        document.getElementById('tipoAntecedente').checked = true;
+        document.getElementById('itemOrden').value = items.length + 1;
+        ocultarModalError();
+        new bootstrap.Modal(document.getElementById('modalItem')).show();
+    }
+
+    window.editarItem = function(id) {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        editingItemId = id;
+        document.getElementById('modalItemTitleText').textContent = 'Editar Item';
+        document.getElementById('itemId').value = id;
+        document.getElementById(item.tipoItem === 'signo_vital' ? 'tipoSignoVital' : 'tipoAntecedente').checked = true;
+        document.getElementById('itemNombre').value = item.nombre || '';
+        document.getElementById('itemCategoria').value = item.categoria || '';
+        document.getElementById('itemTipoDato').value = item.tipoDato || 'boolean';
+        document.getElementById('itemUnidad').value = item.unidad || '';
+        document.getElementById('itemValorMin').value = item.valorMin ?? '';
+        document.getElementById('itemValorMax').value = item.valorMax ?? '';
+        document.getElementById('itemOrden').value = item.orden ?? 0;
+        document.getElementById('itemObligatorio').checked = item.esObligatorio || false;
+        ocultarModalError();
+        new bootstrap.Modal(document.getElementById('modalItem')).show();
+    };
+
+    document.getElementById('btnGuardarItem').addEventListener('click', guardarItem);
+
+    async function guardarItem() {
+        const id = editingItemId;
+        const plantillaIdVal = document.getElementById('itemPlantillaId').value;
+        const tipoItem = document.querySelector('input[name="tipoItem"]:checked')?.value;
+        const nombre = document.getElementById('itemNombre').value.trim();
+        const categoria = document.getElementById('itemCategoria').value;
+        const tipoDato = document.getElementById('itemTipoDato').value;
+        const unidad = document.getElementById('itemUnidad').value.trim();
+        const valorMin = document.getElementById('itemValorMin').value;
+        const valorMax = document.getElementById('itemValorMax').value;
+        const orden = parseInt(document.getElementById('itemOrden').value) || 0;
+        const esObligatorio = document.getElementById('itemObligatorio').checked;
+
+        // Validación
+        if (!tipoItem) { mostrarModalError('Debe seleccionar un tipo (antecedente o signo vital).'); return; }
+        if (!nombre) { mostrarModalError('El nombre es obligatorio.'); return; }
+        if (nombre.length < 2) { mostrarModalError('El nombre debe tener al menos 2 caracteres.'); return; }
+
+        const body = {
+            plantillaId: plantillaIdVal,
+            tipoItem,
+            nombre,
+            categoria: categoria || null,
+            tipoDato,
+            unidad: unidad || null,
+            valorMin: valorMin ? parseFloat(valorMin) : null,
+            valorMax: valorMax ? parseFloat(valorMax) : null,
+            esObligatorio,
+            orden
+        };
+
+        setItemLoading(true);
+        ocultarModalError();
+
+        try {
+            let res;
+            if (id) {
+                res = await fetch(`${jsonActualizarItemUrl}?id=${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            } else {
+                res = await fetch(jsonCrearItemUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            }
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalItem')).hide();
+                showToast(json.message || 'Operación exitosa.', 'success');
+                await cargarItems();
+            } else {
+                mostrarModalError(json.message || 'Error al guardar el item.');
+            }
+        } catch (err) {
+            mostrarModalError('Error de conexión.');
+        } finally {
+            setItemLoading(false);
+        }
+    }
+
+    // ─── DESACTIVAR ITEM ───
+    window.desactivarItem = async function(id) {
+        if (!confirm('¿Está seguro de desactivar este item? No será eliminado, solo quedará inactivo.')) return;
+
+        try {
+            const res = await fetch(`${jsonDesactivarItemUrl}?id=${id}`, { method: 'PATCH' });
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('Item desactivado exitosamente.', 'success');
+                await cargarItems();
+            } else {
+                showToast(json.message || 'Error al desactivar item.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'danger');
+        }
+    };
+
+    // ─── HELPERS ───
     function setLoading(loading) {
         const btn = document.getElementById('btnGuardar');
         const spinner = document.getElementById('btnSpinner');
         const icon = document.getElementById('btnIcon');
+        btn.disabled = loading;
+        spinner.classList.toggle('d-none', !loading);
+        icon.classList.toggle('d-none', loading);
+    }
+
+    function setItemLoading(loading) {
+        const btn = document.getElementById('btnGuardarItem');
+        const spinner = document.getElementById('btnItemSpinner');
+        const icon = document.getElementById('btnItemIcon');
         btn.disabled = loading;
         spinner.classList.toggle('d-none', !loading);
         icon.classList.toggle('d-none', loading);
@@ -180,6 +574,16 @@
 
     function ocultarError() {
         document.getElementById('alertError').classList.add('d-none');
+    }
+
+    function mostrarModalError(msg) {
+        const alert = document.getElementById('modalItemAlert');
+        alert.classList.remove('d-none');
+        alert.textContent = msg;
+    }
+
+    function ocultarModalError() {
+        document.getElementById('modalItemAlert').classList.add('d-none');
     }
 
     function showToast(message, type) {
@@ -205,5 +609,20 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // Mostrar/ocultar campo Unidad según tipo seleccionado
+    document.querySelectorAll('input[name="tipoItem"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const unidadGroup = document.getElementById('unidadGroup');
+            if (this.value === 'signo_vital') {
+                unidadGroup.style.display = 'block';
+            } else {
+                unidadGroup.style.display = 'none';
+                document.getElementById('itemUnidad').value = '';
+            }
+        });
+    });
+    // Estado inicial: ocultar unidad si es antecedente
+    document.getElementById('unidadGroup').style.display = 'none';
 </script>
 }

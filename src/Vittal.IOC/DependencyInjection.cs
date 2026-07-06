@@ -17,6 +17,7 @@ public static class DependencyInjection
         
         // Repositories
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IUsuarioSalaRepository, UsuarioSalaRepository>();
         services.AddScoped<IPerfilRepository, PerfilRepository>();
         services.AddScoped<IPermisoRepository, PermisoRepository>();
         services.AddScoped<IPacienteRepository, PacienteRepository>();
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ITratamientoRepository, TratamientoRepository>();
         
         services.AddScoped<IPlantillaEspecialidadRepository, PlantillaEspecialidadRepository>();
+        services.AddScoped<IPlantillaItemRepository, PlantillaItemRepository>();
         services.AddScoped<IModuloSistemaRepository, ModuloSistemaRepository>();
         services.AddScoped<ITipoAntecedenteRepository, TipoAntecedenteRepository>();
         services.AddScoped<ITipoSignoVitalRepository, TipoSignoVitalRepository>();
@@ -42,6 +44,7 @@ public static class DependencyInjection
 
         // Services
         services.AddScoped<IUsuarioService, UsuarioService>();
+        services.AddScoped<IUsuarioSalaService, UsuarioSalaService>();
         services.AddScoped<IPerfilService, PerfilService>();
         services.AddScoped<IPermisoService, PermisoService>();
         services.AddScoped<IPacienteService, PacienteService>();
@@ -58,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ITratamientoService, TratamientoService>();
         
         services.AddScoped<IPlantillaEspecialidadService, PlantillaEspecialidadService>();
+        services.AddScoped<IPlantillaItemService, PlantillaItemService>();
         services.AddScoped<ITipoAntecedenteService, TipoAntecedenteService>();
         services.AddScoped<ITipoSignoVitalService, TipoSignoVitalService>();
         services.AddScoped<ICitaService, CitaService>();

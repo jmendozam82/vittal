@@ -43,4 +43,13 @@ public interface ISalaService
     /// Reactiva una sala desactivada (activo = true).
     /// </summary>
     Task<ServiceResult<bool>> ReactivateAsync(Guid id, Guid clinicaId);
+
+    /// <summary>
+    /// Aplica una plantilla de especialidad a una sala.
+    /// Copia los items de plantilla_items a tipos_antecedente y tipos_signo_vital.
+    /// Es idempotente: si un item ya existe (mismo nombre + sala), lo salta o reactiva.
+    /// Historia de Usuario: HU-E02 — Plantillas de Especialidad
+    /// </summary>
+    Task<ServiceResult<AplicarPlantillaResponseDto>> AplicarPlantillaAsync(
+        Guid salaId, Guid plantillaId, Guid clinicaId, Guid usuarioId);
 }

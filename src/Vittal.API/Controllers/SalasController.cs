@@ -14,7 +14,7 @@ namespace Vittal.API.Controllers;
 
 /// <summary>
 /// API REST para gestión de Salas/Áreas.
-/// Historia de Usuario: HU06 — Gestión de Salas
+/// Historia de Usuario: HU10 — Gestión de Salas/Áreas
 /// Todos los endpoints requieren autenticación JWT de Supabase.
 /// </summary>
 [ApiController]
@@ -34,7 +34,7 @@ public class SalasController : ControllerBase
 
     /// <summary>Obtiene todas las salas de la clínica. Por defecto solo activas.</summary>
     [HttpGet]
-    [RequirePermission("salas", PermissionType.Read)]
+    [RequirePermission("areas", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<SalaResponseDto[]>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] bool inactivos = false)
@@ -46,7 +46,7 @@ public class SalasController : ControllerBase
 
     /// <summary>Obtiene una sala por su ID.</summary>
     [HttpGet("{id:guid}")]
-    [RequirePermission("salas", PermissionType.Read)]
+    [RequirePermission("areas", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<SalaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid id)
@@ -58,7 +58,7 @@ public class SalasController : ControllerBase
 
     /// <summary>Crea una nueva sala en la clínica.</summary>
     [HttpPost]
-    [RequirePermission("salas", PermissionType.Create)]
+    [RequirePermission("areas", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<SalaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -83,7 +83,7 @@ public class SalasController : ControllerBase
 
     /// <summary>Actualiza una sala existente.</summary>
     [HttpPut("{id:guid}")]
-    [RequirePermission("salas", PermissionType.Update)]
+    [RequirePermission("areas", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<SalaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -98,7 +98,7 @@ public class SalasController : ControllerBase
     /// Desactiva una sala (activo = false). NUNCA elimina.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("salas", PermissionType.Update)]
+    [RequirePermission("areas", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -113,7 +113,7 @@ public class SalasController : ControllerBase
     /// Reactiva una sala desactivada (activo = true).
     /// </summary>
     [HttpPatch("{id:guid}/reactivar")]
-    [RequirePermission("salas", PermissionType.Update)]
+    [RequirePermission("areas", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -121,6 +121,27 @@ public class SalasController : ControllerBase
     {
         var clinicaId = User.GetClinicaId();
         var result = await _service.ReactivateAsync(id, clinicaId);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Aplica una plantilla de especialidad a una sala.
+    /// Copia items de plantilla_items a tipos_antecedente y tipos_signo_vital.
+    /// Idempotente: items ya existentes se saltan o reactivan.
+    /// Historia de Usuario: HU-E02 — Plantillas de Especialidad
+    /// </summary>
+    [HttpPost("{salaId:guid}/aplicar-plantilla/{plantillaId:guid}")]
+    [RequirePermission("areas", PermissionType.Update)]
+    [ProducesResponseType(typeof(ApiResponse<AplicarPlantillaResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AplicarPlantilla(
+        [FromRoute] Guid salaId,
+        [FromRoute] Guid plantillaId)
+    {
+        var clinicaId = User.GetClinicaId();
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.AplicarPlantillaAsync(salaId, plantillaId, clinicaId, usuarioId);
         return result.ToActionResult();
     }
 

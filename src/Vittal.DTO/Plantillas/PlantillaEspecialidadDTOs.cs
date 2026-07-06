@@ -7,6 +7,7 @@ public class PlantillaEspecialidadDTOs
         public string Nombre { get; set; } = string.Empty;
         public string? Descripcion { get; set; }
         public string? Icono { get; set; }
+        public List<PlantillaItemDTOs.Request>? Items { get; set; }
     }
 
     public class Response

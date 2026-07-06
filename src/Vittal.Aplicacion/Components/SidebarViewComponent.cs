@@ -17,7 +17,7 @@ public class SidebarViewComponent : ViewComponent
     private static readonly string[] ModulosDashboard = { "dashboard" };
     private static readonly string[] ModulosLineaTiempo = { "linea_tiempo" };
     private static readonly string[] ModulosColaEspera = { "cola_espera" };
-    private static readonly string[] ModulosAdministracion = { "perfiles", "usuarios", "permisos", "salas" };
+    private static readonly string[] ModulosAdministracion = { "perfiles", "usuarios", "permisos", "salas", "plantillas_especialidad", "usuarios_salas" };
     private static readonly string[] ModulosCatalogos =
     {
         "pacientes", "medicamentos", "clinicas", "tipos_cirugia", "cirugias",
@@ -102,26 +102,14 @@ public class SidebarViewComponent : ViewComponent
             }
         }
 
-        if (esAdmin || esSuperAdmin)
+        // ── Super Admin: ve todo ──
+        if (esSuperAdmin)
         {
             MostrarTodo(model);
-
-            // Solo Super Admin puede ver el catálogo de Clínicas
-            if (esAdmin && !esSuperAdmin)
-            {
-                model.PuedeVerClinicas = false;
-            }
-
-            // Cargar nombre de clínica desde claims si no lo tiene (Admin no pasa por el bloque de Super Admin)
-            if (string.IsNullOrEmpty(model.ClinicaActualNombre))
-            {
-                model.ClinicaActualNombre = claimsUser?.FindFirst("app_clinica_nombre")?.Value ?? "Clínica";
-            }
-
             return View(model);
         }
 
-        // Usuario normal: consultar permisos desde la API
+        // ── Admin y usuarios normales: consultar permisos desde la API ──
         var perfilId = claimsUser?.FindFirst("app_perfil_id") is System.Security.Claims.Claim perfilClaim
             && Guid.TryParse(perfilClaim.Value, out var perfilIdVal) ? perfilIdVal : Guid.Empty;
 
@@ -185,6 +173,8 @@ public class SidebarViewComponent : ViewComponent
         model.PuedeVerUsuarios = true;
         model.PuedeVerPermisos = true;
         model.PuedeVerSalas = true;
+        model.PuedeVerPlantillas = true;
+        model.PuedeVerUsuariosSalas = true;
 
         model.PuedeVerCatalogos = true;
         model.PuedeVerPacientes = true;
@@ -213,13 +203,16 @@ public class SidebarViewComponent : ViewComponent
         model.PuedeVerLineaTiempo = modulos.Contains("linea_tiempo");
         model.PuedeVerColaEspera = modulos.Contains("cola_espera");
 
-        // ── Administración (sub-módulos) ──
+        // ── Administración ──
         model.PuedeVerPerfiles = modulos.Contains("perfiles");
         model.PuedeVerUsuarios = modulos.Contains("usuarios");
         model.PuedeVerPermisos = modulos.Contains("permisos");
         model.PuedeVerSalas = modulos.Contains("salas");
+        model.PuedeVerPlantillas = modulos.Contains("plantillas_especialidad");
+        model.PuedeVerUsuariosSalas = modulos.Contains("usuarios_salas");
         model.PuedeVerAdministracion = model.PuedeVerPerfiles || model.PuedeVerUsuarios
-            || model.PuedeVerPermisos || model.PuedeVerSalas;
+            || model.PuedeVerPermisos || model.PuedeVerSalas
+            || model.PuedeVerPlantillas || model.PuedeVerUsuariosSalas;
 
         // ── Catálogos (sub-módulos) ──
         model.PuedeVerPacientes = modulos.Contains("pacientes");
@@ -235,7 +228,7 @@ public class SidebarViewComponent : ViewComponent
         model.PuedeVerTiposAntecedente = modulos.Contains("tipos_antecedente");
         model.PuedeVerTiposSignoVital = modulos.Contains("tipos_signo_vital");
         model.PuedeVerCatalogos = model.PuedeVerPacientes || model.PuedeVerMedicamentos
-            || model.PuedeVerClinicas || model.PuedeVerTiposCirugia || model.PuedeVerCirugias
+            || model.PuedeVerTiposCirugia || model.PuedeVerCirugias
             || model.PuedeVerTiposDiagnostico || model.PuedeVerDiagnosticos
             || model.PuedeVerTratamientos || model.PuedeVerRecomendaciones || model.PuedeVerExamenes
             || model.PuedeVerTiposAntecedente || model.PuedeVerTiposSignoVital;
@@ -264,6 +257,8 @@ public class SidebarViewModel
     public bool PuedeVerUsuarios { get; set; }
     public bool PuedeVerPermisos { get; set; }
     public bool PuedeVerSalas { get; set; }
+    public bool PuedeVerPlantillas { get; set; }
+    public bool PuedeVerUsuariosSalas { get; set; }
 
     // ── Catálogos (colapsable) ──
     public bool PuedeVerCatalogos { get; set; }

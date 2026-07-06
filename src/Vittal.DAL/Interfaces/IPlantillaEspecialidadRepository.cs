@@ -13,4 +13,5 @@ public interface IPlantillaEspecialidadRepository
     Task<Guid> CreateAsync(PlantillaEspecialidad entity);
     Task<bool> UpdateAsync(PlantillaEspecialidad entity);
     Task<bool> DeactivateAsync(Guid id);
+    Task<bool> ReactivateAsync(Guid id);
 }

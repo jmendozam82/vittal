@@ -161,6 +161,65 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             return Ok(new { success = true, message = "Plantilla reactivada exitosamente" });
         }
 
+        // ===================== ITEMS PROXY ENDPOINTS =====================
+
+        /// <summary>Lista los items de una plantilla — para fetch() desde Edit</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonListarItems(Guid plantillaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/PlantillaItem/plantilla/{plantillaId}");
+
+            if (!success)
+            {
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar items" });
+            }
+
+            var data = ExtractDataArray(response);
+            return Json(new { success = true, data = data });
+        }
+
+        /// <summary>Crea un item en una plantilla — para fetch() desde Edit</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonCrearItem([FromBody] JsonElement body)
+        {
+            var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/PlantillaItem", body);
+
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear item" });
+            }
+
+            return Ok(new { success = true, message = "Item creado exitosamente" });
+        }
+
+        /// <summary>Actualiza un item — para fetch() desde Edit</summary>
+        [HttpPut]
+        public async Task<IActionResult> JsonActualizarItem(Guid id, [FromBody] JsonElement body)
+        {
+            var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/PlantillaItem/{id}", body);
+
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar item" });
+            }
+
+            return Ok(new { success = true, message = "Item actualizado exitosamente" });
+        }
+
+        /// <summary>Desactiva un item — para fetch() desde Edit</summary>
+        [HttpPatch]
+        public async Task<IActionResult> JsonDesactivarItem(Guid id)
+        {
+            var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/PlantillaItem/{id}/desactivar", null);
+
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar item" });
+            }
+
+            return Ok(new { success = true, message = "Item desactivado exitosamente" });
+        }
+
         // ========== Helpers para extraer data de JsonElement ==========
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)

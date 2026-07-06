@@ -1,543 +1,296 @@
 ﻿@using System.Text.Json
 
-
 @{
-
-
     ViewData["Title"] = "Editar Sala";
-
-
     var salaIndexUrl = Url.Action("Index");
-
-
     ViewData["Breadcrumb"] = $"<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-
-
                              $"<li class='breadcrumb-item'><a href='{salaIndexUrl}'>Salas</a></li>" +
-
-
                              "<li class='breadcrumb-item active'>Editar</li>";
-
-
     var jsonActualizarUrl = Url.Action("JsonActualizar");
-
-
-
-
-
-    // Datos de la sala cargados server-side
-
+    var jsonListarPlantillasUrl = Url.Action("JsonListarPlantillas");
+    var jsonAplicarPlantillaUrl = Url.Action("JsonAplicarPlantilla");
 
     var sala = ViewBag.Sala as System.Collections.Generic.IDictionary<string, object>;
-
-
     var salaId = sala != null && sala.ContainsKey("id") ? sala["id"]?.ToString() : (ViewContext.RouteData.Values["id"]?.ToString() ?? string.Empty);
-
-
     var salaNombre = sala != null && sala.ContainsKey("nombre") ? sala["nombre"]?.ToString() : string.Empty;
-
-
     var salaDescripcion = sala != null && sala.ContainsKey("descripcion") ? sala["descripcion"]?.ToString() : string.Empty;
-
-
     var salaActivo = sala == null || !sala.ContainsKey("activo") || Convert.ToBoolean(sala["activo"]);
-
-
     var salaFechaCreacion = sala != null && sala.ContainsKey("fechaCreacion") ? sala["fechaCreacion"]?.ToString() : null;
-
-
     var salaFechaModificacion = sala != null && sala.ContainsKey("fechaModificacion") ? sala["fechaModificacion"]?.ToString() : null;
-
-
 }
 
-
-
-
-
 <div class="row justify-content-center">
-
-
     <div class="col-lg-7">
-
-
         <div class="card shadow-sm border-0">
-
-
             <div class="card-body p-4">
-
-
                 <div class="d-flex align-items-center gap-2 mb-4">
-
-
                     <i class="bi bi-pencil-square text-primary fs-5"></i>
-
-
                     <h5 class="mb-0">Editar sala</h5>
-
-
                 </div>
-
-
-
-
 
                 <div id="alertError" class="alert alert-danger d-none" role="alert"></div>
 
-
-
-
-
                 <form id="frmSala" novalidate>
-
-
                     <input type="hidden" id="salaId" value="@salaId" />
-
-
                     <div class="row g-3">
-
-
                         <!-- Nombre -->
-
-
                         <div class="col-12">
-
-
                             <label for="nombre" class="form-label fw-medium">
-
-
                                 Nombre <span class="text-danger">*</span>
-
-
                             </label>
-
-
                             <input type="text" id="nombre" name="nombre"
-
-
                                    class="form-control" maxlength="100"
-
-
                                    value="@salaNombre" required />
-
-
                             <div class="invalid-feedback">El nombre de la sala es obligatorio (mínimo 3 caracteres).</div>
-
-
                         </div>
 
-
-
-
-
-                        <!-- Descripción -->
-
-
+                        <!-- Descripcion -->
                         <div class="col-12">
-
-
                             <label for="descripcion" class="form-label fw-medium">
-
-
-                                Descripción
-
-
+                                Descripcion
                             </label>
-
-
                             <textarea id="descripcion" name="descripcion"
-
-
                                       class="form-control" rows="3" maxlength="500">@salaDescripcion</textarea>
-
-
-                            <div class="form-text">Opcional. Máximo 500 caracteres.</div>
-
-
+                            <div class="form-text">Opcional. Maximo 500 caracteres.</div>
                         </div>
-
-
-
-
 
                         <!-- Info adicional (solo lectura) -->
-
-
                         <div class="col-12">
-
-
                             <hr class="text-muted" />
-
-
                             <dl class="row mb-0 small text-muted">
-
-
                                 <dt class="col-sm-5">Estado actual:</dt>
-
-
                                 <dd class="col-sm-7">
-
-
                                     @if (salaActivo)
-
-
                                     {
-
-
                                         <span class="badge bg-success">Activo</span>
-
-
                                     }
-
-
                                     else
-
-
                                     {
-
-
                                         <span class="badge bg-secondary">Inactivo</span>
-
-
                                     }
-
-
                                 </dd>
-
-
                                 <dt class="col-sm-5">Creado el:</dt>
-
-
                                 <dd class="col-sm-7">@(salaFechaCreacion ?? "No disponible")</dd>
-
-
-                                <dt class="col-sm-5">Última modificación:</dt>
-
-
+                                <dt class="col-sm-5">Ultima modificacion:</dt>
                                 <dd class="col-sm-7">@(salaFechaModificacion ?? "Sin modificaciones")</dd>
-
-
                             </dl>
-
-
                         </div>
-
-
-
-
 
                         <!-- Botones -->
-
-
                         <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top">
-
-
                             <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-
-
                                 <i class="bi bi-arrow-left me-1"></i> Cancelar
-
-
                             </a>
-
-
                             <button type="submit" class="btn btn-primary btn-sm" id="btnGuardar">
-
-
                                 <span id="btnSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
-
-
                                 <i class="bi bi-check-lg me-1" id="btnIcon"></i>
-
-
                                 Guardar Cambios
-
-
                             </button>
-
-
                         </div>
-
-
                     </div>
-
-
                 </form>
-
-
             </div>
-
-
         </div>
 
-
+        <!-- ====== Aplicar Plantilla de Especialidad ====== -->
+        @if (salaActivo)
+        {
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-file-earmark-medical text-success fs-5"></i>
+                        <h6 class="mb-0">Aplicar Plantilla de Especialidad</h6>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Seleccione una plantilla para importar antecedentes y signos vitales predefinidos a esta sala.
+                        Los items existentes no se duplicaran.
+                    </p>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-8">
+                            <label for="selectPlantilla" class="form-label fw-medium small">Plantilla</label>
+                            <select id="selectPlantilla" class="form-select form-select-sm">
+                                <option value="">-- Seleccione una plantilla --</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <button type="button" class="btn btn-success btn-sm w-100" id="btnAplicarPlantilla" disabled>
+                                <span id="aplSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                                <i class="bi bi-download me-1"></i> Aplicar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="plantillaResult" class="mt-2 small d-none"></div>
+                </div>
+            </div>
+        }
     </div>
-
-
 </div>
 
-
-
-
-
 @section Scripts {
-
-
 <script>
-
-
     const salaId = document.getElementById('salaId').value;
-
-
     const jsonActualizarUrl = '@jsonActualizarUrl';
+    const jsonListarPlantillasUrl = '@jsonListarPlantillasUrl';
+    const jsonAplicarPlantillaUrl = '@jsonAplicarPlantillaUrl';
 
-
-
-
-
+    // ====== Formulario de edicion ======
     document.getElementById('frmSala').addEventListener('submit', async (e) => {
-
-
         e.preventDefault();
 
-
-
-
-
         const nombre = document.getElementById('nombre').value.trim();
-
-
         const descripcion = document.getElementById('descripcion').value.trim();
 
-
-
-
-
         const errores = [];
-
-
         if (!nombre) errores.push('El nombre de la sala es obligatorio.');
-
-
         else if (nombre.length < 3) errores.push('El nombre debe tener al menos 3 caracteres.');
-
-
         if (descripcion.length > 500) errores.push('La descripcion no puede exceder 500 caracteres.');
 
-
-
-
-
         if (errores.length > 0) {
-
-
             mostrarErrores(errores);
-
-
             return;
-
-
         }
-
-
-
-
 
         setLoading(true);
-
-
         ocultarError();
 
-
-
-
-
         const res = await fetch(`${jsonActualizarUrl}?id=${salaId}`, {
-
-
             method: 'PUT',
-
-
             headers: { 'Content-Type': 'application/json' },
-
-
             body: JSON.stringify({ nombre, descripcion })
-
-
         });
 
-
-
-
-
         const json = await res.json();
-
-
         setLoading(false);
 
-
-
-
-
         if (res.ok && json.success) {
-
-
             showToast('Sala actualizada exitosamente.', 'success');
-
-
             setTimeout(() => window.location.href = '@salaIndexUrl', 1200);
-
-
         } else {
-
-
             const errs = json.errors || [json.message || 'Error al actualizar la sala.'];
-
-
             mostrarErrores(errs);
-
-
         }
-
-
     });
 
-
-
-
-
-    function setLoading(loading) {
-
-
-        const btn = document.getElementById('btnGuardar');
-
-
-        const spinner = document.getElementById('btnSpinner');
-
-
-        const icon = document.getElementById('btnIcon');
-
-
-        btn.disabled = loading;
-
-
-        spinner.classList.toggle('d-none', !loading);
-
-
-        icon.classList.toggle('d-none', loading);
-
-
+    // ====== Cargar plantillas en el dropdown ======
+    async function cargarPlantillas() {
+        try {
+            const res = await fetch(jsonListarPlantillasUrl);
+            const json = await res.json();
+            if (json.success && json.data) {
+                const select = document.getElementById('selectPlantilla');
+                json.data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p['id'];
+                    opt.textContent = p['nombre'] || '(sin nombre)';
+                    select.appendChild(opt);
+                });
+                select.disabled = false;
+            }
+        } catch (err) {
+            console.warn('Error al cargar plantillas:', err);
+        }
     }
 
+    // ====== Habilitar/deshabilitar boton "Aplicar" ======
+    document.getElementById('selectPlantilla').addEventListener('change', function() {
+        document.getElementById('btnAplicarPlantilla').disabled = !this.value;
+    });
 
+    // ====== Aplicar plantilla ======
+    document.getElementById('btnAplicarPlantilla').addEventListener('click', async function() {
+        const plantillaId = document.getElementById('selectPlantilla').value;
+        if (!plantillaId) return;
 
+        const btn = this;
+        const spinner = document.getElementById('aplSpinner');
+        const resultDiv = document.getElementById('plantillaResult');
 
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        resultDiv.classList.add('d-none');
+
+        try {
+            const res = await fetch(jsonAplicarPlantillaUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ salaId: salaId, plantillaId: plantillaId })
+            });
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                const d = json.data;
+                const resumen = d && d.resumen ? d.resumen : (
+                    'Antecedentes: ' + (d?.antecedentesCreados || 0) + ' creados, ' +
+                    (d?.antecedentesReactivados || 0) + ' reactivados, ' +
+                    (d?.antecedentesSaltados || 0) + ' saltados. ' +
+                    'Signos Vitales: ' + (d?.signosVitalesCreados || 0) + ' creados, ' +
+                    (d?.signosVitalesReactivados || 0) + ' reactivados, ' +
+                    (d?.signosVitalesSaltados || 0) + ' saltados.'
+                );
+                resultDiv.className = 'mt-2 small text-success';
+                resultDiv.innerHTML = '<i class="bi bi-check-circle me-1"></i> ' + escapeHtml(json.message || 'Plantilla aplicada exitosamente.') +
+                    '<br><span class="text-muted">' + escapeHtml(resumen) + '</span>';
+            } else {
+                resultDiv.className = 'mt-2 small text-danger';
+                resultDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> ' +
+                    escapeHtml(json.message || 'Error al aplicar plantilla.');
+            }
+        } catch (err) {
+            resultDiv.className = 'mt-2 small text-danger';
+            resultDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Error de conexion al aplicar plantilla.';
+        }
+
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+        resultDiv.classList.remove('d-none');
+    });
+
+    // Cargar plantillas al inicio
+    cargarPlantillas();
+
+    // ====== Funciones auxiliares ======
+    function setLoading(loading) {
+        const btn = document.getElementById('btnGuardar');
+        const spinner = document.getElementById('btnSpinner');
+        const icon = document.getElementById('btnIcon');
+        btn.disabled = loading;
+        spinner.classList.toggle('d-none', !loading);
+        icon.classList.toggle('d-none', loading);
+    }
 
     function mostrarErrores(errores) {
-
-
         const alert = document.getElementById('alertError');
-
-
         alert.classList.remove('d-none');
-
-
         alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' +
-
-
             errores.map(e => `<div>${escapeHtml(e)}</div>`).join('');
-
-
     }
-
-
-
-
 
     function ocultarError() {
-
-
         document.getElementById('alertError').classList.add('d-none');
-
-
     }
-
-
-
-
 
     function showToast(message, type) {
-
-
         const container = document.getElementById('toastContainer') || createToastContainer();
-
-
         const toast = document.createElement('div');
-
-
         toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
-
-
         toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
-
-
         toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-
-
         container.appendChild(toast);
-
-
         setTimeout(() => toast.remove(), 5000);
-
-
     }
-
-
-
-
 
     function createToastContainer() {
-
-
         const div = document.createElement('div');
-
-
         div.id = 'toastContainer';
-
-
         document.body.appendChild(div);
-
-
         return div;
-
-
     }
-
-
-
-
 
     function escapeHtml(text) {
-
-
         if (!text) return '';
-
-
         const div = document.createElement('div');
-
-
         div.textContent = text;
-
-
         return div.innerHTML;
-
-
     }
-
-
 </script>
-
-
 }
-
-

@@ -1,0 +1,384 @@
+@{
+    ViewData["Title"] = "Asignar Doctores a Salas";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Administracion/Sala'>Salas</a></li>" +
+                             "<li class='breadcrumb-item active'>Asignar Doctores</li>";
+}
+
+@section HeaderActions {
+    <a href="/Administracion/Sala" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Volver a Salas
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Panel lateral: Selección de sala -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-building me-2 text-primary"></i>Seleccionar Sala
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="salaSelect" class="form-label small fw-medium">Sala / Área</label>
+                    <select id="salaSelect" class="form-select" onchange="cambiarSala(this.value)">
+                        <option value="">— Seleccione una sala —</option>
+                    </select>
+                </div>
+                <div id="salaInfo" class="small text-muted d-none">
+                    <hr class="my-2">
+                    <p class="mb-1"><strong>Descripción:</strong> <span id="salaDescripcion">—</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de doctores disponibles -->
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-person-plus me-2 text-success"></i>Asignar Doctor
+                </h6>
+            </div>
+            <div class="card-body" id="panelAsignar">
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Seleccione una sala para ver los doctores disponibles.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel principal: Doctores asignados -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-people me-2 text-info"></i>Doctores Asignados
+                    <span id="contadorAsignados" class="badge bg-info ms-2">0</span>
+                </h6>
+                <div id="loadingAsignados" class="spinner-border spinner-border-sm text-muted d-none" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="tablaAsignados">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-people fs-1 d-block mb-2"></i>
+                        Seleccione una sala para ver sus doctores asignados.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        salas: '@Url.Action("JsonSalas")',
+        doctores: '@Url.Action("JsonDoctores")',
+        asignaciones: '@Url.Action("JsonAsignaciones")',
+        asignar: '@Url.Action("JsonAsignar")',
+        desasignar: '@Url.Action("JsonDesasignar")'
+    };
+
+    let salas = [];
+    let doctores = [];
+    let asignaciones = [];
+    let salaSeleccionada = null;
+    let desasignarId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarSalas();
+        cargarDoctores();
+    });
+
+    // ===================== CARGA DE DATOS =====================
+
+    async function cargarSalas() {
+        try {
+            const res = await fetch(URLS.salas, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (json.success) {
+                salas = json.data || [];
+                const select = document.getElementById('salaSelect');
+                salas.forEach(function(s) {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.nombre || 'Sin nombre';
+                    select.appendChild(opt);
+                });
+            }
+        } catch (err) {
+            console.error('Error al cargar salas:', err);
+        }
+    }
+
+    async function cargarDoctores() {
+        try {
+            const res = await fetch(URLS.doctores, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (json.success) {
+                doctores = json.data || [];
+            }
+        } catch (err) {
+            console.error('Error al cargar doctores:', err);
+        }
+    }
+
+    async function cargarAsignaciones(salaId) {
+        const loading = document.getElementById('loadingAsignados');
+        loading.classList.remove('d-none');
+
+        try {
+            const res = await fetch(URLS.asignaciones + '?salaId=' + salaId, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (json.success) {
+                asignaciones = json.data || [];
+                renderAsignaciones(asignaciones);
+                renderDoctoresDisponibles();
+                actualizarContador();
+            }
+        } catch (err) {
+            console.error('Error al cargar asignaciones:', err);
+            document.getElementById('tablaAsignados').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-warning"></i>
+                    Error al cargar asignaciones.
+                </div>`;
+        } finally {
+            loading.classList.add('d-none');
+        }
+    }
+
+    // ===================== SALA SELECT =====================
+
+    function cambiarSala(salaId) {
+        if (!salaId) {
+            salaSeleccionada = null;
+            document.getElementById('salaInfo').classList.add('d-none');
+            document.getElementById('tablaAsignados').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-people fs-1 d-block mb-2"></i>
+                    Seleccione una sala para ver sus doctores asignados.
+                </div>`;
+            document.getElementById('panelAsignar').innerHTML = `
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Seleccione una sala para ver los doctores disponibles.
+                </p>`;
+            document.getElementById('contadorAsignados').textContent = '0';
+            return;
+        }
+
+        salaSeleccionada = salaId;
+        const sala = salas.find(function(s) { return s.id === salaId; });
+        if (sala) {
+            document.getElementById('salaInfo').classList.remove('d-none');
+            document.getElementById('salaDescripcion').textContent = sala.descripcion || 'Sin descripción';
+        }
+
+        cargarAsignaciones(salaId);
+    }
+
+    // ===================== DOCTORES DISPONIBLES (No asignados) =====================
+
+    function renderDoctoresDisponibles() {
+        const asignadosIds = asignaciones.map(function(a) { return a.usuarioId; });
+        const disponibles = doctores.filter(function(d) {
+            return asignadosIds.indexOf(d.usuarioId) === -1;
+        });
+
+        if (disponibles.length === 0) {
+            document.getElementById('panelAsignar').innerHTML = `
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-check-circle me-1 text-success"></i>
+                    Todos los doctores están asignados a esta sala.
+                </p>`;
+            return;
+        }
+
+        const opciones = disponibles.map(function(d) {
+            const nombre = d.nombres + ' ' + d.apellidos;
+            return '<option value="' + d.usuarioId + '">' + escapeHtml(nombre) + ' (' + escapeHtml(d.email || '') + ')</option>';
+        }).join('');
+
+        document.getElementById('panelAsignar').innerHTML = `
+            <div class="mb-2">
+                <select id="doctorSelect" class="form-select form-select-sm">
+                    <option value="">— Seleccione un doctor —</option>
+                    ${opciones}
+                </select>
+            </div>
+            <button type="button" class="btn btn-success btn-sm w-100" onclick="asignarDoctor()">
+                <i class="bi bi-plus-lg me-1"></i> Asignar a esta sala
+            </button>`;
+    }
+
+    // ===================== ASIGNAR =====================
+
+    async function asignarDoctor() {
+        const select = document.getElementById('doctorSelect');
+        const usuarioId = select.value;
+        if (!usuarioId || !salaSeleccionada) {
+            showToast('Debe seleccionar un doctor.', 'warning');
+            return;
+        }
+
+        const btn = document.querySelector('#panelAsignar .btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Asignando...';
+
+        try {
+            const res = await fetch(URLS.asignar, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ salaId: salaSeleccionada, usuarioId: usuarioId })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast(json.message || 'Doctor asignado correctamente.', 'success');
+                await cargarAsignaciones(salaSeleccionada);
+            } else {
+                showToast(json.message || 'Error al asignar doctor.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Asignar a esta sala';
+        }
+    }
+
+    // ===================== DESASIGNAR =====================
+
+    function confirmarDesasignar(id, nombre) {
+        desasignarId = id;
+        if (confirm('¿Está seguro que desea desasignar a ' + escapeHtml(nombre) + ' de esta sala?\n\nEl doctor podrá volver a asignarse después.')) {
+            ejecutarDesasignar();
+        }
+    }
+
+    async function ejecutarDesasignar() {
+        if (!desasignarId) return;
+
+        try {
+            const res = await fetch(URLS.desasignar + '?id=' + desasignarId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast(json.message || 'Doctor desasignado correctamente.', 'success');
+                await cargarAsignaciones(salaSeleccionada);
+            } else {
+                showToast(json.message || 'Error al desasignar doctor.', 'danger');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'danger');
+        } finally {
+            desasignarId = null;
+        }
+    }
+
+    // ===================== RENDER =====================
+
+    function renderAsignaciones(items) {
+        if (items.length === 0) {
+            document.getElementById('tablaAsignados').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-person-plus fs-1 d-block mb-2"></i>
+                    No hay doctores asignados a esta sala.
+                    <br><small>Use el panel lateral para asignar doctores.</small>
+                </div>`;
+            return;
+        }
+
+        const filas = items.map(function(a) {
+            const nombre = a.usuarioNombre || 'Sin nombre';
+            const email = a.usuarioEmail || '—';
+            const fecha = a.fechaCreacion ? new Date(a.fechaCreacion).toLocaleDateString('es-MX', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            }) : '—';
+
+            return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-2 me-2 d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                            <i class="bi bi-person-circle text-info"></i>
+                        </div>
+                        <div>
+                            <strong>${escapeHtml(nombre)}</strong>
+                            <br><small class="text-muted">${escapeHtml(email)}</small>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-muted small">${fecha}</td>
+                <td class="text-end">
+                    <button class="btn btn-outline-danger btn-sm"
+                            onclick="confirmarDesasignar('${a.id}', '${escapeHtml(nombre)}')"
+                            title="Desasignar de esta sala">
+                        <i class="bi bi-person-x"></i> Desasignar
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('tablaAsignados').innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Doctor</th>
+                            <th style="width:140px;">Asignado desde</th>
+                            <th class="text-end" style="width:140px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function actualizarContador() {
+        document.getElementById('contadorAsignados').textContent = asignaciones.length;
+    }
+
+    // ===================== UTILERÍAS =====================
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' alert-dismissible fade show shadow-sm';
+        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
+        toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        container.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        document.body.appendChild(div);
+        return div;
+    }
+</script>
+}

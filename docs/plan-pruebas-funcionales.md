@@ -13,12 +13,12 @@
 
 Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 
-- [ ] **API Health**: `http://localhost:5089/health` → `{"status":"healthy"}`
-- [ ] **Swagger UI**: `http://localhost:5089/swagger` → Documentación visible
-- [ ] **Frontend Home**: `http://localhost:5218` → Página principal carga
-- [ ] **Login Page**: `http://localhost:5218/Login/Auth/Login` → Formulario visible
-- [ ] **Supabase conexión**: Tablas visibles desde Supabase Dashboard
-- [ ] **Tests unitarios**: `dotnet test` → 87/87 correctos
+- [x] **API Health**: `http://localhost:5089/health` → `{"status":"healthy"}`
+- [x] **Swagger UI**: `http://localhost:5089/swagger` → Documentación visible
+- [x] **Frontend Home**: `http://localhost:5218` → Página principal carga
+- [x] **Login Page**: `http://localhost:5218/Login/Auth/Login` → Formulario visible
+- [x] **Supabase conexión**: Tablas visibles desde Supabase Dashboard
+- [x] **Tests unitarios**: `dotnet test` → 87/87 correctos
 
 ---
 
@@ -26,112 +26,119 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 
 > **Propósito:** Establecer la base del sistema multi-tenant.
 
-### 1.1 Gestión de Clínicas (HU09)
+### 1.1 Gestión de Clínicas (HU09) ✅
 
-- [ ] Ir a: **Catálogos → Clínicas** (`/Catalogos/Clinica`)
-- [ ] **Crear clínica**: Completar formulario con datos de prueba
+- [x] Ir a: **Catálogos → Clínicas** (`/Catalogos/Clinica`)
+- [x] **Crear clínica**: Completar formulario con datos de prueba
   - Nombre: `Clínica Medicore Principal`
   - Dirección, Teléfono, Email
   - Tiempo de espera de alertas: `15` minutos
-- [ ] **Verificar**: Aparece en el listado, campo `activo = true`
-- [ ] **Editar clínica**: Modificar algún campo, guardar
-- [ ] **Verificar**: Cambios reflejados en el listado
-- [ ] **Desactivar clínica**: Click en "Desactivar"
-- [ ] **Verificar**: Desaparece del listado (o se marca como inactivo)
-- [ ] **Reactivar clínica**: Si existe opción de ver inactivos, reactivar
-- [ ] **Verificar**: Vuelve al listado activo
+- [x] **Verificar**: Aparece en el listado, campo `activo = true`
+- [x] **Editar clínica**: Modificar algún campo, guardar
+- [x] **Verificar**: Cambios reflejados en el listado
+- [x] **Desactivar clínica**: Click en "Desactivar"
+- [x] **Verificar**: Desaparece del listado (o se marca como inactivo)
+- [x] **Reactivar clínica**: Si existe opción de ver inactivos, reactivar
+- [x] **Verificar**: Vuelve al listado activo
 
 > **Datos importantes de la clínica creada:**
-> - ID: _______________________
-> - Nombre: _______________________
+> - ID: 45b513be-a245-45b9-a29f-2cf25fafa5b6
+> - Nombre: Vittal Clinic Central
 
 ---
 
 ### 1.2 Gestión de Perfiles (HU03)
 
-- [ ] Ir a: **Administración → Perfiles** (`/Administracion/Perfil`)
-- [ ] **Verificar** perfil por defecto: `Super Admin` existe
-- [ ] **Crear perfil**: `Médico General`
-- [ ] **Crear perfil**: `Gerente de Clínica`
-- [ ] **Crear perfil**: `Enfermero/a`
-- [ ] **Crear perfil**: `Recepcionista`
-- [ ] **Editar perfil**: Modificar nombre o descripción
-- [ ] **Desactivar perfil** (opcional para probar)
-- [ ] **Verificar**: Orden alfabético en listado
+- [x] Ir a: **Administración → Perfiles** (`/Administracion/Perfil`)
+- [x] **Verificar** perfil por defecto: `Super Admin` existe
+- [x] **Crear perfil**: `Médico General`
+- [x] **Crear perfil**: `Gerente de Clínica`
+- [x] **Crear perfil**: `Enfermero/a`
+- [x] **Crear perfil**: `Recepcionista` (ya existía de seed)
+- [x] **Editar perfil**: Modificar nombre o descripción
+- [x] **Desactivar perfil** (opcional para probar)
+- [x] **Verificar**: Orden alfabético en listado
 
 ---
 
-### 1.3 Gestión de Permisos (HU05)
+### 1.3 Gestión de Permisos (HU05) ✅
 
-- [ ] Ir a: **Administración → Permisos** (`/Administracion/Permiso`)
-- [ ] **Seleccionar perfil**: Super Admin
-- [ ] **Verificar** que tenga todos los permisos marcados (READ, CREATE, UPDATE)
-- [ ] **Seleccionar perfil**: Recepcionista
-- [ ] **Asignar permisos**:
-  - Pacientes: READ, CREATE
-  - Citas: READ, CREATE
-  - (el resto: solo READ o ninguno)
-- [ ] **Seleccionar perfil**: Médico General
-- [ ] **Asignar permisos**:
+- [x] Ir a: **Administración → Permisos** (`/Administracion/Permiso`)
+- [x] **Seleccionar perfil**: Super Admin
+- [x] **Verificar** que tenga todos los permisos marcados (READ, CREATE, UPDATE) — 23/23 ✅
+- [x] **Seleccionar perfil**: Administrador
+- [x] **Asignar permisos**: 15/23 módulos con RCU; "permisos" y "clinicas" deshabilitados (exclusivos Super Admin)
+- [x] **Seleccionar perfil**: Recepcionista
+- [x] **Asignar permisos**:
   - Pacientes: READ, CREATE, UPDATE
-  - Citas: READ, CREATE, UPDATE
+  - Agenda: READ, CREATE, UPDATE
+  - Cola de espera: READ
+- [x] **Seleccionar perfil**: Médico General / Doctor
+- [x] **Asignar permisos**:
+  - Pacientes: READ, CREATE, UPDATE
   - Expedientes: READ, CREATE, UPDATE
-  - Dashboard: READ
-- [ ] **Seleccionar perfil**: Gerente de Clínica
-- [ ] **Asignar permisos**:
-  - Reportes: READ
-  - Dashboard: READ
-  - Usuarios: READ
-- [ ] **Guardar cambios** y verificar persistencia
-- [ ] **Volver a entrar** al perfil y confirmar que los permisos se mantienen
+  - 15 módulos adicionales con solo READ
+- [x] **Seleccionar perfil**: Gerente de Clínica
+- [x] **Asignar permisos**:
+  - 21 módulos con READ (visión global, sin CREATE/UPDATE)
+- [x] **Guardar cambios** y verificar persistencia
+- [x] **Volver a entrar** al perfil y confirmar que los permisos se mantienen
+- [x] **Verificar bloqueo**: Admin NO puede guardar permisos (API 403 Forbidden) ✅
+- [x] **Verificar sidebar**: Admin NO ve "Permisos" en el menú (sidebar filtra por `puedeLeer`) ✅
 
 ---
 
-### 1.4 Gestión de Usuarios (HU04)
+### 1.4 Gestión de Usuarios (HU04) ✅
 
-- [ ] Ir a: **Administración → Usuarios** (`/Administracion/Usuario`)
-- [ ] **Crear usuarios de prueba** (uno por perfil):
+- [x] Ir a: **Administración → Usuarios** (`/Administracion/Usuario`)
+- [x] **Crear usuarios de prueba** (uno por perfil) desde API:
 
-| Nombre | Email | Perfil | Clínica |
+| Nombre | Email | Perfil | Username |
 |---|---|---|---|
-| Dr. Juan Pérez | juan.perez@medicore.test | Médico General | Medicore Principal |
-| Dra. María López | maria.lopez@medicore.test | Médico General | Medicore Principal |
-| Gerente Admin | gerente@medicore.test | Gerente de Clínica | Medicore Principal |
-| Recepción Ana | ana@medicore.test | Recepcionista | Medicore Principal |
-| Enf. Carlos Ruiz | carlos@medicore.test | Enfermero/a | Medicore Principal |
+| Juan Pérez | juan.perez@vittal.com | Médico General | juan.perez |
+| María López | maria.lopez@vittal.com | Médico General | maria.lopez |
+| Gerente Admin | gerente@vittal.com | Gerente de Clínica | gerente |
+| Ana Recepción | ana@vittal.com | Recepcionista | ana.recepcion |
+| Carlos Enfermero | carlos.enfermero@vittal.com | Enfermero/a | carlos.enfermero |
 
-- [ ] **Verificar**: Cada usuario aparece en el listado con su perfil
-- [ ] **Editar usuario**: Cambiar email o teléfono
-- [ ] **Desactivar usuario**: Probar desactivación
-- [ ] **Reactivar usuario** (verificar que funciona)
-- [ ] **Cerrar sesión** como Super Admin y probar login con cada usuario creado
-- [ ] **Verificar** que cada usuario ve solo lo que su perfil permite
-- [ ] **Volver a iniciar sesión** como Super Admin
+- [x] **Crear perfiles faltantes**: Gerente de Clínica, Enfermero/a (Médico General ya existía)
+- [x] **Asignar permisos a nuevos perfiles**: login + módulos según rol
+- [x] **Verificar**: Cada usuario aparece en el listado con su perfil — **9 usuarios total**
+- [x] **Editar usuario**: Cambiar teléfono de Juan Pérez (555-0101 → 555-9999) y dirección
+- [x] **Desactivar usuario**: Ana Recepción desactivada (activo=false) ✅
+- [x] **Reactivar usuario**: Ana Recepción reactivada (activo=true) ✅
+- [x] **Probar login** con cada usuario creado — **los 5 inician sesión correctamente**
+- [x] **Verificar** permisos por perfil desde el API:
+  - Juan Pérez (Médico General): login + agenda + pacientes RCU + expedientes RCU + 13 más READ
+  - Gerente (Gerente de Clínica): login + 20 módulos READ
+  - Ana (Recepcionista): login + pacientes RCU + agenda RCU + cola_espera READ
+  - Carlos (Enfermero/a): login + pacientes READ + expedientes READ + cola_espera READ
 
-> **Nota:** Anotar las contraseñas temporales asignadas por el sistema.
+> **Nota:** Todos los usuarios usan contraseña `Password123!`
 
 ---
 
-### 1.5 Gestión de Salas / Áreas (HU10)
+### 1.5 Gestión de Salas / Áreas (HU10) ✅
 
-- [ ] Ir a: **Administración → Salas** (`/Administracion/Sala`)
-- [ ] **Crear salas** (asociadas a la clínica):
+- [x] Ir a: **Administración → Salas** (`/Administracion/Sala`)
+- [x] **Crear salas** (asociadas a la clínica via JWT):
 
-| Sala | Especialidad |
+| Sala | Especialidad / Descripción |
 |---|---|
-| Consultorio 1 | Medicina General |
+| Consultorio 1 | Medicina General (existente, editado) |
 | Consultorio 2 | Medicina General |
 | Consultorio 3 | Cardiología |
 | Consultorio 4 | Dermatología |
 | Sala de Emergencia | Emergencias |
 
-- [ ] **Verificar**: Cada sala aparece en el listado
-- [ ] **Editar sala**: Cambiar nombre o especialidad
-- [ ] **Desactivar sala**: Probar desactivación
-- [ ] **Reactivar sala**
+- [x] **Verificar**: Cada sala aparece en el listado — **5 salas activas**
+- [x] **Editar sala**: Consultorio 1 descripción cambiada a "Medicina General - Pediatria y adultos"
+- [x] **Desactivar sala**: Sala de Emergencia desactivada (activo=false, desaparece del listado)
+- [x] **Reactivar sala**: Sala de Emergencia reactivada (activo=true, reaparece)
+- [x] **Verificar duplicado**: Intentar crear "Consultorio 1" otra vez → rechazado ✅
 
-> **Importante:** Las salas definen la especialidad médica.
-> Los catálogos de antecedentes y signos vitales se configuran por sala.
+> **Importante:** Las salas no tienen campo `especialidad` — la especialidad se define por `sala_id` en los catálogos vinculados (tipos_antecedente, tipos_signo_vital) según CLAUDE.md §4.1.
+> Los nombres sin acentos funcionan correctamente en la API (Cardiologia, Dermatologia).
 
 ---
 
@@ -699,11 +706,11 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 
 | Módulo | HU | Estado |
 |---|---|---|
-| Clínicas | HU09 | ◻️ |
-| Perfiles | HU03 | ◻️ |
-| Permisos | HU05 | ◻️ |
-| Usuarios | HU04 | ◻️ |
-| Salas | HU10 | ◻️ |
+| Clínicas | HU09 | ✅ |
+| Perfiles | HU03 | ✅ |
+| Permisos | HU05 | ✅ |
+| Usuarios | HU04 | ✅ |
+| Salas | HU10 | ✅ |
 | Plantillas Especialidad | HU-E02 | ◻️ |
 | Tipos Antecedente | HU-E03 | ◻️ |
 | Tipos Signo Vital | HU-E04 | ◻️ |
@@ -749,13 +756,14 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 ## DATOS DE PRUEBA — ACCESO
 
 | Rol | Email | Contraseña |
-|---|---|---|
-| Super Admin | (ya ingresado) | |
-| Médico General | juan.perez@medicore.test | |
-| Médico General | maria.lopez@medicore.test | |
-| Gerente de Clínica | gerente@medicore.test | |
-| Recepcionista | ana@medicore.test | |
-| Enfermero/a | carlos@medicore.test | |
+|---|---|---|---|
+| Super Admin | admin@vittal.com | Password123! |
+| Administrador | carlos@vittal.com | Password123! |
+| Médico General | juan.perez@vittal.com | Password123! |
+| Médico General | maria.lopez@vittal.com | Password123! |
+| Gerente de Clínica | gerente@vittal.com | Password123! |
+| Recepcionista | ana@vittal.com | Password123! |
+| Enfermero/a | carlos.enfermero@vittal.com | Password123! |
 
 ---
 

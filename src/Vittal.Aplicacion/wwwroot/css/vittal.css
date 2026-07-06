@@ -59,7 +59,7 @@ body {
 /* ── Sidebar ────────────────────────────────────────────────────── */
 .vittal-sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--vittal-sidebar-bg);
   position: fixed;
   top: 0; left: 0;
@@ -67,6 +67,7 @@ body {
   flex-direction: column;
   z-index: 100;
   transition: width 0.3s ease;
+  overflow: hidden; /* evita scroll doble */
 }
 
 /* Scroll solo en el área del menú, no en el header/footer */
@@ -74,6 +75,18 @@ body {
 .vittal-sidebar .sidebar-footer {
   flex-shrink: 0;
 }
+
+/* Contenedor del menú: scroll interno y flex para centrar contenido si es menor */
+#sidebarMenuContainer {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+#sidebarMenuContainer::-webkit-scrollbar { width: 5px; }
+#sidebarMenuContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+#sidebarMenuContainer::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Sidebar COLLAPSED ── */
 .vittal-sidebar.collapsed {
@@ -86,8 +99,15 @@ body {
 .vittal-sidebar.collapsed .sub-nav,
 .vittal-sidebar.collapsed .sidebar-user-text,
 .vittal-sidebar.collapsed .user-info,
-.vittal-sidebar.collapsed .sidebar-footer .dropdown-toggle::after {
+.vittal-sidebar.collapsed .sidebar-footer .dropdown-toggle::after,
+/* El workspace switcher también se oculta en collapsed */
+.vittal-sidebar.collapsed .px-3.py-2.border-bottom {
   display: none !important;
+}
+/* En collapsed, el menú no necesita scroll */
+.vittal-sidebar.collapsed #sidebarMenuContainer {
+  overflow: visible !important;
+  flex: 0 0 auto;
 }
 .vittal-sidebar.collapsed .sidebar-logo {
   display: flex;
@@ -210,6 +230,12 @@ body {
 .vittal-sidebar .sub-nav {
   padding-left: 0;
   list-style: none;
+  width: 100%; /* ← EVITA el efecto horizontal al expandir */
+}
+/* Fuerza el contenedor interno a anclar ancho durante animación collapse */
+.vittal-sidebar .sub-nav.collapsing {
+  width: 100% !important;
+  display: block !important; /* ← Bootstrap a veces usa flex inline; lo forzamos a block */
 }
 .vittal-sidebar .sub-nav .nav-link {
   padding: 0.45rem 1.25rem 0.45rem 2.6rem;
@@ -218,6 +244,9 @@ body {
   gap: 0.2rem;
   border-left: 2px solid transparent;
   border-radius: 0 6px 6px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .vittal-sidebar .sub-nav .nav-link:hover,
 .vittal-sidebar .sub-nav .nav-link.active {
@@ -225,9 +254,17 @@ body {
   background: var(--vittal-sidebar-active);
   color: #fff;
 }
-.vittal-sidebar .sub-nav .nav-link .bi-dot {
-  font-size: 1rem;
-  margin-right: 0.2rem;
+.vittal-sidebar .sub-nav .nav-link i {
+  font-size: 0.95rem;
+  width: 1.3rem;
+  text-align: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.55);
+  transition: color 0.15s;
+}
+.vittal-sidebar .sub-nav .nav-link:hover i,
+.vittal-sidebar .sub-nav .nav-link.active i {
+  color: #fff;
 }
 
 /* ── Sidebar Footer: User Dropdown ── */

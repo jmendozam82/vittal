@@ -91,20 +91,99 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
         }
     }
 
-    public Task<ServiceResult<Guid>> CreateAsync(PlantillaEspecialidadDTOs.Request request)
+    public async Task<ServiceResult<Guid>> CreateAsync(PlantillaEspecialidadDTOs.Request request)
     {
-        // NOTA: Para no sobredimensionar en esta fase, la creación de plantillas
-        // y sus ítems es bastante simple aquí. El admin puede crearlas con la migración.
-        return Task.FromResult(ServiceResult<Guid>.Failure("Not implemented yet for admin creation via API."));
+        try
+        {
+            var entity = new PlantillaEspecialidad
+            {
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Icono = request.Icono,
+                Activo = true,
+                FechaCreacion = DateTime.UtcNow,
+                Items = request.Items?.Select(i => new PlantillaItem
+                {
+                    PlantillaId = Guid.Empty, // se asigna en el repository
+                    TipoItem = i.TipoItem,
+                    Nombre = i.Nombre,
+                    Categoria = i.Categoria,
+                    TipoDato = i.TipoDato,
+                    Unidad = i.Unidad,
+                    ValorMin = i.ValorMin,
+                    ValorMax = i.ValorMax,
+                    EsObligatorio = i.EsObligatorio,
+                    Orden = i.Orden,
+                    Activo = true,
+                    FechaCreacion = DateTime.UtcNow
+                }).ToList() ?? new List<PlantillaItem>()
+            };
+
+            var id = await _repository.CreateAsync(entity);
+            return ServiceResult<Guid>.Success(id, "Plantilla creada exitosamente.");
+        }
+        catch (Exception)
+        {
+            return ServiceResult<Guid>.Failure("Error al crear la plantilla.");
+        }
     }
 
-    public Task<ServiceResult<bool>> UpdateAsync(Guid id, PlantillaEspecialidadDTOs.Request request)
+    public async Task<ServiceResult<bool>> UpdateAsync(Guid id, PlantillaEspecialidadDTOs.Request request)
     {
-        return Task.FromResult(ServiceResult<bool>.Failure("Not implemented yet for admin update via API."));
+        try
+        {
+            var entity = await _repository.GetByIdAsync(id);
+            if (entity == null)
+            {
+                return ServiceResult<bool>.Failure("Plantilla no encontrada.");
+            }
+
+            entity.Nombre = request.Nombre;
+            entity.Descripcion = request.Descripcion;
+            entity.Icono = request.Icono;
+            entity.FechaModificacion = DateTime.UtcNow;
+
+            // Nota: Los items se gestionan por separado via PlantillaItemController.
+            // Este endpoint solo actualiza el header de la plantilla.
+
+            var result = await _repository.UpdateAsync(entity);
+            return result
+                ? ServiceResult<bool>.Success(result, "Plantilla actualizada exitosamente.")
+                : ServiceResult<bool>.Failure("No se pudo actualizar la plantilla.");
+        }
+        catch (Exception)
+        {
+            return ServiceResult<bool>.Failure("Error al actualizar la plantilla.");
+        }
     }
 
-    public Task<ServiceResult<bool>> DeactivateAsync(Guid id)
+    public async Task<ServiceResult<bool>> DeactivateAsync(Guid id)
     {
-        return Task.FromResult(ServiceResult<bool>.Failure("Not implemented yet for admin delete via API."));
+        try
+        {
+            var result = await _repository.DeactivateAsync(id);
+            return result
+                ? ServiceResult<bool>.Success(result, "Plantilla desactivada exitosamente.")
+                : ServiceResult<bool>.Failure("No se encontró la plantilla.");
+        }
+        catch (Exception)
+        {
+            return ServiceResult<bool>.Failure("Error al desactivar la plantilla.");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> ReactivateAsync(Guid id)
+    {
+        try
+        {
+            var result = await _repository.ReactivateAsync(id);
+            return result
+                ? ServiceResult<bool>.Success(result, "Plantilla reactivada exitosamente.")
+                : ServiceResult<bool>.Failure("No se encontró la plantilla.");
+        }
+        catch (Exception)
+        {
+            return ServiceResult<bool>.Failure("Error al reactivar la plantilla.");
+        }
     }
 }

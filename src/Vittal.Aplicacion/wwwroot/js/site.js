@@ -66,3 +66,43 @@
         applySidebarState(true);
     }
 })();
+
+// ── Sidebar: Acordeón suave + auto-scroll ────────────────────────────
+(function() {
+    'use strict';
+
+    const menuContainer = document.getElementById('sidebarMenuContainer');
+    if (!menuContainer) return;
+
+    // Cuando Bootstrap collapse muestra un submenú, auto-scrollea para que sea visible
+    menuContainer.addEventListener('shown.bs.collapse', function(e) {
+        const target = e.target;
+        if (!target.classList.contains('sub-nav')) return;
+
+        // Pequeño delay para que la animación termine
+        setTimeout(function() {
+            // Verifica si el bottom del submenú está fuera de la vista
+            const rect = target.getBoundingClientRect();
+            const containerRect = menuContainer.getBoundingClientRect();
+            const offsetBottom = rect.bottom - containerRect.bottom + 20;
+
+            if (offsetBottom > 0) {
+                menuContainer.scrollBy({ top: offsetBottom, behavior: 'smooth' });
+            }
+        }, 350); // después de la animación del collapse (~300ms)
+    });
+
+    // Al cerrar un collapse, si el scroll está muy abajo, sube suavemente
+    menuContainer.addEventListener('hidden.bs.collapse', function(e) {
+        const target = e.target;
+        if (!target.classList.contains('sub-nav')) return;
+
+        const containerRect = menuContainer.getBoundingClientRect();
+        const activeLinks = menuContainer.querySelectorAll('.nav-link.active');
+        if (activeLinks.length === 0) {
+            // No hay nada activo visible, scroll al inicio suavemente
+            menuContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+})();
+

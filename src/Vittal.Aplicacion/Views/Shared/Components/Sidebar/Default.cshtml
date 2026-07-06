@@ -49,8 +49,9 @@
         </div>
     }
 
-    @* ── Clínica actual (solo no-Super Admin) ── *@
-    @if (!Model.EsSuperAdmin && !string.IsNullOrEmpty(Model.ClinicaActualNombre))
+    @* ── Clínica actual (todos los usuarios) ── *@
+    @* Super Admin: dropdown selector. Demás usuarios: solo nombre visible *@
+    @if (!string.IsNullOrEmpty(Model.ClinicaActualNombre) && !Model.EsSuperAdmin)
     {
         <div class="px-3 py-2 border-bottom border-secondary" style="border-color:rgba(255,255,255,0.1)!important;">
             <div class="d-flex align-items-center text-white-50" style="font-size:0.82rem;">
@@ -119,26 +120,41 @@
                             <i class="bi bi-gear-fill"></i><span class="nav-text">Administración</span>
                             <i class="bi bi-chevron-down ms-auto section-arrow"></i>
                         </a>
-                        <ul class="nav flex-column sub-nav collapse @(adminExpanded ? "show" : "")" id="subAdmin">
+                        <ul class="nav flex-column sub-nav collapse @(adminExpanded ? "show" : "")" id="subAdmin" data-bs-parent="#sidebarMenuContainer">
                             @if (Model.PuedeVerPerfiles)
                             {
                                 <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Perfil" ? "active" : "")"
-                                       asp-area="Administracion" asp-controller="Perfil" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Perfiles</span></a></li>
+                                       asp-area="Administracion" asp-controller="Perfil" asp-action="Index"><i class="bi bi-person-badge"></i><span class="nav-text">Perfiles</span></a></li>
                             }
                             @if (Model.PuedeVerUsuarios)
                             {
                                 <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Usuario" ? "active" : "")"
-                                       asp-area="Administracion" asp-controller="Usuario" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Usuarios</span></a></li>
+                                       asp-area="Administracion" asp-controller="Usuario" asp-action="Index"><i class="bi bi-people"></i><span class="nav-text">Usuarios</span></a></li>
                             }
-                            @if (Model.PuedeVerPermisos)
+                            @if (Model.EsSuperAdmin && Model.PuedeVerPermisos)
                             {
                                 <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Permiso" ? "active" : "")"
-                                       asp-area="Administracion" asp-controller="Permiso" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Permisos</span></a></li>
+                                       asp-area="Administracion" asp-controller="Permiso" asp-action="Index"><i class="bi bi-shield-lock"></i><span class="nav-text">Permisos</span></a></li>
                             }
                             @if (Model.PuedeVerSalas)
                             {
                                 <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Sala" ? "active" : "")"
-                                       asp-area="Administracion" asp-controller="Sala" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Asignar Salas</span></a></li>
+                                       asp-area="Administracion" asp-controller="Sala" asp-action="Index"><i class="bi bi-door-open"></i><span class="nav-text">Salas / Áreas</span></a></li>
+                            }
+                            @if (Model.EsSuperAdmin && Model.PuedeVerPlantillas)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "PlantillaEspecialidad" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="PlantillaEspecialidad" asp-action="Index"><i class="bi bi-file-earmark-text"></i><span class="nav-text">Plantillas de Especialidad</span></a></li>
+                            }
+                            @if (Model.EsSuperAdmin && Model.PuedeVerClinicas)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "Clinica" ? "active" : "")"
+                                       asp-area="Catalogos" asp-controller="Clinica" asp-action="Index"><i class="bi bi-building"></i><span class="nav-text">Clínicas</span></a></li>
+                            }
+                            @if (Model.PuedeVerUsuariosSalas)
+                            {
+                                <li><a class="nav-link sub-link @(area == "Administracion" && Model.CurrentController == "UsuarioSala" ? "active" : "")"
+                                       asp-area="Administracion" asp-controller="UsuarioSala" asp-action="Index"><i class="bi bi-person-plus"></i><span class="nav-text">Asignar Doctores</span></a></li>
                             }
                         </ul>
                     </li>
@@ -155,19 +171,18 @@
                             <i class="bi bi-bookmark-fill"></i><span class="nav-text">Catálogos</span>
                             <i class="bi bi-chevron-down ms-auto section-arrow"></i>
                         </a>
-                        <ul class="nav flex-column sub-nav collapse @(catExpanded ? "show" : "")" id="subCatalogos">
-                            @if (Model.PuedeVerPacientes)      { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Paciente" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Pacientes</span></a></li> }
-                            @if (Model.PuedeVerMedicamentos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Medicamento" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Medicamentos</span></a></li> }
-                            @if (Model.PuedeVerClinicas)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Clinica" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Clínicas</span></a></li> }
-                            @if (Model.PuedeVerTiposCirugia)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoCirugia" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Cirugía</span></a></li> }
-                            @if (Model.PuedeVerCirugias)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Cirugia" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Cirugías</span></a></li> }
-                            @if (Model.PuedeVerTiposDiagnostico){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoDiagnostico" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Diagnóstico</span></a></li> }
-                            @if (Model.PuedeVerDiagnosticos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Diagnostico" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Diagnósticos</span></a></li> }
-                            @if (Model.PuedeVerTratamientos)   { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Tratamiento" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tratamientos</span></a></li> }
-                            @if (Model.PuedeVerRecomendaciones){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Recomendacion" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Recomendaciones</span></a></li> }
-                            @if (Model.PuedeVerExamenes)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Examen" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Exámenes</span></a></li> }
-                            @if (Model.PuedeVerTiposAntecedente){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoAntecedente" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Antecedente</span></a></li> }
-                            @if (Model.PuedeVerTiposSignoVital){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoSignoVital" asp-action="Index"><i class="bi bi-dot"></i><span class="nav-text">Tipos de Signo Vital</span></a></li> }
+                        <ul class="nav flex-column sub-nav collapse @(catExpanded ? "show" : "")" id="subCatalogos" data-bs-parent="#sidebarMenuContainer">
+                            @if (Model.PuedeVerPacientes)       { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Paciente" asp-action="Index"><i class="bi bi-person-heart"></i><span class="nav-text">Pacientes</span></a></li> }
+                            @if (Model.PuedeVerMedicamentos)    { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Medicamento" asp-action="Index"><i class="bi bi-capsule"></i><span class="nav-text">Medicamentos</span></a></li> }
+                            @if (Model.PuedeVerTiposCirugia)    { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoCirugia" asp-action="Index"><i class="bi bi-scissors"></i><span class="nav-text">Tipos de Cirugía</span></a></li> }
+                            @if (Model.PuedeVerCirugias)        { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Cirugia" asp-action="Index"><i class="bi bi-heart-pulse"></i><span class="nav-text">Cirugías</span></a></li> }
+                            @if (Model.PuedeVerTiposDiagnostico){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoDiagnostico" asp-action="Index"><i class="bi bi-clipboard2-pulse"></i><span class="nav-text">Tipos de Diagnóstico</span></a></li> }
+                            @if (Model.PuedeVerDiagnosticos)    { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Diagnostico" asp-action="Index"><i class="bi bi-clipboard2-plus"></i><span class="nav-text">Diagnósticos</span></a></li> }
+                            @if (Model.PuedeVerTratamientos)    { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Tratamiento" asp-action="Index"><i class="bi bi-activity"></i><span class="nav-text">Tratamientos</span></a></li> }
+                            @if (Model.PuedeVerRecomendaciones) { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Recomendacion" asp-action="Index"><i class="bi bi-chat-dots"></i><span class="nav-text">Recomendaciones</span></a></li> }
+                            @if (Model.PuedeVerExamenes)        { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="Examen" asp-action="Index"><i class="bi bi-search-heart"></i><span class="nav-text">Exámenes</span></a></li> }
+                            @if (Model.PuedeVerTiposAntecedente){ <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoAntecedente" asp-action="Index"><i class="bi bi-journal-medical"></i><span class="nav-text">Tipos de Antecedente</span></a></li> }
+                            @if (Model.PuedeVerTiposSignoVital) { <li><a class="nav-link sub-link" asp-area="Catalogos" asp-controller="TipoSignoVital" asp-action="Index"><i class="bi bi-graph-up-arrow"></i><span class="nav-text">Tipos de Signo Vital</span></a></li> }
                         </ul>
                     </li>
                 }

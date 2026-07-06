@@ -148,4 +148,12 @@ public class PlantillaEspecialidadRepository : IPlantillaEspecialidadRepository
         var result = await connection.ExecuteAsync(sql, new { Id = id });
         return result > 0;
     }
+
+    public async Task<bool> ReactivateAsync(Guid id)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var sql = "UPDATE plantillas_especialidad SET activo = true, fecha_modificacion = CURRENT_TIMESTAMP WHERE id = @Id";
+        var result = await connection.ExecuteAsync(sql, new { Id = id });
+        return result > 0;
+    }
 }
