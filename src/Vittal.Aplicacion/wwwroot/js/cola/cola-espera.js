@@ -15,7 +15,8 @@ window.vittalColaEspera = (function() {
         filterDoctor: 'todos',
         refreshInterval: null,
         isRefreshing: false,
-        selectedCitaId: null   // for modals
+        selectedCitaId: null,   // for modals
+        stats: { atendidasHoy: 0 }
     };
 
     // ── Umbrales de tiempo de espera (minutos) ─────────────────
@@ -136,7 +137,8 @@ window.vittalColaEspera = (function() {
 
             if (result.success) {
                 state.citas = result.data || [];
-                updateStats(state.citas);
+                state.stats = result.stats || { atendidasHoy: 0 };
+                updateStats(state.citas, state.stats);
                 renderCola(state.citas);
                 updateTotalCount(state.citas.length);
             } else {
@@ -180,21 +182,21 @@ window.vittalColaEspera = (function() {
     }
 
     // ── Actualizar contadores ──────────────────────────────────
-    function updateStats(citas) {
-        var agendadas = 0, enEspera = 0, enAtencion = 0, atendidas = 0, ret;
+    function updateStats(citas, stats) {
+        var agendadas = 0, enEspera = 0, enAtencion = 0;
 
         citas.forEach(function(c) {
             var est = c.estado;
             if (est === 'agendada') agendadas++;
             else if (est === 'en_espera') enEspera++;
             else if (est === 'en_atencion') enAtencion++;
-            else if (est === 'atendida') atendidas++;
         });
 
         setText('statAgendadas', agendadas);
         setText('statEnEspera', enEspera);
         setText('statEnAtencion', enAtencion);
-        setText('statAtendidas', atendidas);
+        // El conteo de atendidas viene del servidor (filtro propio en JsonCola)
+        setText('statAtendidas', stats ? stats.atendidasHoy : 0);
     }
 
     function updateTotalCount(count) {

@@ -59,13 +59,14 @@ public class ColaEsperaController : Controller
 
         var data = ExtractDataArray(response);
 
-        // Estados que forman parte de la cola de espera
+        // Estados que forman parte de la cola de espera activa
         var estadosCola = new HashSet<string> { "agendada", "en_espera", "en_atencion" };
 
         // Fecha de hoy (solo comparar YYYY-MM-DD)
         var hoy = DateTime.Today;
 
         var cola = new List<object>();
+        var atendidasHoy = 0;
 
         foreach (var item in data)
         {
@@ -78,11 +79,18 @@ public class ColaEsperaController : Controller
 
             if (!fechaOk) continue;
 
-            // Filtrar por estado (solo estados de cola)
-            var estadoOk = dict.TryGetValue("estado", out var est) && est is string estStr
-                && estadosCola.Contains(estStr);
+            // Obtener estado
+            var estadoStr = dict.TryGetValue("estado", out var est) && est is string es ? es : null;
 
-            if (!estadoOk) continue;
+            // Contar atendidas de hoy para estadísticas (tarjeta "Hoy Atendidas")
+            if (estadoStr == "atendida")
+            {
+                atendidasHoy++;
+                continue; // No agregar a la cola activa
+            }
+
+            // Filtrar por estado (solo estados de cola activa)
+            if (estadoStr == null || !estadosCola.Contains(estadoStr)) continue;
 
             // Filtrar por doctor si se especifica
             if (!string.IsNullOrEmpty(doctorId) && Guid.TryParse(doctorId, out var docGuid))
@@ -107,7 +115,7 @@ public class ColaEsperaController : Controller
             return TimeSpan.MaxValue;
         }).ToList();
 
-        return Json(new { success = true, data = cola, total = cola.Count });
+        return Json(new { success = true, data = cola, total = cola.Count, stats = new { atendidasHoy } });
     }
 
     /// <summary>
