@@ -42,7 +42,7 @@ window.vittalColaEspera = (function() {
         if (filterDoctor) {
             filterDoctor.addEventListener('change', function() {
                 state.filterDoctor = this.value;
-                renderCola(state.citas);
+                loadCola();  // Recargar desde el servidor con el nuevo filtro
             });
         }
 
@@ -113,12 +113,13 @@ window.vittalColaEspera = (function() {
 
         doctores.forEach(function(doc) {
             const option = document.createElement('option');
-            option.value = doc.id || '';
-            // Construct full name
+            // El API devuelve usuarioId como identificador del doctor
+            option.value = doc.usuarioId || doc.id || '';
+            // Construir nombre completo desde la respuesta del API
             const nombre = [
-                doc.primerNombre || doc.primer_nombre || '',
-                doc.primerApellido || doc.primer_apellido || ''
-            ].filter(Boolean).join(' ') || 'Doctor';
+                doc.nombres || doc.primerNombre || doc.primer_nombre || '',
+                doc.apellidos || doc.primerApellido || doc.primer_apellido || ''
+            ].filter(Boolean).join(' ') || doc.nombreCompleto || 'Doctor';
             option.textContent = nombre;
             select.appendChild(option);
         });
