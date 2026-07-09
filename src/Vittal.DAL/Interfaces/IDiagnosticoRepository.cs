@@ -6,7 +6,7 @@ using Vittal.Entity.Models;
 namespace Vittal.DAL.Interfaces;
 
 /// <summary>
-/// Interface para repositorio de diagnósticos de citas. Tabla: public.diagnosticos
+/// Interface para repositorio de diagnósticos (catálogo). Tabla: public.diagnosticos
 /// Historia de Usuario: HU14 — Gestión de Diagnósticos
 /// </summary>
 public interface IDiagnosticoRepository
@@ -33,8 +33,11 @@ public interface IDiagnosticoRepository
     Task<bool> ReactivateAsync(Guid id, Guid clinicaId);
 
     /// <summary>
-    /// Verifica si ya existe un diagnóstico con la misma cita y tipo de diagnóstico en la clínica.
-    /// UNIQUE (clinica_id, cita_id, tipo_diagnostico_id).
+    /// Verifica si ya existe un diagnóstico con el mismo nombre en la clínica.
+    /// UNIQUE (clinica_id, nombre).
     /// </summary>
-    Task<bool> ExistsByDiagnosticoAsync(Guid clinicaId, Guid citaId, Guid tipoDiagnosticoId, Guid? excludeId = null);
+    Task<bool> ExistsByNombreAsync(Guid clinicaId, string nombre, Guid? excludeId = null);
+
+    /// <summary>Busca diagnósticos por nombre, código CIE-10 o tipo de diagnóstico.</summary>
+    Task<IEnumerable<Diagnostico>> SearchAsync(Guid clinicaId, string term);
 }

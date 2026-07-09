@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ using Vittal.Entity.Models;
 namespace Vittal.DAL.Repositories;
 
 /// <summary>
-/// Repositorio para la tabla public.diagnosticos (diagnósticos asignados a citas).
+/// Repositorio para la tabla public.diagnosticos (catálogo de diagnósticos).
 /// Implementa IDiagnosticoRepository con Dapper y PostgreSQL.
 /// Historia de Usuario: HU14 — Gestión de Diagnósticos
 /// </summary>
@@ -29,9 +30,9 @@ public class DiagnosticoRepository : IDiagnosticoRepository
     private const string SelectColumns = @"
         d.id                     AS Id,
         d.clinica_id             AS ClinicaId,
-        d.cita_id                AS CitaId,
+        d.nombre                 AS Nombre,
+        d.codigo_cie10           AS CodigoCie10,
         d.tipo_diagnostico_id    AS TipoDiagnosticoId,
-        d.descripcion            AS Descripcion,
         d.activo                 AS Activo,
         d.fecha_creacion         AS FechaCreacion,
         d.fecha_modificacion     AS FechaModificacion,
@@ -52,7 +53,7 @@ public class DiagnosticoRepository : IDiagnosticoRepository
             SELECT {SelectColumns}
             {FromJoin}
             WHERE d.clinica_id = @ClinicaId AND d.activo = true
-            ORDER BY td.nombre, d.fecha_creacion DESC;";
+            ORDER BY d.nombre;";
 
         try
         {
@@ -75,7 +76,7 @@ public class DiagnosticoRepository : IDiagnosticoRepository
             SELECT {SelectColumns}
             {FromJoin}
             WHERE d.clinica_id = @ClinicaId
-            ORDER BY d.activo DESC, td.nombre, d.fecha_creacion DESC;";
+            ORDER BY d.activo DESC, d.nombre;";
 
         try
         {
@@ -118,11 +119,11 @@ public class DiagnosticoRepository : IDiagnosticoRepository
     {
         const string sql = @"
             INSERT INTO public.diagnosticos (
-                clinica_id, cita_id, tipo_diagnostico_id, descripcion,
+                clinica_id, nombre, codigo_cie10, tipo_diagnostico_id,
                 activo, fecha_creacion, creado_por
             )
             VALUES (
-                @ClinicaId, @CitaId, @TipoDiagnosticoId, @Descripcion,
+                @ClinicaId, @Nombre, @CodigoCie10, @TipoDiagnosticoId,
                 true, NOW(), @CreadoPor
             )
             RETURNING id;";
@@ -134,7 +135,7 @@ public class DiagnosticoRepository : IDiagnosticoRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al crear diagnóstico en clínica {ClinicaId}", diagnostico.ClinicaId);
+            _logger.LogError(ex, "Error al crear diagnóstico '{Nombre}' en clínica {ClinicaId}", diagnostico.Nombre, diagnostico.ClinicaId);
             throw;
         }
     }
@@ -146,11 +147,11 @@ public class DiagnosticoRepository : IDiagnosticoRepository
     {
         const string sql = @"
             UPDATE public.diagnosticos
-            SET cita_id               = @CitaId,
-                tipo_diagnostico_id   = @TipoDiagnosticoId,
-                descripcion           = @Descripcion,
-                fecha_modificacion    = NOW(),
-                modificado_por        = @ModificadoPor
+            SET nombre              = @Nombre,
+                codigo_cie10        = @CodigoCie10,
+                tipo_diagnostico_id = @TipoDiagnosticoId,
+                fecha_modificacion  = NOW(),
+                modificado_por      = @ModificadoPor
             WHERE id = @Id AND clinica_id = @ClinicaId;";
 
         try
@@ -213,16 +214,15 @@ public class DiagnosticoRepository : IDiagnosticoRepository
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 6. ExistsByDiagnosticoAsync — Verifica duplicado (cita_id + tipo_diagnostico_id)
+    // 6. ExistsByNombreAsync — Verifica duplicado por nombre en la clínica
     // ────────────────────────────────────────────────────────────────────────
-    public async Task<bool> ExistsByDiagnosticoAsync(Guid clinicaId, Guid citaId, Guid tipoDiagnosticoId, Guid? excludeId = null)
+    public async Task<bool> ExistsByNombreAsync(Guid clinicaId, string nombre, Guid? excludeId = null)
     {
         const string sql = @"
             SELECT COUNT(1)
             FROM public.diagnosticos
             WHERE clinica_id = @ClinicaId
-              AND cita_id = @CitaId
-              AND tipo_diagnostico_id = @TipoDiagnosticoId
+              AND LOWER(nombre) = LOWER(@Nombre)
               AND (@ExcludeId IS NULL OR id != @ExcludeId);";
 
         try
@@ -231,15 +231,45 @@ public class DiagnosticoRepository : IDiagnosticoRepository
             var count = await connection.ExecuteScalarAsync<int>(sql, new
             {
                 ClinicaId = clinicaId,
-                CitaId = citaId,
-                TipoDiagnosticoId = tipoDiagnosticoId,
+                Nombre = nombre,
                 ExcludeId = excludeId
             });
             return count > 0;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al verificar existencia de diagnóstico (cita+tipodiag) en clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al verificar existencia de diagnóstico '{Nombre}' en clínica {ClinicaId}", nombre, clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 7. SearchAsync — Búsqueda por nombre, código CIE-10 o tipo de diagnóstico
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Diagnostico>> SearchAsync(Guid clinicaId, string term)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE d.clinica_id = @ClinicaId
+              AND d.activo = true
+              AND (
+                  d.nombre ILIKE @Term
+                  OR d.codigo_cie10 ILIKE @Term
+                  OR td.nombre ILIKE @Term
+              )
+            ORDER BY d.nombre
+            LIMIT 50;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var searchTerm = $"%{term}%";
+            return await connection.QueryAsync<Diagnostico>(sql, new { ClinicaId = clinicaId, Term = searchTerm });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar diagnósticos con término '{Term}' en clínica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

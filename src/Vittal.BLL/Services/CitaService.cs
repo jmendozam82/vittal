@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cita;
@@ -13,10 +14,14 @@ namespace Vittal.BLL.Services;
 public class CitaService : ICitaService
 {
     private readonly ICitaRepository _repository;
+    private readonly ILineaTiempoService _lineaTiempoService;
+    private readonly ILogger<CitaService> _logger;
 
-    public CitaService(ICitaRepository repository)
+    public CitaService(ICitaRepository repository, ILineaTiempoService lineaTiempoService, ILogger<CitaService> logger)
     {
         _repository = repository;
+        _lineaTiempoService = lineaTiempoService;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<CitaResponseDto>>> GetAllAsync(Guid clinicaId)
@@ -27,8 +32,9 @@ public class CitaService : ICitaService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<CitaResponseDto>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error en GetAllAsync de CitaService");
             return ServiceResult<IEnumerable<CitaResponseDto>>.Failure("Error al obtener las citas.");
         }
     }
@@ -46,8 +52,9 @@ public class CitaService : ICitaService
             var dto = MapToDto(entity);
             return ServiceResult<CitaResponseDto>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error en GetByIdAsync de CitaService");
             return ServiceResult<CitaResponseDto>.Failure("Error al obtener la cita.");
         }
     }
@@ -84,11 +91,15 @@ public class CitaService : ICitaService
                 return ServiceResult<CitaResponseDto>.Failure("Error al recuperar la cita creada.", ServiceErrorType.InternalError);
             }
 
+            // Generar pasos de línea de tiempo automáticamente (HU19)
+            await GenerarLineaTiempoAsync(clinicaId, id);
+
             var responseDto = MapToDto(created);
             return ServiceResult<CitaResponseDto>.Success(responseDto, "Cita creada exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error en CreateAsync de CitaService");
             return ServiceResult<CitaResponseDto>.Failure("Error al crear la cita.");
         }
     }
@@ -126,8 +137,9 @@ public class CitaService : ICitaService
             var responseDto = MapToDto(updated ?? entity);
             return ServiceResult<CitaResponseDto>.Success(responseDto, "Cita actualizada exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error en UpdateAsync de CitaService");
             return ServiceResult<CitaResponseDto>.Failure("Error al actualizar la cita.");
         }
     }
@@ -141,13 +153,34 @@ public class CitaService : ICitaService
                 ? ServiceResult<bool>.Success(result, "Cita desactivada exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró la cita.", ServiceErrorType.NotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error en DeactivateAsync de CitaService");
             return ServiceResult<bool>.Failure("Error al desactivar la cita.");
         }
     }
 
     // ── Mapeo manual Entity → DTO ──────────────────────────────────────
+
+    /// <summary>
+    /// Genera los pasos de línea de tiempo para una cita de forma no-bloqueante.
+    /// Si falla, solo se loguea la advertencia — no debe impedir la creación de la cita.
+    /// </summary>
+    private async Task GenerarLineaTiempoAsync(Guid clinicaId, Guid citaId)
+    {
+        try
+        {
+            var result = await _lineaTiempoService.GenerarPasosParaCitaAsync(clinicaId, citaId);
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning("No se generó la línea de tiempo para cita {CitaId}: {Error}", citaId, result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error no crítico al generar línea de tiempo para cita {CitaId}", citaId);
+        }
+    }
 
     private static CitaResponseDto MapToDto(Cita entity)
     {

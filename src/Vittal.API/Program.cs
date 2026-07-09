@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -17,7 +19,12 @@ using Vittal.IOC;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+    {
+        opts.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+        opts.JsonSerializerOptions.Converters.Add(new TimeOnlyJsonConverter());
+    });
 
 // Configure HttpClient for Supabase Auth
 builder.Services.AddHttpClient("SupabaseAuth");
@@ -196,4 +203,49 @@ static List<SecurityKey> FetchJwksKeys(string jwksUrl)
     }
     return keys;
 }
+
+// =============================================================================
+// JSON Converters para DateOnly / TimeOnly
+// .NET 8 incluye soporte nativo, pero necesitamos aceptar "HH:mm" sin segundos
+// que es el formato que envían los controllers MVC.
+// =============================================================================
+
+public class DateOnlyJsonConverter : JsonConverter<DateOnly>
+{
+    private static readonly string[] Formats = { "yyyy-MM-dd", "yyyyMMdd" };
+
+    public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var value = reader.GetString();
+        if (string.IsNullOrEmpty(value))
+            throw new JsonException("DateOnly value cannot be null or empty.");
+        return DateOnly.ParseExact(value, Formats, CultureInfo.InvariantCulture);
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+    }
+}
+
+public class TimeOnlyJsonConverter : JsonConverter<TimeOnly>
+{
+    // Acepta "HH:mm" (envío desde MVC) y "HH:mm:ss" (formato nativo .NET 8)
+    private static readonly string[] Formats = { "HH:mm", "HH:mm:ss", "HH:mm:ss.fff" };
+
+    public override TimeOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var value = reader.GetString();
+        if (string.IsNullOrEmpty(value))
+            throw new JsonException("TimeOnly value cannot be null or empty.");
+        return TimeOnly.ParseExact(value, Formats, CultureInfo.InvariantCulture);
+    }
+
+    public override void Write(Utf8JsonWriter writer, TimeOnly value, JsonSerializerOptions options)
+    {
+        // Escribir sin segundos — todos los consumidores JS lo manejan bien
+        writer.WriteStringValue(value.ToString("HH:mm", CultureInfo.InvariantCulture));
+    }
+}
+
 

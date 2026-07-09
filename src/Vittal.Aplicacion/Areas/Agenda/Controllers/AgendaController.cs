@@ -332,9 +332,9 @@ public class AgendaController : Controller
 
         var payload = new
         {
-            pacienteId = GetValue<Guid>(dict, "pacienteId"),
-            doctorId = GetValue<Guid>(dict, "doctorId"),
-            salaId = GetValue<Guid?>(dict, "salaId"),
+            pacienteId = dict?.TryGetValue("pacienteId", out var pId) == true && Guid.TryParse(pId?.ToString(), out var parsedPId) ? parsedPId : Guid.Empty,
+            doctorId = dict?.TryGetValue("doctorId", out var dId) == true && Guid.TryParse(dId?.ToString(), out var parsedDId) ? parsedDId : Guid.Empty,
+            salaId = dict?.TryGetValue("salaId", out var sId) == true && sId != null && Guid.TryParse(sId.ToString(), out var parsedSId) ? parsedSId : (Guid?)null,
             fechaCita = dict?.TryGetValue("fechaCita", out var fc) == true ? fc?.ToString() : null,
             horaCita = dict?.TryGetValue("horaCita", out var hc) == true ? hc?.ToString() : null,
             horaFin = dict?.TryGetValue("horaFin", out var hf) == true ? hf?.ToString() : null,

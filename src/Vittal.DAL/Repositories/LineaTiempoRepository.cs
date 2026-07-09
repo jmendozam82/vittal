@@ -148,12 +148,12 @@ public class LineaTiempoRepository : ILineaTiempoRepository
                 estado = @Estado,
                 hora_llegada = CASE
                     WHEN @Estado = 'en_sala' AND hora_llegada IS NULL
-                    THEN @Hora
+                    THEN @Hora::TIME
                     ELSE hora_llegada
                 END,
                 hora_salida = CASE
                     WHEN @Estado IN ('completado', 'saltado') AND hora_salida IS NULL
-                    THEN @Hora
+                    THEN @Hora::TIME
                     ELSE hora_salida
                 END,
                 fecha_modificacion = NOW()

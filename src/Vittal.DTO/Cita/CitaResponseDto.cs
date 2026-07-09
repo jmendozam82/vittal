@@ -17,10 +17,14 @@ public class CitaResponseDto
     public Guid? SalaId { get; set; }
 
     // ── Campos de fecha y hora ────────────────────────────────────
-    public DateTime FechaCita { get; set; }
-    public TimeSpan HoraCita { get; set; }
-    public TimeSpan? HoraFin { get; set; }
-    public TimeSpan? HoraLlegada { get; set; }
+    /// <summary>Fecha de la cita (DATE en BD). ISO 8601.</summary>
+    public DateOnly FechaCita { get; set; }
+    /// <summary>Hora de inicio de la cita (TIME en BD).</summary>
+    public TimeOnly HoraCita { get; set; }
+    /// <summary>Hora de fin estimada de la cita (TIME nullable).</summary>
+    public TimeOnly? HoraFin { get; set; }
+    /// <summary>Hora de llegada del paciente (TIME nullable).</summary>
+    public TimeOnly? HoraLlegada { get; set; }
 
     // ── Campos de negocio ─────────────────────────────────────────
     public string? Lugar { get; set; }

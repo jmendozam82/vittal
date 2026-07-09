@@ -18,11 +18,11 @@ public class AlertaEspera
     public Guid? SalaId { get; set; }
 
     // ── Campos de tiempo ──────────────────────────────────────────
-    /// <summary>Hora programada de la cita.</summary>
-    public TimeSpan HoraCita { get; set; }
+    /// <summary>Hora programada de la cita (TIME en BD).</summary>
+    public TimeOnly HoraCita { get; set; }
 
     /// <summary>Hora en que el paciente llegó (nullable).</summary>
-    public TimeSpan? HoraLlegada { get; set; }
+    public TimeOnly? HoraLlegada { get; set; }
 
     /// <summary>Minutos de espera al momento de generar la alerta.</summary>
     public int MinutosEspera { get; set; }

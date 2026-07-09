@@ -8,7 +8,6 @@ using Vittal.Aplicacion.Helpers;
 
 
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
-
 {
 
     /// <summary>
@@ -21,11 +20,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     {
 
-        public string CitaId { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+
+        public string? CodigoCie10 { get; set; }
 
         public string TipoDiagnosticoId { get; set; } = string.Empty;
-
-        public string? Descripcion { get; set; }
 
     }
 
@@ -228,6 +227,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         {
 
+            if (string.IsNullOrWhiteSpace(dto.Nombre))
+
+            {
+
+                return BadRequest(new { success = false, message = "El nombre del diagnóstico es obligatorio." });
+
+            }
+
+
             if (string.IsNullOrWhiteSpace(dto.TipoDiagnosticoId) || !Guid.TryParse(dto.TipoDiagnosticoId, out _))
 
             {
@@ -237,20 +245,20 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             }
 
 
-            _logger.LogInformation("JsonCrear called: tipoDiagnosticoId={TipoDiagnosticoId}, citaId={CitaId}",
+            _logger.LogInformation("JsonCrear called: nombre={Nombre}, codigoCie10={CodigoCie10}",
 
-                dto.TipoDiagnosticoId, dto.CitaId);
+                dto.Nombre, dto.CodigoCie10);
 
 
             var payload = new
 
             {
 
-                citaId = dto.CitaId,
+                nombre = dto.Nombre.Trim(),
 
-                tipoDiagnosticoId = dto.TipoDiagnosticoId,
+                codigoCie10 = string.IsNullOrWhiteSpace(dto.CodigoCie10) ? null : dto.CodigoCie10.Trim(),
 
-                descripcion = dto.Descripcion
+                tipoDiagnosticoId = dto.TipoDiagnosticoId
 
             };
 
@@ -284,6 +292,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         {
 
+            if (string.IsNullOrWhiteSpace(dto.Nombre))
+
+            {
+
+                return BadRequest(new { success = false, message = "El nombre del diagnóstico es obligatorio." });
+
+            }
+
+
             if (string.IsNullOrWhiteSpace(dto.TipoDiagnosticoId) || !Guid.TryParse(dto.TipoDiagnosticoId, out _))
 
             {
@@ -293,18 +310,18 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             }
 
 
-            _logger.LogInformation("JsonActualizar called: id={Id}, tipoDiagnosticoId={TipoDiagnosticoId}", id, dto.TipoDiagnosticoId);
+            _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
 
 
             var payload = new
 
             {
 
-                citaId = dto.CitaId,
+                nombre = dto.Nombre.Trim(),
 
-                tipoDiagnosticoId = dto.TipoDiagnosticoId,
+                codigoCie10 = string.IsNullOrWhiteSpace(dto.CodigoCie10) ? null : dto.CodigoCie10.Trim(),
 
-                descripcion = dto.Descripcion
+                tipoDiagnosticoId = dto.TipoDiagnosticoId
 
             };
 

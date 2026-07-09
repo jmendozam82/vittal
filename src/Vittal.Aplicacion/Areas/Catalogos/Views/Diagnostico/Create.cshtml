@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Nuevo Diagn髎tico";
+    ViewData["Title"] = "Nuevo Diagn贸stico";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Diagnostico'>Diagn髎ticos</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Diagnostico'>Diagn贸sticos</a></li>" +
 
-                             "<li class='breadcrumb-item active'>Nuevo Diagn髎tico</li>";
+                             "<li class='breadcrumb-item active'>Nuevo Diagn贸stico</li>";
 
 }
 
@@ -18,7 +18,7 @@
 
         <h5 class="mb-0">
 
-            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nuevo Diagn髎tico
+            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nuevo Diagn贸stico
 
         </h5>
 
@@ -28,11 +28,11 @@
 
         <form id="formDiagnostico" novalidate>
 
-            <!-- Datos del diagn髎tico -->
+            <!-- Datos del diagn贸stico -->
 
             <h6 class="text-primary border-bottom pb-2 mb-3">
 
-                <i class="bi bi-info-circle me-2"></i>Datos del Diagn髎tico
+                <i class="bi bi-info-circle me-2"></i>Informaci贸n del Diagn贸stico
 
             </h6>
 
@@ -42,45 +42,39 @@
 
                 <div class="col-md-6">
 
-                    <label for="citaId" class="form-label fw-semibold">Cita <span class="text-danger">*</span></label>
+                    <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
 
-                    <input type="text" class="form-control" id="citaId" name="citaId"
+                    <input type="text" class="form-control" id="nombre" name="nombre"
 
-                           required placeholder="ID de la cita (UUID)">
+                           required maxlength="255" placeholder="Ingrese el nombre del diagn贸stico">
 
-                    <div class="invalid-feedback">El ID de la cita es obligatorio.</div>
-
-                    <div class="form-text">Ingrese el UUID de la cita a la que pertenece este diagn髎tico.</div>
+                    <div class="invalid-feedback">El nombre del diagn贸stico es obligatorio.</div>
 
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-3">
 
-                    <label for="tipoDiagnosticoId" class="form-label fw-semibold">Tipo de Diagn髎tico <span class="text-danger">*</span></label>
+                    <label for="codigoCie10" class="form-label fw-semibold">C贸digo CIE-10</label>
+
+                    <input type="text" class="form-control" id="codigoCie10" name="codigoCie10"
+
+                           maxlength="20" placeholder="Ej: H52.1">
+
+                    <div class="form-text">Opcional. C贸digo de Clasificaci贸n Internacional de Enfermedades.</div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label for="tipoDiagnosticoId" class="form-label fw-semibold">Tipo de Diagn贸stico <span class="text-danger">*</span></label>
 
                     <select class="form-select" id="tipoDiagnosticoId" name="tipoDiagnosticoId" required>
 
-                        <option value="">-- Seleccione un tipo de diagn髎tico --</option>
+                        <option value="">-- Seleccione un tipo de diagn贸stico --</option>
 
                     </select>
 
-                    <div class="invalid-feedback">Debe seleccionar un tipo de diagn髎tico.</div>
-
-                </div>
-
-            </div>
-
-
-
-            <div class="row g-3 mb-3">
-
-                <div class="col-md-12">
-
-                    <label for="descripcion" class="form-label fw-semibold">Descripci髇</label>
-
-                    <textarea class="form-control" id="descripcion" name="descripcion"
-
-                              rows="3" placeholder="Descripci髇 detallada del diagn髎tico (opcional)"></textarea>
+                    <div class="invalid-feedback">Debe seleccionar un tipo de diagn贸stico.</div>
 
                 </div>
 
@@ -100,7 +94,7 @@
 
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
 
-                    <i class="bi bi-floppy me-1"></i> Guardar Diagn髎tico
+                    <i class="bi bi-floppy me-1"></i> Guardar Diagn贸stico
 
                 </button>
 
@@ -118,7 +112,7 @@
 
 <script>
 
-    // Cargar tipos de diagn髎tico al iniciar
+    // Cargar tipos de diagn贸stico al iniciar
 
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -142,7 +136,7 @@
 
             if (!res.ok) {
 
-                console.error('Error al cargar tipos de diagn髎tico');
+                console.error('Error al cargar tipos de diagn贸stico');
 
                 return;
 
@@ -174,7 +168,7 @@
 
         } catch (err) {
 
-            console.error('Error al cargar tipos de diagn髎tico:', err);
+            console.error('Error al cargar tipos de diagn贸stico:', err);
 
         }
 
@@ -190,7 +184,7 @@
 
 
 
-        // Validaci髇 del lado cliente
+        // Validaci贸n del lado cliente
 
         const form = this;
 
@@ -216,11 +210,11 @@
 
         const data = {
 
-            citaId: document.getElementById('citaId').value.trim(),
+            nombre: document.getElementById('nombre').value.trim(),
 
-            tipoDiagnosticoId: document.getElementById('tipoDiagnosticoId').value,
+            codigoCie10: document.getElementById('codigoCie10').value.trim() || null,
 
-            descripcion: document.getElementById('descripcion').value.trim() || null
+            tipoDiagnosticoId: document.getElementById('tipoDiagnosticoId').value
 
         };
 
@@ -246,7 +240,7 @@
 
             if (res.ok && json.success) {
 
-                showToast('success', json.message || 'Diagn髎tico creado exitosamente.');
+                showToast('success', json.message || 'Diagn贸stico creado exitosamente.');
 
                 setTimeout(() => {
 
@@ -256,7 +250,7 @@
 
             } else {
 
-                showToast('danger', json.message || 'Error al crear el diagn髎tico.');
+                showToast('danger', json.message || 'Error al crear el diagn贸stico.');
 
                 btn.disabled = false;
 
@@ -266,7 +260,7 @@
 
         } catch (err) {
 
-            showToast('danger', 'Error de conexi髇 al guardar.');
+            showToast('danger', 'Error de conexi贸n al guardar.');
 
             btn.disabled = false;
 

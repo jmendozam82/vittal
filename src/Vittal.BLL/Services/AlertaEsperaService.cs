@@ -133,7 +133,7 @@ public class AlertaEsperaService : IAlertaEsperaService
                 c.Estado == "en_espera" && c.Activo);
 
             var alertasGeneradas = 0;
-            var horaActual = DateTime.UtcNow.TimeOfDay;
+            var horaActual = TimeOnly.FromDateTime(DateTime.UtcNow);
 
             foreach (var cita in citasEnEspera)
             {
@@ -207,7 +207,7 @@ public class AlertaEsperaService : IAlertaEsperaService
     /// <summary>
     /// Calcula los minutos de espera desde la hora de cita hasta ahora.
     /// </summary>
-    private static int CalcularMinutosDeEspera(TimeSpan horaCita, TimeSpan horaActual)
+    private static int CalcularMinutosDeEspera(TimeOnly horaCita, TimeOnly horaActual)
     {
         // Si la cita es a las 10:00 y son las 10:35 → 35 minutos de espera
         var diff = horaActual - horaCita;

@@ -52,7 +52,7 @@
 
                            class="form-control"
 
-                           placeholder="Buscar por tipo de diagnóstico o descripción..."
+                           placeholder="Buscar por nombre, código CIE-10 o tipo de diagnóstico..."
 
                            autocomplete="off" />
 
@@ -516,9 +516,11 @@
 
         const filas = items.map(d => {
 
-            const tipoDiagnostico = d.tipoDiagnosticoNombre || '—';
+            const nombre = d.nombre || '—';
 
-            const descripcion = d.descripcion || '—';
+            const codigoCie10 = d.codigoCie10 || '—';
+
+            const tipoDiagnostico = d.tipoDiagnosticoNombre || '—';
 
             const estadoBadge = d.activo
 
@@ -534,9 +536,11 @@
 
             <tr class="${rowClass}">
 
-                <td><strong>${escapeHtml(tipoDiagnostico)}</strong></td>
+                <td><strong>${escapeHtml(nombre)}</strong></td>
 
-                <td class="text-muted">${escapeHtml(descripcion)}</td>
+                <td class="text-muted">${escapeHtml(codigoCie10)}</td>
+
+                <td class="text-muted">${escapeHtml(tipoDiagnostico)}</td>
 
                 <td class="text-center">${estadoBadge}</td>
 
@@ -554,7 +558,7 @@
 
                     <button class="btn btn-outline-warning btn-sm"
 
-                            onclick="confirmarDesactivar('${d.id}', '${escapeHtml(tipoDiagnostico)}')"
+                            onclick="confirmarDesactivar('${d.id}', '${escapeHtml(nombre)}')"
 
                             title="Desactivar">
 
@@ -564,7 +568,7 @@
 
                     <button class="btn btn-outline-success btn-sm"
 
-                            onclick="confirmarReactivar('${d.id}', '${escapeHtml(tipoDiagnostico)}')"
+                            onclick="confirmarReactivar('${d.id}', '${escapeHtml(nombre)}')"
 
                             title="Reactivar">
 
@@ -589,9 +593,11 @@
 
                         <tr>
 
-                            <th>Tipo de Diagnóstico</th>
+                            <th>Nombre</th>
 
-                            <th>Descripción</th>
+                            <th>Código CIE-10</th>
+
+                            <th>Tipo de Diagnóstico</th>
 
                             <th class="text-center">Estado</th>
 

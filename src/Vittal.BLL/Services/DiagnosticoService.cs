@@ -11,8 +11,7 @@ using Vittal.Utility.Results;
 namespace Vittal.BLL.Services;
 
 /// <summary>
-/// Servicio de diagnósticos asignados a citas médicas.
-/// Cada diagnóstico relaciona una cita con un tipo de diagnóstico.
+/// Servicio de catálogo de diagnósticos.
 /// Historia de Usuario: HU14 — Gestión de Diagnósticos
 /// </summary>
 public class DiagnosticoService : IDiagnosticoService
@@ -82,36 +81,51 @@ public class DiagnosticoService : IDiagnosticoService
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 3. CreateAsync — Crea un nuevo diagnóstico en una cita
+    // 3. CreateAsync — Crea un nuevo diagnóstico en el catálogo
     // ────────────────────────────────────────────────────────────────────────
     public async Task<ServiceResult<DiagnosticoResponseDto>> CreateAsync(
         DiagnosticoRequestDto dto, Guid clinicaId, Guid creadoPor)
     {
         try
         {
-            _logger.LogInformation("Creando diagnóstico (cita {CitaId}, tipo {TipoDiagId}) en clínica {ClinicaId}",
-                dto.CitaId, dto.TipoDiagnosticoId, clinicaId);
+            _logger.LogInformation("Creando diagnóstico '{Nombre}' en clínica {ClinicaId}",
+                dto.Nombre, clinicaId);
 
-            // Validate uniqueness of (cita, tipo_diagnostico) per clínica
-            if (await _repo.ExistsByDiagnosticoAsync(clinicaId, dto.CitaId, dto.TipoDiagnosticoId))
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.Nombre) || dto.Nombre.Trim().Length < 2)
             {
                 return ServiceResult<DiagnosticoResponseDto>.Failure(
-                    "Ya existe un diagnóstico de ese tipo asignado a esta cita.",
+                    "El nombre del diagnóstico debe tener al menos 2 caracteres.",
+                    ServiceErrorType.Validation);
+            }
+
+            if (dto.TipoDiagnosticoId == Guid.Empty)
+            {
+                return ServiceResult<DiagnosticoResponseDto>.Failure(
+                    "Debe seleccionar un tipo de diagnóstico.",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate uniqueness of name per clinic
+            if (await _repo.ExistsByNombreAsync(clinicaId, dto.Nombre.Trim()))
+            {
+                return ServiceResult<DiagnosticoResponseDto>.Failure(
+                    "Ya existe un diagnóstico con ese nombre en su clínica.",
                     ServiceErrorType.Conflict);
             }
 
             var entity = new Diagnostico
             {
                 ClinicaId = clinicaId,
-                CitaId = dto.CitaId,
+                Nombre = dto.Nombre.Trim(),
+                CodigoCie10 = dto.CodigoCie10?.Trim(),
                 TipoDiagnosticoId = dto.TipoDiagnosticoId,
-                Descripcion = dto.Descripcion,
                 CreadoPor = creadoPor,
                 Activo = true
             };
 
             var newId = await _repo.CreateAsync(entity);
-            _logger.LogInformation("Diagnóstico creado con ID: {NewId}", newId);
+            _logger.LogInformation("Diagnóstico '{Nombre}' creado con ID: {NewId}", dto.Nombre, newId);
 
             // Fetch created entity to return full DTO (with JOIN data)
             var created = await _repo.GetByIdAsync(newId, clinicaId);
@@ -149,18 +163,33 @@ public class DiagnosticoService : IDiagnosticoService
                     "Diagnóstico no encontrado", ServiceErrorType.NotFound);
             }
 
-            // Validate uniqueness (exclude current)
-            if (await _repo.ExistsByDiagnosticoAsync(clinicaId, dto.CitaId, dto.TipoDiagnosticoId, id))
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.Nombre) || dto.Nombre.Trim().Length < 2)
             {
                 return ServiceResult<DiagnosticoResponseDto>.Failure(
-                    "Ya existe otro diagnóstico de ese tipo asignado a esta cita.",
+                    "El nombre del diagnóstico debe tener al menos 2 caracteres.",
+                    ServiceErrorType.Validation);
+            }
+
+            if (dto.TipoDiagnosticoId == Guid.Empty)
+            {
+                return ServiceResult<DiagnosticoResponseDto>.Failure(
+                    "Debe seleccionar un tipo de diagnóstico.",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate uniqueness (exclude current)
+            if (await _repo.ExistsByNombreAsync(clinicaId, dto.Nombre.Trim(), id))
+            {
+                return ServiceResult<DiagnosticoResponseDto>.Failure(
+                    "Ya existe otro diagnóstico con ese nombre en su clínica.",
                     ServiceErrorType.Conflict);
             }
 
             // Update entity fields
-            existing.CitaId = dto.CitaId;
+            existing.Nombre = dto.Nombre.Trim();
+            existing.CodigoCie10 = dto.CodigoCie10?.Trim();
             existing.TipoDiagnosticoId = dto.TipoDiagnosticoId;
-            existing.Descripcion = dto.Descripcion;
             existing.ModificadoPor = modificadoPor;
             existing.FechaModificacion = DateTime.UtcNow;
 
@@ -282,22 +311,14 @@ public class DiagnosticoService : IDiagnosticoService
                     new List<DiagnosticoResponseDto>(), "Ingrese al menos 2 caracteres para buscar.");
             }
 
-            var entities = await _repo.GetAllAsync(clinicaId);
-            var lowerTerm = term.ToLowerInvariant();
-
-            var filtered = new List<DiagnosticoResponseDto>();
+            var entities = await _repo.SearchAsync(clinicaId, term.Trim());
+            var dtos = new List<DiagnosticoResponseDto>();
             foreach (var entity in entities)
             {
-                var hasTipo = entity.TipoDiagnosticoNombre?.ToLowerInvariant().Contains(lowerTerm) ?? false;
-                var hasDesc = entity.Descripcion?.ToLowerInvariant().Contains(lowerTerm) ?? false;
-
-                if (hasTipo || hasDesc)
-                {
-                    filtered.Add(MapToDto(entity));
-                }
+                dtos.Add(MapToDto(entity));
             }
 
-            return ServiceResult<IEnumerable<DiagnosticoResponseDto>>.Success(filtered);
+            return ServiceResult<IEnumerable<DiagnosticoResponseDto>>.Success(dtos);
         }
         catch (Exception ex)
         {
@@ -315,10 +336,10 @@ public class DiagnosticoService : IDiagnosticoService
         {
             Id = d.Id,
             ClinicaId = d.ClinicaId,
-            CitaId = d.CitaId,
+            Nombre = d.Nombre,
+            CodigoCie10 = d.CodigoCie10,
             TipoDiagnosticoId = d.TipoDiagnosticoId,
             TipoDiagnosticoNombre = d.TipoDiagnosticoNombre,
-            Descripcion = d.Descripcion,
             Activo = d.Activo,
             FechaCreacion = d.FechaCreacion,
             FechaModificacion = d.FechaModificacion

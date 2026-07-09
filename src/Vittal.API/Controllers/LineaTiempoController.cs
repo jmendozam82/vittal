@@ -32,7 +32,7 @@ public class LineaTiempoController : ControllerBase
     /// <summary>Obtiene la línea de tiempo completa de una cita, ordenada por orden del paso.</summary>
     /// <param name="citaId">ID de la cita.</param>
     [HttpGet("cita/{citaId:guid}")]
-    [RequirePermission("citas", PermissionType.Read)]
+    [RequirePermission("linea_tiempo", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<List<LineaTiempoResponseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTimelineByCita(Guid citaId)
@@ -46,7 +46,7 @@ public class LineaTiempoController : ControllerBase
     /// <param name="fecha">Fecha a consultar (por defecto: hoy UTC).</param>
     /// <param name="doctorId">Opcional: ID del doctor para filtrar.</param>
     [HttpGet("dia")]
-    [RequirePermission("citas", PermissionType.Read)]
+    [RequirePermission("linea_tiempo", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<List<LineaTiempoResponseDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTimelineDelDia([FromQuery] DateTime? fecha, [FromQuery] Guid? doctorId)
     {
@@ -59,7 +59,7 @@ public class LineaTiempoController : ControllerBase
     /// <summary>Inicia un paso de la línea de tiempo (cambia estado a "en_sala").</summary>
     /// <param name="pasoId">ID del paso a iniciar.</param>
     [HttpPost("{pasoId:guid}/iniciar")]
-    [RequirePermission("citas", PermissionType.Update)]
+    [RequirePermission("linea_tiempo", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<LineaTiempoResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -75,7 +75,7 @@ public class LineaTiempoController : ControllerBase
     /// <summary>Finaliza un paso de la línea de tiempo (cambia estado a "completado").</summary>
     /// <param name="pasoId">ID del paso a finalizar.</param>
     [HttpPost("{pasoId:guid}/finalizar")]
-    [RequirePermission("citas", PermissionType.Update)]
+    [RequirePermission("linea_tiempo", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<LineaTiempoResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -91,7 +91,7 @@ public class LineaTiempoController : ControllerBase
     /// <summary>Salta un paso de la línea de tiempo (cambia estado a "saltado").</summary>
     /// <param name="pasoId">ID del paso a saltar.</param>
     [HttpPost("{pasoId:guid}/saltar")]
-    [RequirePermission("citas", PermissionType.Update)]
+    [RequirePermission("linea_tiempo", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

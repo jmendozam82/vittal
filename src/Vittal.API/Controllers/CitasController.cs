@@ -31,7 +31,7 @@ public class CitasController : ControllerBase
 
     /// <summary>Obtiene todas las citas activas de la clínica.</summary>
     [HttpGet]
-    [RequirePermission("citas", PermissionType.Read)]
+    [RequirePermission("agenda", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<CitaResponseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll()
@@ -43,7 +43,7 @@ public class CitasController : ControllerBase
 
     /// <summary>Obtiene una cita por su ID.</summary>
     [HttpGet("{id:guid}")]
-    [RequirePermission("citas", PermissionType.Read)]
+    [RequirePermission("agenda", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<CitaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -55,7 +55,7 @@ public class CitasController : ControllerBase
 
     /// <summary>Crea una nueva cita médica.</summary>
     [HttpPost]
-    [RequirePermission("citas", PermissionType.Create)]
+    [RequirePermission("agenda", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<CitaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CitaRequestDto dto)
@@ -81,7 +81,7 @@ public class CitasController : ControllerBase
 
     /// <summary>Actualiza los datos de una cita existente.</summary>
     [HttpPut("{id:guid}")]
-    [RequirePermission("citas", PermissionType.Update)]
+    [RequirePermission("agenda", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<CitaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -96,7 +96,7 @@ public class CitasController : ControllerBase
     /// Desactiva una cita (activo = false). NUNCA elimina.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("citas", PermissionType.Update)]
+    [RequirePermission("agenda", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Desactivar(Guid id)

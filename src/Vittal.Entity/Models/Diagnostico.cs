@@ -1,7 +1,7 @@
 namespace Vittal.Entity.Models;
 
 /// <summary>
-/// Diagnósticos asignados a una cita médica, clasificados por tipo de diagnóstico.
+/// Catálogo de diagnósticos por clínica, clasificados por tipo de diagnóstico.
 /// Tabla: public.diagnosticos
 /// Historia de Usuario: HU14 — Gestión de Diagnósticos
 /// </summary>
@@ -10,11 +10,11 @@ public class Diagnostico
     // ── Campos primarios ──────────────────────────────────────────
     public Guid Id { get; set; }
     public Guid ClinicaId { get; set; }
-    public Guid CitaId { get; set; }
-    public Guid TipoDiagnosticoId { get; set; }
 
     // ── Datos del diagnóstico ─────────────────────────────────────
-    public string? Descripcion { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string? CodigoCie10 { get; set; }
+    public Guid TipoDiagnosticoId { get; set; }
 
     // ── Campos de estado y auditoría ──────────────────────────────
     public bool Activo { get; set; } = true;

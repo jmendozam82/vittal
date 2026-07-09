@@ -18,19 +18,19 @@ public class Cita
 
     // ── Campos de fecha y hora ────────────────────────────────────
     /// <summary>Fecha de la cita (DATE en BD).</summary>
-    public DateTime FechaCita { get; set; }
+    public DateOnly FechaCita { get; set; }
 
     /// <summary>Hora de inicio de la cita (TIME en BD).</summary>
-    public TimeSpan HoraCita { get; set; }
+    public TimeOnly HoraCita { get; set; }
 
     /// <summary>Hora de fin estimada de la cita (TIME nullable). HU-E01.</summary>
-    public TimeSpan? HoraFin { get; set; }
+    public TimeOnly? HoraFin { get; set; }
 
     /// <summary>Hora en que el paciente llegó a la clínica.</summary>
-    public TimeSpan? HoraLlegada { get; set; }
+    public TimeOnly? HoraLlegada { get; set; }
 
     /// <summary>Hora en que finalizó la atención médica (TIME nullable).</summary>
-    public TimeSpan? HoraFinAtencion { get; set; }
+    public TimeOnly? HoraFinAtencion { get; set; }
 
     /// <summary>ID del paso activo actual en la línea de tiempo (nullable).</summary>
     public Guid? LineaTiempoActivoId { get; set; }

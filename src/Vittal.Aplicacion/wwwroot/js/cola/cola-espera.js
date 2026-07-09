@@ -5,7 +5,7 @@
    Historia de Usuario: HU18 — Cola de Espera
    ─────────────────────────────────────────────────────────────── */
 
-const vittalColaEspera = (function() {
+window.vittalColaEspera = (function() {
 
     // ── Estado global ─────────────────────────────────────────
     let config = {};

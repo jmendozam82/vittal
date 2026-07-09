@@ -173,9 +173,9 @@ public class ColaEsperaController : Controller
 
         var payload = new
         {
-            pacienteId = GetValue<Guid>(dict, "pacienteId"),
-            doctorId = GetValue<Guid>(dict, "doctorId"),
-            salaId = GetValue<Guid?>(dict, "salaId"),
+            pacienteId = GetGuidValue(dict, "pacienteId"),
+            doctorId = GetGuidValue(dict, "doctorId"),
+            salaId = GetNullableGuidValue(dict, "salaId"),
             fechaCita = dict.TryGetValue("fechaCita", out var fc) && fc is string fcStr ? fcStr[..10] : null,
             horaCita = dict.TryGetValue("horaCita", out var hc) && hc is string hcStr ? hcStr : null,
             horaFin = dict.TryGetValue("horaFin", out var hf) && hf is string hfStr ? hfStr : null,
@@ -218,9 +218,9 @@ public class ColaEsperaController : Controller
 
         var payload = new
         {
-            pacienteId = GetValue<Guid>(dict, "pacienteId"),
-            doctorId = GetValue<Guid>(dict, "doctorId"),
-            salaId = GetValue<Guid?>(dict, "salaId"),
+            pacienteId = GetGuidValue(dict, "pacienteId"),
+            doctorId = GetGuidValue(dict, "doctorId"),
+            salaId = GetNullableGuidValue(dict, "salaId"),
             fechaCita = dict.TryGetValue("fechaCita", out var fc) && fc is string fcStr ? fcStr[..10] : null,
             horaCita = dict.TryGetValue("horaCita", out var hc) && hc is string hcStr ? hcStr : null,
             horaFin = dict.TryGetValue("horaFin", out var hf) && hf is string hfStr ? hfStr : null,
@@ -263,9 +263,9 @@ public class ColaEsperaController : Controller
 
         var payload = new
         {
-            pacienteId = GetValue<Guid>(dict, "pacienteId"),
-            doctorId = GetValue<Guid>(dict, "doctorId"),
-            salaId = GetValue<Guid?>(dict, "salaId"),
+            pacienteId = GetGuidValue(dict, "pacienteId"),
+            doctorId = GetGuidValue(dict, "doctorId"),
+            salaId = GetNullableGuidValue(dict, "salaId"),
             fechaCita = dict.TryGetValue("fechaCita", out var fc) && fc is string fcStr ? fcStr[..10] : null,
             horaCita = dict.TryGetValue("horaCita", out var hc) && hc is string hcStr ? hcStr : null,
             horaFin = dict.TryGetValue("horaFin", out var hf) && hf is string hfStr ? hfStr : null,
@@ -308,9 +308,9 @@ public class ColaEsperaController : Controller
 
         var payload = new
         {
-            pacienteId = GetValue<Guid>(dict, "pacienteId"),
-            doctorId = GetValue<Guid>(dict, "doctorId"),
-            salaId = GetValue<Guid?>(dict, "salaId"),
+            pacienteId = GetGuidValue(dict, "pacienteId"),
+            doctorId = GetGuidValue(dict, "doctorId"),
+            salaId = GetNullableGuidValue(dict, "salaId"),
             fechaCita = dict.TryGetValue("fechaCita", out var fc) && fc is string fcStr ? fcStr[..10] : null,
             horaCita = dict.TryGetValue("horaCita", out var hc) && hc is string hcStr ? hcStr : null,
             horaFin = dict.TryGetValue("horaFin", out var hf) && hf is string hfStr ? hfStr : null,
@@ -329,6 +329,23 @@ public class ColaEsperaController : Controller
         }
 
         return Ok(new { success = true, message = "Cita cancelada" });
+    }
+
+    // ── Helper para extraer GUIDs desde diccionarios JSON ─────────
+    // Los valores JSON se deserializan como strings, NO como Guid.
+    // GetValue<Guid> falla (return Guid.Empty). Este helper parsea correctamente.
+    private static Guid GetGuidValue(Dictionary<string, object?>? dict, string key)
+    {
+        if (dict != null && dict.TryGetValue(key, out var val) && val is string strVal && Guid.TryParse(strVal, out var guid))
+            return guid;
+        return Guid.Empty;
+    }
+
+    private static Guid? GetNullableGuidValue(Dictionary<string, object?>? dict, string key)
+    {
+        if (dict != null && dict.TryGetValue(key, out var val) && val is string strVal && Guid.TryParse(strVal, out var guid))
+            return guid;
+        return null;
     }
 
     // ──────────────────────────────────────────────────────────────

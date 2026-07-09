@@ -62,16 +62,133 @@ public class NullableDateOnlyTypeHandler : SqlMapper.TypeHandler<DateOnly?>
     }
 }
 
+/// <summary>
+/// TypeHandler para que Dapper pueda serializar/deserializar TimeOnly correctamente
+/// a través de Npgsql (PostgreSQL TIME → C# TimeOnly).
+/// </summary>
+public class TimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly>
+{
+    public override TimeOnly Parse(object value)
+    {
+        return value switch
+        {
+            TimeOnly t => t,
+            TimeSpan ts => TimeOnly.FromTimeSpan(ts),
+            string s => TimeOnly.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to TimeOnly")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, TimeOnly value)
+    {
+        parameter.Value = value.ToTimeSpan();
+        parameter.DbType = DbType.Time;
+    }
+}
+
+/// <summary>
+/// TypeHandler para TimeOnly? (nullable).
+/// </summary>
+public class NullableTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly?>
+{
+    public override TimeOnly? Parse(object value)
+    {
+        if (value is null or DBNull) return null;
+        return value switch
+        {
+            TimeOnly t => t,
+            TimeSpan ts => TimeOnly.FromTimeSpan(ts),
+            string s => TimeOnly.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to TimeOnly?")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, TimeOnly? value)
+    {
+        if (value.HasValue)
+        {
+            parameter.Value = value.Value.ToTimeSpan();
+            parameter.DbType = DbType.Time;
+        }
+        else
+        {
+            parameter.Value = DBNull.Value;
+        }
+    }
+}
+
+/// <summary>
+/// TypeHandler para que Dapper pueda deserializar TimeSpan desde TimeOnly.
+/// Npgsql 8+ retorna TimeOnly para columnas TIME en PostgreSQL.
+/// Las entidades Vittal usan TimeSpan para estos campos, por lo que
+/// este handler convierte TimeOnly → TimeSpan automáticamente.
+/// </summary>
+public class TimeSpanTypeHandler : SqlMapper.TypeHandler<TimeSpan>
+{
+    public override TimeSpan Parse(object value)
+    {
+        return value switch
+        {
+            TimeSpan ts => ts,
+            TimeOnly to => to.ToTimeSpan(),
+            string s => TimeSpan.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to TimeSpan")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, TimeSpan value)
+    {
+        parameter.Value = value;
+        parameter.DbType = DbType.Time;
+    }
+}
+
+/// <summary>
+/// TypeHandler para TimeSpan? (nullable) — también acepta TimeOnly de Npgsql.
+/// </summary>
+public class NullableTimeSpanTypeHandler : SqlMapper.TypeHandler<TimeSpan?>
+{
+    public override TimeSpan? Parse(object value)
+    {
+        if (value is null or DBNull) return null;
+        return value switch
+        {
+            TimeSpan ts => ts,
+            TimeOnly to => to.ToTimeSpan(),
+            string s => TimeSpan.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to TimeSpan?")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, TimeSpan? value)
+    {
+        if (value.HasValue)
+        {
+            parameter.Value = value.Value;
+            parameter.DbType = DbType.Time;
+        }
+        else
+        {
+            parameter.Value = DBNull.Value;
+        }
+    }
+}
+
 public class DbConnectionFactory
 {
     /// <summary>
-    /// Inicializador estático: registra los TypeHandlers de Dapper para DateOnly.
+    /// Inicializador estático: registra los TypeHandlers de Dapper para DateOnly, TimeOnly y TimeSpan.
+    /// Npgsql 8+ retorna TimeOnly para TIME; los handlers de TimeSpan convierten TimeOnly → TimeSpan.
     /// Se ejecuta una sola vez al cargar el tipo.
     /// </summary>
     static DbConnectionFactory()
     {
         SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new NullableDateOnlyTypeHandler());
+        SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
+        SqlMapper.AddTypeHandler(new NullableTimeOnlyTypeHandler());
+        SqlMapper.AddTypeHandler(new TimeSpanTypeHandler());
+        SqlMapper.AddTypeHandler(new NullableTimeSpanTypeHandler());
     }
 
     private readonly IConfiguration _configuration;

@@ -21,19 +21,19 @@ public class CitaRequestDto
     /// <summary>Sala donde se realiza la cita (opcional).</summary>
     public Guid? SalaId { get; set; }
 
-    /// <summary>Fecha de la cita (obligatorio).</summary>
+    /// <summary>Fecha de la cita (obligatorio). Formato ISO 8601: yyyy-MM-dd.</summary>
     [Required(ErrorMessage = "La fecha de la cita es obligatoria.")]
-    public DateTime FechaCita { get; set; }
+    public DateOnly FechaCita { get; set; }
 
-    /// <summary>Hora de inicio de la cita (obligatorio).</summary>
+    /// <summary>Hora de inicio de la cita (obligatorio). Formato HH:mm:ss.</summary>
     [Required(ErrorMessage = "La hora de la cita es obligatoria.")]
-    public TimeSpan HoraCita { get; set; }
+    public TimeOnly HoraCita { get; set; }
 
     /// <summary>Hora de fin estimada de la cita (opcional).</summary>
-    public TimeSpan? HoraFin { get; set; }
+    public TimeOnly? HoraFin { get; set; }
 
     /// <summary>Hora de llegada del paciente (opcional).</summary>
-    public TimeSpan? HoraLlegada { get; set; }
+    public TimeOnly? HoraLlegada { get; set; }
 
     /// <summary>Lugar o sala física de atención.</summary>
     [StringLength(200, ErrorMessage = "El lugar no puede exceder 200 caracteres.")]
