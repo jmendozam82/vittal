@@ -101,4 +101,19 @@ public class LineaTiempoController : ControllerBase
         var result = await _service.SaltarPasoAsync(clinicaId, pasoId);
         return result.ToActionResult();
     }
+
+    /// <summary>
+    /// Fuerza la verificación de una cita: si todos los pasos están finalizados, la marca como "atendida".
+    /// Endpoint de reparación para citas atascadas.
+    /// </summary>
+    /// <param name="citaId">ID de la cita a verificar/completar.</param>
+    [HttpPost("{citaId:guid}/forzar-completar")]
+    [RequirePermission("linea_tiempo", PermissionType.Update)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForzarCompletarCita(Guid citaId)
+    {
+        var clinicaId = User.GetClinicaId();
+        var result = await _service.ForzarCompletarCitaAsync(clinicaId, citaId);
+        return result.ToActionResult();
+    }
 }

@@ -30,4 +30,10 @@ public interface ILineaTiempoService
 
     /// <summary>Genera los pasos predeterminados de línea de tiempo para una cita basados en la sala/asignación.</summary>
     Task<ServiceResult<List<LineaTiempoResponseDto>>> GenerarPasosParaCitaAsync(Guid clinicaId, Guid citaId);
+
+    /// <summary>
+    /// Fuerza la verificación y completado de una cita (cambia estado a "atendida" si todos los pasos están finalizados).
+    /// Método de reparación para citas atascadas.
+    /// </summary>
+    Task<ServiceResult<bool>> ForzarCompletarCitaAsync(Guid clinicaId, Guid citaId);
 }

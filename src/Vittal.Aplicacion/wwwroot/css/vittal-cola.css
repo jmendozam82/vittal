@@ -518,6 +518,19 @@
   background: #E8DAEF;
 }
 
+.cola-btn-continuar {
+  background: #E0F7FA;
+  color: #00838F;
+  border-color: transparent;
+  text-decoration: none;
+}
+
+.cola-btn-continuar:hover {
+  background: #B2EBF2;
+  color: #006064;
+  text-decoration: none;
+}
+
 .cola-btn-cancelar {
   color: #95A5A6;
   border-color: transparent;

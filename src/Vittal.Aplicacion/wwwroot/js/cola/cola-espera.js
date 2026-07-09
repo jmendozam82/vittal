@@ -266,7 +266,7 @@ window.vittalColaEspera = (function() {
         var estadoBadgeClass = 'cola-badge-estado estado-' + estado;
 
         // Botones de acción según estado
-        var actionsHtml = buildActions(id, estado);
+        var actionsHtml = buildActions(id, estado, pacienteNombre);
 
         // Nombre del doctor (si no está en filtro individual)
         var doctorHtml = doctorNombre
@@ -299,8 +299,9 @@ window.vittalColaEspera = (function() {
             + '</div>';
     }
 
-    function buildActions(id, estado) {
+    function buildActions(id, estado, pacienteNombre) {
         var html = '';
+        var nombreEnc = encodeURIComponent(pacienteNombre || 'Paciente');
 
         switch (estado) {
             case 'agendada':
@@ -318,6 +319,8 @@ window.vittalColaEspera = (function() {
                 break;
 
             case 'en_atencion':
+                html += '<a href="/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(id) + '&paciente=' + nombreEnc + '" class="cola-btn-action cola-btn-continuar">'
+                    + '<i class="bi bi-arrow-right-circle"></i> Continuar</a>';
                 html += '<button class="cola-btn-action cola-btn-completar" onclick="vittalColaEspera.completar(\'' + id + '\')">'
                     + '<i class="bi bi-check-circle"></i> Completar</button>';
                 html += '<button class="cola-btn-action cola-btn-cancelar" onclick="vittalColaEspera.promptCancelar(\'' + id + '\')" title="Cancelar cita">'
@@ -386,7 +389,9 @@ window.vittalColaEspera = (function() {
 
             if (result.success) {
                 showToast('Atención iniciada: ' + nombre, 'info');
-                await loadCola();
+                // Redirigir a la Línea de Tiempo de este paciente
+                var pacienteParam = encodeURIComponent(nombre);
+                window.location.href = '/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(id) + '&paciente=' + pacienteParam;
             } else {
                 showToast(result.message || 'Error al iniciar atención', 'error');
             }

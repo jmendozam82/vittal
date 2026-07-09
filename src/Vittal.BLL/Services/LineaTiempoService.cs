@@ -149,6 +149,9 @@ public class LineaTiempoService : ILineaTiempoService
             paso.HoraSalida = horaActual;
             paso.FechaModificacion = DateTime.UtcNow;
 
+            // ── Verificar si todos los pasos están completados → marcar cita como atendida ──
+            await VerificarYCompletarCitaAsync(clinicaId, paso.CitaId);
+
             return ServiceResult<LineaTiempoResponseDto>.Success(MapToDto(paso), "Paso finalizado exitosamente.");
         }
         catch (Exception ex)
@@ -265,6 +268,55 @@ public class LineaTiempoService : ILineaTiempoService
         }
     }
 
+    /// <summary>
+    /// Verifica si todos los pasos de una cita están completados o saltados.
+    /// Si es así, cambia el estado de la cita a "atendida".
+    /// </summary>
+    private async Task VerificarYCompletarCitaAsync(Guid clinicaId, Guid citaId)
+    {
+        try
+        {
+            var pasosRestantes = await _repository.GetByCitaIdAsync(clinicaId, citaId);
+            if (pasosRestantes == null || !pasosRestantes.Any())
+                return;
+
+            // Todos los pasos deben estar en estado final (completado o saltado)
+            var todosFinalizados = pasosRestantes.All(p =>
+                p.Estado == "completado" || p.Estado == "saltado");
+
+            if (!todosFinalizados)
+            {
+                _logger.LogInformation("Cita {CitaId} aún tiene pasos pendientes. No se marca como atendida.", citaId);
+                return;
+            }
+
+            // Obtener la cita y actualizar su estado
+            var cita = await _citaRepository.GetByIdAsync(clinicaId, citaId);
+            if (cita == null)
+            {
+                _logger.LogWarning("Cita {CitaId} no encontrada al intentar marcarla como atendida.", citaId);
+                return;
+            }
+
+            if (cita.Estado == "atendida")
+            {
+                _logger.LogInformation("Cita {CitaId} ya estaba marcada como atendida.", citaId);
+                return;
+            }
+
+            cita.Estado = "atendida";
+            cita.FechaModificacion = DateTime.UtcNow;
+            await _citaRepository.UpdateAsync(cita);
+
+            _logger.LogInformation("Cita {CitaId} marcada como atendida automáticamente (todos los pasos completados).", citaId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al intentar marcar cita {CitaId} como atendida.", citaId);
+            // No propagamos la excepción para no interrumpir el flujo principal
+        }
+    }
+
     // ── Mapeo Entity → DTO ──────────────────────────────────────────────
 
     private static LineaTiempoResponseDto MapToDto(LineaTiempo entity)
@@ -288,22 +340,53 @@ public class LineaTiempoService : ILineaTiempoService
     }
 
     /// <summary>
-    /// Formatea la duración del paso. Si no ha finalizado, muestra "--:--:--".
+    /// Formatea la duración del paso.
+    /// - "completado" o "saltado" con horaSalida → duración exacta entre llegada y salida
+    /// - "en_sala" (activo) → duración desde la llegada hasta ahora (full current time)
+    /// - "pendiente" o sin horaLlegada → "--:--:--"
     /// </summary>
     private static string FormatearDuracion(TimeSpan? horaLlegada, TimeSpan? horaSalida, string estado)
     {
         if (horaLlegada == null)
             return "--:--:--";
 
-        if (horaSalida == null && estado != "completado")
-            return "--:--:--";
+        // Si hay hora de salida (completado o saltado), calcular duración exacta
+        if (horaSalida != null)
+        {
+            var duracion = horaSalida.Value - horaLlegada.Value;
+            if (duracion < TimeSpan.Zero) duracion = TimeSpan.Zero;
+            return duracion.ToString(@"hh\:mm\:ss");
+        }
 
-        var fin = horaSalida ?? DateTime.UtcNow.TimeOfDay;
-        var duracion = fin - horaLlegada.Value;
+        // Si está activo (en_sala) o completado, calcular duración hasta ahora
+        if (estado == "en_sala")
+        {
+            var ahora = DateTime.UtcNow.TimeOfDay;
+            var duracion = ahora - horaLlegada.Value;
+            if (duracion < TimeSpan.Zero) duracion = TimeSpan.Zero;
+            return duracion.ToString(@"hh\:mm\:ss");
+        }
 
-        if (duracion < TimeSpan.Zero)
-            duracion = TimeSpan.Zero;
+        // Pendiente, saltado sin horaSalida, u otro → sin duración
+        return "--:--:--";
+    }
 
-        return duracion.ToString(@"hh\:mm\:ss");
+    /// <summary>
+    /// Fuerza la verificación y completado de una cita. Revisa si todos los pasos están finalizados
+    /// y, de ser así, marca la cita como "atendida". Útil para reparar citas atascadas.
+    /// </summary>
+    public async Task<ServiceResult<bool>> ForzarCompletarCitaAsync(Guid clinicaId, Guid citaId)
+    {
+        try
+        {
+            _logger.LogInformation("Forzando verificación de cita {CitaId}", citaId);
+            await VerificarYCompletarCitaAsync(clinicaId, citaId);
+            return ServiceResult<bool>.Success(true, "Verificación completada.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al forzar completado de cita {CitaId}", citaId);
+            return ServiceResult<bool>.Failure($"Error al forzar completado: {ex.Message}");
+        }
     }
 }

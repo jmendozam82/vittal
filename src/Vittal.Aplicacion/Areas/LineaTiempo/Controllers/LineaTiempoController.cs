@@ -19,9 +19,11 @@ public class LineaTiempoController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public IActionResult Index(Guid? citaId, string? paciente)
     {
         ViewData["FechaHoy"] = DateTime.Now.ToString("yyyy-MM-dd");
+        ViewData["CitaId"] = citaId;
+        ViewData["PacienteNombre"] = paciente;
         return View();
     }
 

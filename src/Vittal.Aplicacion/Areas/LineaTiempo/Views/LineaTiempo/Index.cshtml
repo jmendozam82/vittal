@@ -1,7 +1,16 @@
 @{
     ViewData["Title"] = "Línea de Tiempo";
-    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
-                             "<li class='breadcrumb-item active'>Línea de Tiempo</li>";
+
+    var citaId = ViewBag.CitaId as Guid?;
+    var pacienteNombre = ViewBag.PacienteNombre as string;
+    var esModoCita = citaId.HasValue;
+
+    var breadcrumbInicio = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>";
+    var breadcrumbLink = esModoCita
+        ? "<li class='breadcrumb-item'><a href='/LineaTiempo/LineaTiempo'>Línea de Tiempo</a></li>" +
+          "<li class='breadcrumb-item active'>" + System.Web.HttpUtility.HtmlEncode(pacienteNombre ?? "Paciente") + "</li>"
+        : "<li class='breadcrumb-item active'>Línea de Tiempo</li>";
+    ViewData["Breadcrumb"] = breadcrumbInicio + breadcrumbLink;
 
     var fechaHoy = ViewBag.FechaHoy as string ?? DateTime.Now.ToString("yyyy-MM-dd");
 }
@@ -13,31 +22,54 @@
 <!-- ── Header ──────────────────────────────────────────────────── -->
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div>
-        <h4 class="mb-0 fw-bold">
-            <i class="bi bi-clock-history text-primary me-2"></i>Línea de Tiempo
-        </h4>
-        <small class="text-muted">
-            <i class="bi bi-calendar3 me-1"></i>
-            <span id="fechaDisplay">@fechaHoy</span>
-        </small>
+        @if (esModoCita)
+        {
+            <h4 class="mb-0 fw-bold text-primary">
+                <i class="bi bi-person-fill me-2"></i>@System.Web.HttpUtility.HtmlEncode(pacienteNombre ?? "Paciente")
+            </h4>
+            <div class="d-flex align-items-center gap-2 mt-1">
+                <span class="badge bg-info"><i class="bi bi-play-circle me-1"></i>En Atención</span>
+                <small class="text-muted">
+                    <i class="bi bi-calendar3 me-1"></i>@fechaHoy
+                </small>
+                <a href="/LineaTiempo/LineaTiempo" class="btn btn-outline-secondary btn-sm ms-2" title="Ver todas las líneas de tiempo">
+                    <i class="bi bi-list-ul me-1"></i>Vista General
+                </a>
+            </div>
+        }
+        else
+        {
+            <h4 class="mb-0 fw-bold">
+                <i class="bi bi-clock-history text-primary me-2"></i>Línea de Tiempo
+            </h4>
+            <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>
+                <span id="fechaDisplay">@fechaHoy</span>
+            </small>
+        }
     </div>
-    <div class="d-flex align-items-center gap-2">
+    @if (!esModoCita)
+    {
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0 small text-muted fw-medium">Doctor:</label>
-            <select id="filtroDoctorId" class="form-select form-select-sm" style="min-width:180px;">
-                <option value="">Todos los doctores</option>
-            </select>
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 small text-muted fw-medium">Doctor:</label>
+                <select id="filtroDoctorId" class="form-select form-select-sm" style="min-width:180px;">
+                    <option value="">Todos los doctores</option>
+                </select>
+            </div>
+            <input type="date" id="filtroFecha" class="form-control form-control-sm" style="max-width:160px;"
+                   value="@fechaHoy" />
+            <button class="btn btn-outline-primary btn-sm" id="btnRefrescar" title="Actualizar">
+                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+            </button>
         </div>
-        <input type="date" id="filtroFecha" class="form-control form-control-sm" style="max-width:160px;"
-               value="@fechaHoy" />
-        <button class="btn btn-outline-primary btn-sm" id="btnRefrescar" title="Actualizar">
-            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
-        </button>
-    </div>
+    }
 </div>
 
 <!-- ── Contenedor Principal ─────────────────────────────────────── -->
-<div id="timelineMainContainer">
+<div id="timelineMainContainer"
+     data-cita-id="@(citaId?.ToString() ?? "")"
+     data-modo-cita="@(esModoCita ? "true" : "false")">
     <div class="text-center py-5">
         <div class="vittal-spinner mx-auto"></div>
         <p class="text-muted small mt-2">Cargando línea de tiempo...</p>
@@ -45,5 +77,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/modules/linea-tiempo.js"></script>
+    <script src="~/js/modules/linea-tiempo.js" asp-append-version="true"></script>
 }

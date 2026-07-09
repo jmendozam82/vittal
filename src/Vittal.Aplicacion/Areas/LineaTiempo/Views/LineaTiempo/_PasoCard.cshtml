@@ -5,7 +5,7 @@
     - id (string/Guid)
     - nombrePaso (string)
     - orden (int/double)
-    - estado (string): completado | activo | pendiente | saltado
+    - estado (string): completado | en_sala | pendiente | saltado
     - horaLlegada (string|null)
     - horaSalida (string|null)
     - duracionFormateada (string)
@@ -26,18 +26,15 @@
     var pacienteNombre = Model?.GetValueOrDefault("pacienteNombre")?.ToString() ?? "";
     var salaNombre = Model?.GetValueOrDefault("salaNombre")?.ToString();
 
-    var estadoClass = estado switch
-    {
-        "completado" => "completado",
-        "activo" => "activo",
-        "saltado" => "saltado",
-        _ => "pendiente"
-    };
+    var estadoClass = estado == "completado" ? "completado"
+        : estado == "en_sala" || estado == "activo" ? "activo"
+        : estado == "saltado" ? "saltado"
+        : "pendiente";
 
     var icono = estado switch
     {
         "completado" => "bi-check-lg",
-        "activo" => "bi-arrow-right-circle",
+        "en_sala" or "activo" => "bi-arrow-right-circle",
         "saltado" => "bi-forward",
         _ => "bi-circle"
     };
@@ -45,7 +42,7 @@
     var badgeEstado = estado switch
     {
         "completado" => "badge-atendida",
-        "activo" => "badge-en-atencion",
+        "en_sala" or "activo" => "badge-en-atencion",
         "saltado" => "badge-en-espera",
         _ => "badge-cancelada"
     };
@@ -53,7 +50,7 @@
     var estadoTexto = estado switch
     {
         "completado" => "Completado",
-        "activo" => "En Progreso",
+        "en_sala" or "activo" => "En Progreso",
         "saltado" => "Saltado",
         _ => "Pendiente"
     };
@@ -63,7 +60,7 @@
     <div class="paso-circulo @estadoClass">
         @if (estado == "completado") {
             <i class="bi bi-check-lg" style="font-size:0.8rem;"></i>
-        } else if (estado == "activo") {
+        } else if (estado == "en_sala") {
             <i class="bi bi-play-fill" style="font-size:0.7rem;margin-left:1px;"></i>
         } else {
             @orden
@@ -74,7 +71,7 @@
             <i class="bi @icono text-muted"></i>
             <span class="paso-nombre">@nombrePaso</span>
             <span class="badge @badgeEstado ms-1">@estadoTexto</span>
-            <span class="paso-duracion @(estado == "activo" ? "vivo" : "")" id="duracion-@id">
+            <span class="paso-duracion @(estado == "en_sala" ? "vivo" : "")" id="duracion-@id">
                 <i class="bi bi-hourglass me-1"></i>@duracion
             </span>
         </div>
@@ -97,7 +94,7 @@
                 <button class="btn btn-outline-warning btn-sm btn-saltar-paso" data-paso-id="@id">
                     <i class="bi bi-forward me-1"></i>Saltar
                 </button>
-            } else if (estado == "activo") {
+            } else if (estado == "en_sala") {
                 <button class="btn btn-success btn-sm btn-finalizar-paso" data-paso-id="@id">
                     <i class="bi bi-check-lg me-1"></i>Finalizar
                 </button>

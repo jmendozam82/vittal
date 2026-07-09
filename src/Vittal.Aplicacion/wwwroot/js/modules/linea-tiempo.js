@@ -11,6 +11,7 @@
     'use strict';
 
     let activeTimerInterval = null;
+    let citaIdActual = null;  // Se setea cuando se carga por cita específica
 
     const DOM = {
         container: document.getElementById('timelineMainContainer'),
@@ -21,8 +22,17 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
-        cargarDoctores();
-        cargarTimeline();
+        // Detectar si estamos en modo cita específica (desde Cola → Atender)
+        var modoCita = DOM.container && DOM.container.dataset.modoCita === 'true';
+        var citaId = DOM.container && DOM.container.dataset.citaId;
+
+        if (modoCita && citaId) {
+            citaIdActual = citaId;
+            cargarTimelinePorCita(citaId);
+        } else {
+            cargarDoctores();
+            cargarTimeline();
+        }
 
         if (DOM.filtroDoctor) {
             DOM.filtroDoctor.addEventListener('change', cargarTimeline);
@@ -51,7 +61,7 @@
             if (json.success && json.data) {
                 json.data.forEach(function (d) {
                     var opt = document.createElement('option');
-                    opt.value = d.id || '';
+                    opt.value = d.usuarioId || '';
                     opt.textContent = (d.nombres || '') + ' ' + (d.apellidos || '');
                     DOM.filtroDoctor.appendChild(opt);
                 });
@@ -97,6 +107,34 @@
         }
     }
 
+    async function cargarTimelinePorCita(citaId) {
+        citaIdActual = citaId;
+        if (!DOM.container) return;
+
+        DOM.container.innerHTML =
+            '<div class="text-center py-5"><div class="vittal-spinner mx-auto"></div><p class="text-muted small mt-2">Cargando línea de tiempo del paciente...</p></div>';
+
+        try {
+            var res = await fetch('/LineaTiempo/LineaTiempo/JsonTimelineByCita?citaId=' + encodeURIComponent(citaId), {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            var json = await res.json();
+
+            if (!json.success) {
+                mostrarError(json.message || 'Error al cargar la línea de tiempo del paciente.');
+                return;
+            }
+
+            var pasos = json.data || [];
+            renderizarTimeline(pasos);
+
+        } catch (err) {
+            console.error('Error cargando timeline por cita:', err);
+            mostrarError('Error de conexión al cargar la línea de tiempo.');
+        }
+    }
+
     function renderizarTimeline(pasos) {
         if (pasos.length === 0) {
             DOM.container.innerHTML =
@@ -104,44 +142,118 @@
             return;
         }
 
-        var totalPasos = pasos.length;
-        var completados = pasos.filter(function (p) { return p.estado === 'completado'; }).length;
-        var progreso = totalPasos > 0 ? Math.round((completados / totalPasos) * 100) : 0;
+        // Detectar si es modo cita específica (los filtros NO existen en ese modo)
+        var esModoCita = DOM.container && DOM.container.dataset.modoCita === 'true';
 
         var html = '';
 
-        // Barra de progreso
-        html += '<div class="d-flex align-items-center gap-2 mb-3">';
-        html += '<small class="text-muted fw-medium">Progreso:</small>';
-        html += '<div class="timeline-progress flex-grow-1">';
-        html += '<div class="progress-bar" style="width:' + progreso + '%"></div>';
-        html += '</div>';
-        html += '<small class="fw-bold text-primary">' + progreso + '%</small>';
-        html += '</div>';
+        if (esModoCita) {
+            // ── MODO CITA ESPECÍFICA — mostrar progreso global ──────────
+            var totalPasos = pasos.length;
+            var completados = pasos.filter(function (p) { return p.estado === 'completado'; }).length;
+            var progreso = totalPasos > 0 ? Math.round((completados / totalPasos) * 100) : 0;
 
-        // Timeline
-        html += '<div class="timeline-vertical">';
+            html += '<div class="d-flex align-items-center gap-2 mb-3">';
+            html += '<small class="text-muted fw-medium">Progreso:</small>';
+            html += '<div class="timeline-progress flex-grow-1">';
+            html += '<div class="progress-bar" style="width:' + progreso + '%"></div>';
+            html += '</div>';
+            html += '<small class="fw-bold text-primary">' + progreso + '%</small>';
+            html += '</div>';
 
-        pasos.forEach(function (paso) {
-            html += renderPasoCard(paso);
-        });
+            // Timeline único (un solo paciente)
+            html += '<div class="timeline-vertical">';
+            pasos.forEach(function (paso) {
+                html += renderPasoCard(paso);
+            });
+            html += '</div>';
 
-        html += '</div>';
+            // Tiempo total
+            var duracionTotal = calcularDuracionTotal(pasos);
+            html += '<div class="timeline-total">';
+            html += '<div class="total-label">Tiempo Total</div>';
+            html += '<div class="total-value" id="tiempoTotal">' + duracionTotal + '</div>';
+            html += '</div>';
+        } else {
+            // ── MODO GENERAL — agrupar pasos por cita/paciente ─────────
+            var grupos = {};
+            pasos.forEach(function (paso) {
+                var key = paso.citaId || 'sin-cita';
+                if (!grupos[key]) {
+                    grupos[key] = {
+                        citaId: key,
+                        pacienteId: paso.pacienteId || '',
+                        pasos: []
+                    };
+                }
+                grupos[key].pasos.push(paso);
+            });
 
-        // Tiempo total
-        var duracionTotal = calcularDuracionTotal(pasos);
-        html += '<div class="timeline-total">';
-        html += '<div class="total-label">Tiempo Total</div>';
-        html += '<div class="total-value" id="tiempoTotal">' + duracionTotal + '</div>';
-        html += '</div>';
+            html += '<div class="small text-muted mb-2"><i class="bi bi-people me-1"></i>' + Object.keys(grupos).length + ' pacientes en atención</div>';
+
+            Object.keys(grupos).forEach(function (key) {
+                var grupo = grupos[key];
+                var pPasos = grupo.pasos;
+                var pCompletados = pPasos.filter(function (p) { return p.estado === 'completado'; }).length;
+                var pProgreso = pPasos.length > 0 ? Math.round((pCompletados / pPasos.length) * 100) : 0;
+
+                // Usar pacienteId como identificador (6 chars)
+                var pacienteLabel = grupo.pacienteId ? grupo.pacienteId.substring(0, 8) : 'Paciente';
+
+                html += '<div class="vittal-card mb-3">';
+                html += '<div class="card-header d-flex align-items-center justify-content-between p-2">';
+                html += '<div>';
+                html += '<i class="bi bi-person-circle text-primary me-2"></i>';
+                html += '<strong>Paciente #' + pacienteLabel + '</strong>';
+                html += '<span class="badge bg-light text-dark ms-2">' + pProgreso + '%</span>';
+                html += '</div>';
+                html += '<a href="/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(grupo.citaId) + '" class="btn btn-outline-primary btn-sm">';
+                html += '<i class="bi bi-eye me-1"></i>Ver</a>';
+                html += '</div>';
+
+                html += '<div class="p-2"><div class="timeline-vertical">';
+                pPasos.forEach(function (paso) {
+                    html += renderPasoResumen(paso);
+                });
+                html += '</div></div>';
+                html += '</div>';
+            });
+        }
 
         DOM.container.innerHTML = html;
 
         // Iniciar timer para pasos activos
-        iniciarTimerActivo(pasos);
+        if (esModoCita) {
+            iniciarTimerActivo(pasos);
+        } else {
+            // Activar timers por grupo
+            Object.keys(grupos).forEach(function (key) {
+                iniciarTimerActivo(grupos[key].pasos);
+            });
+        }
 
         // Binding de botones
         bindPasoButtons();
+    }
+
+    function renderPasoResumen(paso) {
+        var estado = paso.estado || 'pendiente';
+        var nombrePaso = paso.nombrePaso || 'Paso';
+        var duracion = paso.duracionFormateada || '--:--';
+
+        var estadoIcon = {
+            completado: '<i class="bi bi-check-circle-fill text-success"></i>',
+            en_sala: '<i class="bi bi-play-circle-fill text-primary"></i>',
+            activo: '<i class="bi bi-play-circle-fill text-primary"></i>',
+            saltado: '<i class="bi bi-forward-fill text-warning"></i>',
+            pendiente: '<i class="bi bi-circle text-muted"></i>'
+        }[estado] || '<i class="bi bi-circle text-muted"></i>';
+
+        return '<div class="d-flex align-items-center gap-2 py-1 small">'
+            + estadoIcon
+            + '<span>' + escapeHtml(nombrePaso) + '</span>'
+            + '<span class="ms-auto text-muted">' + duracion + '</span>'
+            + '</div>';
     }
 
     function renderPasoCard(paso) {
@@ -164,12 +276,14 @@
 
         var estadoClass = {
             completado: 'completado',
+            en_sala: 'activo',
             activo: 'activo',
             saltado: 'saltado'
         }[estado] || 'pendiente';
 
         var icono = {
             completado: 'bi-check-lg',
+            en_sala: 'bi-arrow-right-circle',
             activo: 'bi-arrow-right-circle',
             saltado: 'bi-forward',
             pendiente: 'bi-circle'
@@ -177,6 +291,7 @@
 
         var badgeEstado = {
             completado: 'badge-atendida',
+            en_sala: 'badge-en-atencion',
             activo: 'badge-en-atencion',
             saltado: 'badge-en-espera',
             pendiente: 'badge-cancelada'
@@ -184,6 +299,7 @@
 
         var estadoTexto = {
             completado: 'Completado',
+            en_sala: 'En Progreso',
             activo: 'En Progreso',
             saltado: 'Saltado',
             pendiente: 'Pendiente'
@@ -196,7 +312,7 @@
         html += '<div class="paso-circulo ' + estadoClass + '">';
         if (estado === 'completado') {
             html += '<i class="bi bi-check-lg" style="font-size:0.8rem;"></i>';
-        } else if (estado === 'activo') {
+        } else if (estado === 'en_sala') {
             html += '<i class="bi bi-play-fill" style="font-size:0.7rem;margin-left:1px;"></i>';
         } else {
             html += orden;
@@ -209,7 +325,7 @@
         html += '<i class="bi ' + icono + ' text-muted"></i>';
         html += '<span class="paso-nombre">' + escapeHtml(nombrePaso) + '</span>';
         html += '<span class="badge ' + badgeEstado + ' ms-1">' + estadoTexto + '</span>';
-        html += '<span class="paso-duracion ' + (estado === 'activo' ? 'vivo' : '') + '" id="duracion-' + id + '">';
+        html += '<span class="paso-duracion ' + (estado === 'en_sala' ? 'vivo' : '') + '" id="duracion-' + id + '">';
         html += '<i class="bi bi-hourglass me-1"></i>' + duracion;
         html += '</span>';
         html += '</div>';
@@ -230,7 +346,7 @@
             html += '<i class="bi bi-play-fill me-1"></i>Iniciar</button> ';
             html += '<button class="btn btn-outline-warning btn-sm btn-saltar-paso" data-paso-id="' + id + '">';
             html += '<i class="bi bi-forward me-1"></i>Saltar</button>';
-        } else if (estado === 'activo') {
+        } else if (estado === 'en_sala') {
             html += '<button class="btn btn-success btn-sm btn-finalizar-paso" data-paso-id="' + id + '">';
             html += '<i class="bi bi-check-lg me-1"></i>Finalizar</button>';
         }
@@ -260,6 +376,14 @@
         });
     }
 
+    async function recargarVista() {
+        if (citaIdActual) {
+            await cargarTimelinePorCita(citaIdActual);
+        } else {
+            await cargarTimeline();
+        }
+    }
+
     async function iniciarPaso(pasoId, btn) {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
@@ -273,7 +397,7 @@
 
             if (res.ok && json.success) {
                 VittalAPI.showToast('Paso iniciado correctamente.', 'success');
-                await cargarTimeline();
+                await recargarVista();
             } else {
                 VittalAPI.showToast(json.message || 'Error al iniciar paso.', 'error');
                 btn.disabled = false;
@@ -299,7 +423,7 @@
 
             if (res.ok && json.success) {
                 VittalAPI.showToast('Paso finalizado correctamente.', 'success');
-                await cargarTimeline();
+                await recargarVista();
             } else {
                 VittalAPI.showToast(json.message || 'Error al finalizar paso.', 'error');
                 btn.disabled = false;
@@ -327,7 +451,7 @@
 
             if (res.ok && json.success) {
                 VittalAPI.showToast('Paso saltado correctamente.', 'success');
-                await cargarTimeline();
+                await recargarVista();
             } else {
                 VittalAPI.showToast(json.message || 'Error al saltar paso.', 'error');
                 btn.disabled = false;
@@ -348,7 +472,7 @@
 
         var pasoActivo = null;
         for (var i = 0; i < pasos.length; i++) {
-            if (pasos[i].estado === 'activo') {
+            if (pasos[i].estado === 'en_sala') {
                 pasoActivo = pasos[i];
                 break;
             }
@@ -362,6 +486,17 @@
         // Si llegada es del tipo "09:05:00" o "09:05"
         var inicioDate = new Date();
         inicioDate.setHours(inicio.hours, inicio.minutes, 0, 0);
+
+        // Calcular segundos base de pasos ya completados (estáticos)
+        var segundosCompletados = 0;
+        for (var i = 0; i < pasos.length; i++) {
+            if (pasos[i].estado === 'completado' && pasos[i].duracionFormateada) {
+                var partes = pasos[i].duracionFormateada.split(':');
+                if (partes.length === 3) {
+                    segundosCompletados += parseInt(partes[0]) * 3600 + parseInt(partes[1]) * 60 + parseInt(partes[2]);
+                }
+            }
+        }
 
         activeTimerInterval = setInterval(function () {
             var ahora = new Date();
@@ -377,10 +512,14 @@
                 duracionEl.classList.add('vivo');
             }
 
-            // Actualizar tiempo total
+            // Actualizar tiempo total (completados + activo)
+            var totalSeg = segundosCompletados + diffSeg;
             var totalEl = document.getElementById('tiempoTotal');
             if (totalEl) {
-                totalEl.textContent = '00:' + pad(mins) + ':' + pad(segs);
+                var h = Math.floor(totalSeg / 3600);
+                var m = Math.floor((totalSeg % 3600) / 60);
+                var s = totalSeg % 60;
+                totalEl.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
             }
         }, 1000);
     }

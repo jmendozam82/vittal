@@ -79,13 +79,12 @@ public class LineaTiempoRepository : ILineaTiempoRepository
         var sql = $@"
             SELECT {SelectColumns}
             {FromTable}
+            INNER JOIN public.citas c ON c.id = lt.cita_id AND c.clinica_id = lt.clinica_id
             WHERE lt.clinica_id = @ClinicaId
               AND lt.activo = true
+              AND c.estado != 'atendida'
               AND DATE(lt.fecha_creacion) = @Fecha
-              AND (@DoctorId IS NULL OR lt.cita_id IN (
-                  SELECT c.id FROM public.citas c
-                  WHERE c.doctor_id = @DoctorId AND c.clinica_id = @ClinicaId
-              ))
+              AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
             ORDER BY lt.fecha_creacion DESC";
 
         try
