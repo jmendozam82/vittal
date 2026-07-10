@@ -74,6 +74,16 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? ArchivoUrl { get; set; }
     }
 
+    /// <summary>
+    /// DTO interno para agregar una recomendación a una hoja de cita.
+    /// </summary>
+    public class RecomendacionFormDto
+    {
+        public string HojaCitaId { get; set; } = string.Empty;
+        public string RecomendacionId { get; set; } = string.Empty;
+        public string? Observaciones { get; set; }
+    }
+
     [Area("Expedientes")]
     [Authorize]
     public class ExpedientesController : Controller
@@ -628,6 +638,56 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             return Ok(new { success = true, message = "Examen agregado exitosamente" });
+        }
+
+        /// <summary>Obtiene recomendaciones de una hoja de cita — para fetch() desde Details</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonRecomendaciones(Guid hojaCitaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/hojas-recomendacion/hoja-cita/{hojaCitaId}");
+
+            if (!success)
+            {
+                _logger.LogWarning("JsonRecomendaciones API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar recomendaciones" });
+            }
+
+            var data = ExtractDataArray(response);
+            return Json(new { success = true, data = data });
+        }
+
+        /// <summary>Catálogo de recomendaciones — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonRecomendacionesCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Recomendaciones");
+            if (!success)
+            {
+                _logger.LogWarning("JsonRecomendacionesCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Agrega una recomendación a una hoja de cita — para fetch() desde Details</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonCrearRecomendacion([FromBody] RecomendacionFormDto dto)
+        {
+            var payload = new
+            {
+                hojaCitaId = dto.HojaCitaId,
+                recomendacionId = dto.RecomendacionId,
+                observaciones = dto.Observaciones
+            };
+
+            var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/hojas-recomendacion", payload);
+
+            if (!success)
+            {
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al agregar recomendación" });
+            }
+
+            return Ok(new { success = true, message = "Recomendación agregada exitosamente" });
         }
 
         // ========== Helpers para extraer data de JsonElement ==========

@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IHojaTratamientoRepository, HojaTratamientoRepository>();
         services.AddScoped<IHojaCirugiaRepository, HojaCirugiaRepository>();
         services.AddScoped<IHojaExamenRepository, HojaExamenRepository>();
+        services.AddScoped<IHojaRecomendacionRepository, HojaRecomendacionRepository>();
         services.AddScoped<IExpedienteArchivoRepository, ExpedienteArchivoRepository>();
 
         services.AddScoped<IExpedienteService, ExpedienteService>();
@@ -86,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<IHojaTratamientoService, HojaTratamientoService>();
         services.AddScoped<IHojaCirugiaService, HojaCirugiaService>();
         services.AddScoped<IHojaExamenService, HojaExamenService>();
+        services.AddScoped<IHojaRecomendacionService, HojaRecomendacionService>();
         services.AddScoped<IExpedienteArchivoService, ExpedienteArchivoService>();
 
         // ══════════════════════════════════════════════

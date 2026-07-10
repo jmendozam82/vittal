@@ -356,6 +356,39 @@
     </div>
 </div>
 
+<!-- ========== MODAL: Agregar Recomendación ========== -->
+<div class="modal fade" id="modalAgregarRecomendacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-chat-quote me-2 text-secondary"></i>Agregar Recomendación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formRecomendacion">
+                    <input type="hidden" id="recHojaCitaId" />
+                    <div class="mb-3">
+                        <label for="recRecomendacionId" class="form-label fw-semibold">Recomendación <span class="text-danger">*</span></label>
+                        <select class="form-select" id="recRecomendacionId" required>
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recObservaciones" class="form-label fw-semibold">Observaciones</label>
+                        <textarea class="form-control" id="recObservaciones" rows="2" maxlength="1000" placeholder="Observaciones adicionales"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-sm text-white" id="btnGuardarRecomendacion">
+                    <i class="bi bi-check-lg me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     const EXPEDIENTE_ID = '@expedienteId';
@@ -370,19 +403,22 @@
         tratamientos: '@Url.Action("JsonTratamientos")',
         cirugias: '@Url.Action("JsonCirugias")',
         examenes: '@Url.Action("JsonExamenes")',
+        recomendaciones: '@Url.Action("JsonRecomendaciones")',
         archivos: '@Url.Action("JsonArchivos")',
         crearHojaCita: '@Url.Action("JsonCrearHojaCita")',
         crearDiagnostico: '@Url.Action("JsonCrearDiagnostico")',
         crearTratamiento: '@Url.Action("JsonCrearTratamiento")',
         crearCirugia: '@Url.Action("JsonCrearCirugia")',
         crearExamen: '@Url.Action("JsonCrearExamen")',
+        crearRecomendacion: '@Url.Action("JsonCrearRecomendacion")',
         doctores: '@Url.Action("JsonDoctores")',
         // Catálogos para dropdowns (proxy MVC con JWT)
         diagnosticosCatalogo: '@Url.Action("JsonDiagnosticosCatalogo")',
         medicamentosCatalogo: '@Url.Action("JsonMedicamentosCatalogo")',
         tratamientosCatalogo: '@Url.Action("JsonTratamientosCatalogo")',
         cirugiasCatalogo: '@Url.Action("JsonCirugiasCatalogo")',
-        examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")'
+        examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")',
+        recomendacionesCatalogo: '@Url.Action("JsonRecomendacionesCatalogo")'
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
@@ -399,7 +435,8 @@
             cargarCatalogo(URLS.medicamentosCatalogo, 'tratMedicamentoId', 'nombre', 'id'),
             cargarCatalogo(URLS.tratamientosCatalogo, 'tratTratamientoId', 'nombre', 'id'),
             cargarCatalogo(URLS.cirugiasCatalogo, 'cirCirugiaId', 'nombre', 'id'),
-            cargarCatalogo(URLS.examenesCatalogo, 'exaExamenId', 'nombre', 'id')
+            cargarCatalogo(URLS.examenesCatalogo, 'exaExamenId', 'nombre', 'id'),
+            cargarCatalogo(URLS.recomendacionesCatalogo, 'recRecomendacionId', 'nombre', 'id')
         ]);
 
         // Detectar citaId desde query params y auto-poblar modal
@@ -661,6 +698,9 @@
                             <button class="btn btn-outline-info btn-sm" onclick="abrirModalExamen('${h.id}')">
                                 <i class="bi bi-clipboard2-pulse me-1"></i> + Examen
                             </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="abrirModalRecomendacion('${h.id}')">
+                                <i class="bi bi-chat-quote me-1"></i> + Recomendación
+                            </button>
                         </div>
                         <hr class="my-2">
                         <!-- Sub-contenedores de detalles -->
@@ -675,6 +715,9 @@
                         </div>
                         <div id="examenes_${h.id}">
                             <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-info"></div></div>
+                        </div>
+                        <div id="recomendaciones_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-secondary"></div></div>
                         </div>
                     </div>
                 </div>
@@ -691,7 +734,8 @@
             cargarDiagnosticos(hojaCitaId),
             cargarTratamientos(hojaCitaId),
             cargarCirugias(hojaCitaId),
-            cargarExamenes(hojaCitaId)
+            cargarExamenes(hojaCitaId),
+            cargarRecomendaciones(hojaCitaId)
         ]);
     }
 
@@ -766,6 +810,23 @@
             }
         } catch (err) {
             document.getElementById('examenes_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar exámenes.</div>';
+        }
+    }
+
+    async function cargarRecomendaciones(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.recomendaciones}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('recomendaciones_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin recomendaciones registradas.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-secondary">Recomendaciones:</strong>' +
+                    data.map(r => `<div class="small ms-2"><i class="bi bi-dot me-1"></i>${escapeHtml(r.recomendacionNombre || '')} ${r.observaciones ? '- ' + escapeHtml(r.observaciones) : ''}</div>`).join('');
+            }
+        } catch (err) {
+            document.getElementById('recomendaciones_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar recomendaciones.</div>';
         }
     }
 
@@ -1041,6 +1102,48 @@
                 bootstrap.Modal.getInstance(document.getElementById('modalAgregarExamen')).hide();
                 await cargarExamenes(hojaCitaId);
                 document.getElementById('formExamen').reset();
+            } else {
+                showToast('danger', json.message || 'Error al agregar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // --- AGREGAR RECOMENDACIÓN ---
+    window.abrirModalRecomendacion = function(hojaCitaId) {
+        document.getElementById('recHojaCitaId').value = hojaCitaId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarRecomendacion')).show();
+    };
+
+    document.getElementById('btnGuardarRecomendacion').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('recHojaCitaId').value;
+        const recomendacionId = document.getElementById('recRecomendacionId').value;
+        if (!recomendacionId) { showToast('danger', 'Seleccione una recomendación.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const res = await fetch(URLS.crearRecomendacion, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hojaCitaId: hojaCitaId,
+                    recomendacionId: recomendacionId,
+                    observaciones: document.getElementById('recObservaciones').value.trim() || null
+                })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', 'Recomendación agregada.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAgregarRecomendacion')).hide();
+                await cargarRecomendaciones(hojaCitaId);
+                document.getElementById('formRecomendacion').reset();
             } else {
                 showToast('danger', json.message || 'Error al agregar.');
             }
