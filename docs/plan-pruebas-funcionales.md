@@ -569,10 +569,21 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 
 > **Nota:** Hubo un error inicial 500 porque `fechaCirugia` se envió como solo fecha `2026-08-15` y no como datetime completo. El campo `TIMESTAMPTZ` requiere formato ISO completo.
 
-#### 5.2.7 Recomendaciones ◻️
-- [ ] **Pendiente**: No existe tabla `hojas_recomendaciones` en BD ni endpoint `POST /api/hojas-recomendacion`
-- [ ] **Alternativa**: El catálogo `/api/Recomendaciones` existe pero no tiene tabla de relación con hojas de cita
-- [ ] **Requiere**: Desarrollo de migración, Entity, DTOs, DAL, BLL y Controller para `hojas_recomendaciones`
+#### 5.2.7 Recomendaciones ✅
+- [x] **Completado: Stack completo implementado** (2026-07-10):
+  - Migración SQL: `20260709000001_create_hojas_recomendaciones.sql` → tabla `public.hojas_recomendaciones` con RLS, índices y UNIQUE(hoja_cita_id, recomendacion_id)
+  - Entity + DTOs: `HojaRecomendacion.cs`, `HojaRecomendacionRequestDto`, `HojaRecomendacionResponseDto`
+  - DAL: `IHojaRecomendacionRepository` + `HojaRecomendacionRepository` (Dapper, SELECT con JOIN LEFT)
+  - BLL: `IHojaRecomendacionService` + `HojaRecomendacionService` (CRUD + logging)
+  - API: `HojasRecomendacionController.cs` con `RequirePermission("expedientes")`
+  - IOC: Repositorio y servicio registrados
+- [x] **Agregar recomendación**: `POST /api/hojas-recomendacion` → **201 Created**:
+  - Tomar abundante agua → ✅
+  - Evitar esfuerzos físicos por 48 horas → ✅
+- [x] **Verificar**: `GET /api/hojas-recomendacion/hoja-cita/{hojaCitaId}` → 200 con recomendaciones + `recomendacionNombre` JOIN ✅
+- [x] **Frontend**: Proxys `JsonRecomendaciones`, `JsonRecomendacionesCatalogo`, `JsonCrearRecomendacion` en ExpedientesController, modal en Details.cshtml con selector de catálogo ✅
+- [x] **Compilación**: 0 errores en todos los proyectos ✅
+- [x] **Commit+Push**: `8d1cd36` → `origin/main` ✅
 
 ### 5.3 Imprimir Receta Médica ◻️
 - [ ] **Pendiente**: Funcionalidad de frontend exclusivamente (vista de impresión Razor)
@@ -605,6 +616,7 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 - ✅ **DbConnectionFactory**: Agregados `DateTimeTypeHandler` y `NullableDateTimeTypeHandler` para conversión `DateOnly→DateTime` de Npgsql 8+
 - ✅ **Entity comments**: Corregidos typos (`hojas_` → `hoja_`) en HojaDiagnostico, HojaTratamiento, HojaCirugia, HojaExamen
 - ✅ **Build**: 0 errores, 0 warnings tras todas las correcciones
+- ✅ **HojaRecomendacion stack**: Migración SQL (`hojas_recomendaciones`), Entity, DTOs, DAL, BLL, API Controller, IOC, frontend proxy-actions + modal. Commit `8d1cd36` → `origin/main`
 
 ---
 
@@ -788,7 +800,7 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 | F5 | Signos Vitales por Consulta | HU-E06 | ✅ |
 | F5 | Antecedentes del Paciente | HU-E05 | ✅ |
 | F6 | Segundo Paciente (Integración) | — | ✅ |
-| — | Recomendaciones en Hoja | HU20 (parcial) | ◻️ |
+| — | Recomendaciones en Hoja | HU20 (parcial) | ✅ |
 | — | Archivos Adjuntos (Storage) | HU20 (parcial) | ◻️ |
 | — | Imprimir Receta | HU20 | ◻️ |
 | — | Dashboard | HU23 | ◻️ |
@@ -810,7 +822,7 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 | 5 | HU20 Hoja Cirugía | `fechaCirugia` requiere formato ISO completo (`2026-08-15T08:00:00Z`), no solo fecha. El campo `TIMESTAMPTZ` no acepta `DATE` parcial. | 💡 Mejora | 🟢 Resuelto |
 | 6 | HU20 SignosVitalesHoja | Constructor `SignosVitalesHojaRequestDto` tiene parámetros reordenados vs los campos JSON esperados. Verificar que `salaId` está presente en el body. | 🐛 Bug | 🟢 Resuelto |
 | 7 | HU-E07 Constancias | CHECK constraint de `tipo_constancia` acepta: `reposo`, `incapacidad`, `constancia_atencion`, `referencia_especialista`, `otro`. No acepta `ASISTENCIA`. Usar minúsculas con guión bajo. | 💡 Mejora | 🟢 Resuelto |
-| 8 | HU20 Recomendaciones | No existe tabla `hojas_recomendaciones` ni endpoint asociado. Catálogo `/api/Recomendaciones` existe pero sin relación a hojas de cita. | 🐛 Bug | 🔴 Abierto |
+| 8 | HU20 Recomendaciones | Stack completo implementado: migración `hojas_recomendaciones`, Entity, DTOs, DAL (Dapper), BLL, API Controller, IOC, frontend proxy-actions + modal. Catálogo `/api/Recomendaciones` se integra con la hoja de cita vía POST/GET. | 🐛 Bug | 🟢 Resuelto |
 | 9 | DAL Dapper | `SELECT *` no mapea correctamente columnas snake_case a propiedades PascalCase porque Npgsql 8+ usa nombres exactos. Se reemplazó por columnas explícitas con AS alias. Además se agregó `MatchNamesWithUnderscores = true` global. | 🐛 Bug | 🟢 Resuelto |
 | 10 | DAL Npgsql | Columnas `DATE` en PostgreSQL 15 con Npgsql 8+ retornan `DateOnly` en lugar de `DateTime`. Se agregaron `DateTimeTypeHandler` y `NullableDateTimeTypeHandler` en DbConnectionFactory para conversión automática. | 🐛 Bug | 🟢 Resuelto |
 | 11 | Entity Comments | Typos en comentarios de entidades: `public.hojas_diagnosticos` → `public.hoja_diagnosticos` (y similares). Corregido en 4 archivos. | 💡 Mejora | 🟢 Resuelto |
@@ -834,5 +846,5 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 
 ---
 
-*Documento generado el 2026-07-01 | Última actualización: 2026-07-10 | Próxima revisión: Al completar cada fase*
+*Documento generado el 2026-07-01 | Última actualización: 2026-07-10 (hojas_recomendaciones) | Próxima revisión: Al completar cada fase*
 *Vittal v1.0.0 — Plan de Pruebas Funcionales*

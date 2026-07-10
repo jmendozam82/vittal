@@ -1,0 +1,465 @@
+@model Vittal.Aplicacion.Areas.Expedientes.Controllers.RecetaMedicaViewModel
+@{
+    Layout = null;
+    var fechaFormateada = DateTime.TryParse(Model.Fecha, out var dt)
+        ? dt.ToString("dd/MM/yyyy")
+        : Model.Fecha;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receta Médica - @Model.PacienteNombre</title>
+    <style>
+        /* ── Reset y configuración general ─────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #000;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .receta {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 30px;
+            min-height: 900px;
+            position: relative;
+        }
+
+        /* ── Encabezado ────────────────────────────────────────── */
+        .header {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: #333;
+            margin-top: 3px;
+        }
+
+        .header .clinica {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .header .numero-receta {
+            font-size: 11px;
+            margin-top: 5px;
+            color: #555;
+        }
+
+        /* ── Datos del paciente y doctor ───────────────────────── */
+        .datos {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #999;
+        }
+
+        .datos-item {
+            flex: 1;
+        }
+
+        .datos-item label {
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #555;
+        }
+
+        .datos-item .valor {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+
+        .datos-item .valor.contacto {
+            font-size: 12px;
+            color: #444;
+        }
+
+        /* ── Cuerpo de la receta ───────────────────────────────── */
+        .cuerpo {
+            margin-bottom: 30px;
+        }
+
+        .cuerpo h2 {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .cuerpo .rx-indicator {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* ── Tabla de medicamentos ─────────────────────────────── */
+        table.medicamentos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table.medicamentos th {
+            background: #eee;
+            border: 1px solid #999;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        table.medicamentos td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        table.medicamentos tr:nth-child(even) td {
+            background: #f9f9f9;
+        }
+
+        .num-item {
+            width: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* ── Tratamientos no farmacológicos ────────────────────── */
+        .tratamientos {
+            margin-bottom: 20px;
+        }
+
+        .tratamientos h3 {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #999;
+            padding-bottom: 4px;
+        }
+
+        .tratamientos ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tratamientos li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tratamientos li::before {
+            content: "•";
+            position: absolute;
+            left: 5px;
+        }
+
+        .tratamientos li .instrucciones {
+            font-style: italic;
+            color: #555;
+            font-size: 12px;
+        }
+
+        /* ── Motivo de consulta ────────────────────────────────── */
+        .motivo {
+            margin-bottom: 20px;
+            font-size: 13px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-left: 4px solid #999;
+        }
+
+        .motivo strong {
+            text-transform: uppercase;
+        }
+
+        /* ── Firma ─────────────────────────────────────────────── */
+        .firma {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+        }
+
+        .firma .doctor-info {
+            text-align: center;
+        }
+
+        .firma .linea-firma {
+            width: 250px;
+            border-top: 1px solid #000;
+            margin: 5px auto;
+            padding-top: 3px;
+        }
+
+        .firma .sello {
+            font-size: 11px;
+            color: #666;
+            text-align: right;
+        }
+
+        /* ── Pie de página ─────────────────────────────────────── */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            right: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+        }
+
+        .footer .importante {
+            font-size: 9px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        /* ── Sin medicamentos ──────────────────────────────────── */
+        .sin-items {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* ── Botón de impresión (solo en pantalla) ─────────────── */
+        .no-print {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .no-print button {
+            padding: 12px 40px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+        }
+
+        .no-print button:hover {
+            background: #0b5ed7;
+        }
+
+        /* ── print styles ──────────────────────────────────────── */
+        @@media print {
+            body {
+                padding: 0;
+                font-size: 13px;
+            }
+
+            .receta {
+                border: none;
+                padding: 20px;
+                max-width: 100%;
+                min-height: auto;
+            }
+
+            .no-print { display: none; }
+
+            .header h1 { font-size: 22px; }
+
+            table.medicamentos th {
+                background: #eee !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            table.medicamentos tr:nth-child(even) td {
+                background: #f9f9f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .datos-item label { font-size: 10px; }
+            .datos-item .valor { font-size: 14px; }
+
+            .footer {
+                position: fixed;
+                bottom: 10px;
+                left: 20px;
+                right: 20px;
+            }
+
+            .motivo {
+                background: #f5f5f5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            @@page {
+                margin: 15mm 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Imprimir Receta</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+    <div class="receta">
+
+        <!-- ═══ ENCABEZADO ═══ -->
+        <div class="header">
+            <div class="clinica">@Model.ClinicaNombre</div>
+            <h1>Receta Médica</h1>
+            <div class="subtitle">Sistema Médico Vittal — Receta Oficial</div>
+            <div class="numero-receta">No. @Guid.NewGuid().ToString("N").Substring(0,10).ToUpperInvariant()</div>
+        </div>
+
+        <!-- ═══ DATOS ═══ -->
+        <div class="datos">
+            <div class="datos-item">
+                <label>Paciente</label>
+                <div class="valor">@Model.PacienteNombre</div>
+                @if (!string.IsNullOrWhiteSpace(Model.PacienteEmail))
+                {
+                    <div class="valor contacto">📧 @Model.PacienteEmail</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PacienteCelular))
+                {
+                    <div class="valor contacto">📞 @Model.PacienteCelular</div>
+                }
+            </div>
+            <div class="datos-item" style="text-align:right;">
+                <label>Fecha</label>
+                <div class="valor">@fechaFormateada</div>
+                <label style="margin-top:8px;display:block;">Médico</label>
+                <div class="valor">@Model.DoctorNombre</div>
+            </div>
+        </div>
+
+        <!-- ═══ MOTIVO ═══ -->
+        @if (!string.IsNullOrWhiteSpace(Model.Motivo))
+        {
+            <div class="motivo">
+                <strong>Motivo de consulta:</strong> @Model.Motivo
+            </div>
+        }
+
+        <!-- ═══ MEDICAMENTOS ═══ -->
+        <div class="cuerpo">
+            <h2>Indicaciones Médicas</h2>
+            <div class="rx-indicator">℞</div>
+
+            @if (Model.Medicamentos.Count > 0)
+            {
+                <table class="medicamentos">
+                    <thead>
+                        <tr>
+                            <th class="num-item">#</th>
+                            <th>Medicamento</th>
+                            <th>Dosis</th>
+                            <th>Frecuencia</th>
+                            <th>Duración</th>
+                            <th>Instrucciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Medicamentos.Count; i++)
+                        {
+                            var m = Model.Medicamentos[i];
+                            <tr>
+                                <td class="num-item">@(i + 1)</td>
+                                <td><strong>@m.Nombre</strong></td>
+                                <td>@m.Dosis</td>
+                                <td>@m.Frecuencia</td>
+                                <td>@m.Duracion</td>
+                                <td>@m.Instrucciones</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <!-- ═══ TRATAMIENTOS NO FARMACOLÓGICOS ═══ -->
+            @if (Model.Tratamientos.Count > 0)
+            {
+                <div class="tratamientos">
+                    <h3>Tratamientos</h3>
+                    <ul>
+                        @foreach (var t in Model.Tratamientos)
+                        {
+                            <li>
+                                @t.Nombre
+                                @if (!string.IsNullOrWhiteSpace(t.Instrucciones))
+                                {
+                                    <div class="instrucciones">— @t.Instrucciones</div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (Model.Medicamentos.Count == 0 && Model.Tratamientos.Count == 0)
+            {
+                <div class="sin-items">
+                    No se indicaron medicamentos ni tratamientos en esta consulta.
+                </div>
+            }
+        </div>
+
+        <!-- ═══ FIRMA ═══ -->
+        <div class="firma">
+            <div class="sello">
+                Documento válido como<br/>
+                receta médica oficial
+            </div>
+            <div class="doctor-info">
+                <div style="margin-bottom:5px;font-size:12px;">Firma del Médico</div>
+                <div class="linea-firma"></div>
+                <div style="font-size:13px;font-weight:bold;">@Model.DoctorNombre</div>
+            </div>
+        </div>
+
+        <!-- ═══ PIE ═══ -->
+        <div class="footer">
+            <div>@Model.ClinicaNombre — Sistema Médico Vittal</div>
+            <div class="importante">Esta receta es válida únicamente con firma y sello del médico tratante.</div>
+        </div>
+
+    </div>
+
+    <div class="no-print" style="margin-top:10px;">
+        <button onclick="window.print()">🖨️ Imprimir Receta</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+</body>
+</html>

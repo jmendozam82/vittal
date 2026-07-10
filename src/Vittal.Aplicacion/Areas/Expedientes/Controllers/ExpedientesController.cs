@@ -84,6 +84,38 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? Observaciones { get; set; }
     }
 
+    /// <summary>
+    /// ViewModel para la vista de impresión de receta médica.
+    /// </summary>
+    public class RecetaMedicaViewModel
+    {
+        public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string DoctorNombre { get; set; } = string.Empty;
+        public string PacienteNombre { get; set; } = string.Empty;
+        public string? PacienteEmail { get; set; }
+        public string? PacienteCelular { get; set; }
+        public string? PacienteDireccion { get; set; }
+        public string Fecha { get; set; } = string.Empty;
+        public string? Motivo { get; set; }
+        public List<MedicamentoReceta> Medicamentos { get; set; } = new();
+        public List<TratamientoReceta> Tratamientos { get; set; } = new();
+    }
+
+    public class MedicamentoReceta
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string? Dosis { get; set; }
+        public string? Frecuencia { get; set; }
+        public string? Duracion { get; set; }
+        public string? Instrucciones { get; set; }
+    }
+
+    public class TratamientoReceta
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string? Instrucciones { get; set; }
+    }
+
     [Area("Expedientes")]
     [Authorize]
     public class ExpedientesController : Controller
@@ -688,6 +720,115 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             return Ok(new { success = true, message = "Recomendación agregada exitosamente" });
+        }
+
+        // ===================== IMPRIMIR RECETA MÉDICA =====================
+
+        /// <summary>
+        /// Muestra la vista de impresión de receta médica para una hoja de cita.
+        /// Renderiza una página optimizada con @media print para imprimir.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ImprimirReceta(Guid hojaCitaId)
+        {
+            var model = new RecetaMedicaViewModel();
+
+            // 1. Obtener hoja de cita
+            var (hcSuccess, hcResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/HojasCita/{hojaCitaId}");
+            if (!hcSuccess)
+            {
+                TempData["Error"] = "No se encontró la hoja de cita.";
+                return RedirectToAction("Index");
+            }
+
+            var hc = ExtractDataObject(hcResponse) as Dictionary<string, object?>;
+            if (hc == null)
+            {
+                TempData["Error"] = "No se encontró la hoja de cita.";
+                return RedirectToAction("Index");
+            }
+
+            model.DoctorNombre = hc.GetValueOrDefault("doctorNombre") as string ?? "";
+            model.PacienteNombre = hc.GetValueOrDefault("pacienteNombre") as string ?? "";
+            model.Fecha = hc.GetValueOrDefault("fechaConsulta") as string ?? "";
+            model.Motivo = hc.GetValueOrDefault("motivoConsulta") as string;
+
+            var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
+
+            // 2. Obtener expediente para obtener el pacienteId
+            if (!string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var expId))
+            {
+                (bool expSuccess, JsonElement? expResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}");
+                if (expSuccess)
+                {
+                    var exp = ExtractDataObject(expResponse) as Dictionary<string, object?>;
+                    var pacienteId = exp?.GetValueOrDefault("pacienteId")?.ToString();
+
+                    // 3. Obtener datos del paciente (email, celular, dirección)
+                    if (!string.IsNullOrWhiteSpace(pacienteId) && Guid.TryParse(pacienteId, out var pacId))
+                    {
+                        (bool pacSuccess, JsonElement? pacResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/{pacId}");
+                        if (pacSuccess)
+                        {
+                            var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
+                            model.PacienteEmail = pac?.GetValueOrDefault("email") as string;
+                            model.PacienteCelular = pac?.GetValueOrDefault("celular") as string;
+                            model.PacienteDireccion = pac?.GetValueOrDefault("direccion") as string;
+                        }
+                    }
+                }
+            }
+
+            // 4. Obtener tratamientos y medicamentos de la hoja de cita
+            var (trSuccess, trResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-tratamiento/hoja-cita/{hojaCitaId}");
+            if (trSuccess)
+            {
+                var items = ExtractDataArray(trResponse);
+                foreach (var item in items)
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+
+                    var medicamentoNombre = dict.GetValueOrDefault("medicamentoNombre") as string;
+                    var tratamientoNombre = dict.GetValueOrDefault("tratamientoNombre") as string;
+
+                    if (!string.IsNullOrWhiteSpace(medicamentoNombre))
+                    {
+                        model.Medicamentos.Add(new MedicamentoReceta
+                        {
+                            Nombre = medicamentoNombre,
+                            Dosis = dict.GetValueOrDefault("dosis") as string,
+                            Frecuencia = dict.GetValueOrDefault("frecuencia") as string,
+                            Duracion = dict.GetValueOrDefault("duracion") as string,
+                            Instrucciones = dict.GetValueOrDefault("instrucciones") as string
+                        });
+                    }
+                    else if (!string.IsNullOrWhiteSpace(tratamientoNombre))
+                    {
+                        model.Tratamientos.Add(new TratamientoReceta
+                        {
+                            Nombre = tratamientoNombre,
+                            Instrucciones = dict.GetValueOrDefault("instrucciones") as string
+                        });
+                    }
+                }
+            }
+
+            // 5. Intentar obtener el nombre de la clínica
+            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
+            if (cliSuccess)
+            {
+                var clinicas = ExtractDataArray(cliResponse);
+                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
+                if (primera != null)
+                {
+                    var nombre = primera.GetValueOrDefault("nombre") as string;
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.ClinicaNombre = nombre;
+                }
+            }
+
+            return View(model);
         }
 
         // ========== Helpers para extraer data de JsonElement ==========
