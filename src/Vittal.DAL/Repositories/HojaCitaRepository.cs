@@ -33,7 +33,7 @@ public class HojaCitaRepository : IHojaCitaRepository
         h.fecha_creacion        AS FechaCreacion,
         h.fecha_modificacion    AS FechaModificacion,
         CONCAT(p.primer_nombre, ' ', p.primer_apellido) AS PacienteNombre,
-        CONCAT(u.primer_nombre, ' ', u.primer_apellido) AS DoctorNombre";
+        CONCAT(u.nombres, ' ', u.apellidos) AS DoctorNombre";
 
     private const string FromJoin = @"
         FROM public.hojas_cita h

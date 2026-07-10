@@ -246,7 +246,25 @@ public class ColaEsperaController : Controller
             return BadRequest(new { success = false, message = errorMessage ?? "Error al iniciar atención" });
         }
 
-        return Ok(new { success = true, message = "Atención iniciada" });
+        // Buscar el expediente del paciente para redirigir a la hoja de cita
+        Guid? expedienteId = null;
+        var pacienteId = GetNullableGuidValue(dict, "pacienteId");
+        if (pacienteId.HasValue)
+        {
+            var (expSuccess, expResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/paciente/{pacienteId.Value}");
+            if (expSuccess)
+            {
+                var expData = ExtractDataObject(expResponse);
+                if (expData is Dictionary<string, object?> expDict)
+                {
+                    var expId = GetNullableGuidValue(expDict, "id");
+                    if (expId.HasValue)
+                        expedienteId = expId.Value;
+                }
+            }
+        }
+
+        return Ok(new { success = true, message = "Atención iniciada", expedienteId, citaId = id.ToString() });
     }
 
     /// <summary>

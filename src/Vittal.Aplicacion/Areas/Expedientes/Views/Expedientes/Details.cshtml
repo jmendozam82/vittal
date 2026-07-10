@@ -93,8 +93,14 @@
                     <input type="hidden" id="hcExpedienteId" value="@expedienteId" />
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label for="hcCitaId" class="form-label fw-semibold">Cita Asociada <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="hcCitaId" placeholder="ID de la cita (opcional)" />
+                            <label for="hcCitaId" class="form-label fw-semibold">Cita Asociada</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="hcCitaId" placeholder="ID de la cita (opcional)" readonly />
+                                <button class="btn btn-outline-secondary" type="button" id="btnLimpiarCita" title="Quitar cita asociada">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted" id="hcCitaInfo">Si viene desde Cola de Espera, la cita se asigna automáticamente.</small>
                         </div>
                         <div class="col-md-6">
                             <label for="hcDoctorId" class="form-label fw-semibold">Doctor <span class="text-danger">*</span></label>
@@ -370,7 +376,13 @@
         crearTratamiento: '@Url.Action("JsonCrearTratamiento")',
         crearCirugia: '@Url.Action("JsonCrearCirugia")',
         crearExamen: '@Url.Action("JsonCrearExamen")',
-        doctores: '@Url.Action("JsonDoctores")'
+        doctores: '@Url.Action("JsonDoctores")',
+        // Catálogos para dropdowns (proxy MVC con JWT)
+        diagnosticosCatalogo: '@Url.Action("JsonDiagnosticosCatalogo")',
+        medicamentosCatalogo: '@Url.Action("JsonMedicamentosCatalogo")',
+        tratamientosCatalogo: '@Url.Action("JsonTratamientosCatalogo")',
+        cirugiasCatalogo: '@Url.Action("JsonCirugiasCatalogo")',
+        examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")'
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
@@ -380,6 +392,28 @@
             cargarArchivos(),
             cargarDoctoresDropdown()
         ]);
+
+        // Cargar catálogos para dropdowns de los modales
+        await Promise.all([
+            cargarCatalogo(URLS.diagnosticosCatalogo, 'diagDiagnosticoId', 'nombre', 'id'),
+            cargarCatalogo(URLS.medicamentosCatalogo, 'tratMedicamentoId', 'nombre', 'id'),
+            cargarCatalogo(URLS.tratamientosCatalogo, 'tratTratamientoId', 'nombre', 'id'),
+            cargarCatalogo(URLS.cirugiasCatalogo, 'cirCirugiaId', 'nombre', 'id'),
+            cargarCatalogo(URLS.examenesCatalogo, 'exaExamenId', 'nombre', 'id')
+        ]);
+
+        // Detectar citaId desde query params y auto-poblar modal
+        const params = new URLSearchParams(window.location.search);
+        const citaIdParam = params.get('citaId');
+        if (citaIdParam) {
+            await prefillCitaFromCola(citaIdParam);
+            // Auto-mostrar el modal para que el doctor cree la hoja de cita inmediatamente
+            const modalEl = document.getElementById('modalNuevaHojaCita');
+            if (modalEl) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        }
     });
 
     // ========== CARGAR DATOS DEL EXPEDIENTE ==========
@@ -440,6 +474,109 @@
             }
         } catch (err) {
             console.error('Error al cargar doctores:', err);
+        }
+    }
+
+    // ========== CITA DESDE COLA DE ESPERA ==========
+    async function prefillCitaFromCola(citaId) {
+        try {
+            // Poblar el campo de citaId
+            const hcCitaId = document.getElementById('hcCitaId');
+            if (hcCitaId) {
+                hcCitaId.value = citaId;
+            }
+
+            // Fetch cita data para auto-poblar doctor, fecha y motivo
+            const res = await fetch('/api/Citas/' + encodeURIComponent(citaId), {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            const cita = json.success && json.data ? (Array.isArray(json.data) ? json.data[0] : json.data) : null;
+            if (!cita) return;
+
+            // Auto-poblar doctor
+            const doctorId = cita.doctorId || cita.usuarioId || '';
+            const hcDoctorId = document.getElementById('hcDoctorId');
+            if (hcDoctorId && doctorId) {
+                // Esperar a que el dropdown esté poblado
+                const waitForDoctors = setInterval(function() {
+                    const option = hcDoctorId.querySelector('option[value="' + doctorId + '"]');
+                    if (option) {
+                        hcDoctorId.value = doctorId;
+                        clearInterval(waitForDoctors);
+                    }
+                }, 100);
+                // Timeout after 5 seconds
+                setTimeout(function() { clearInterval(waitForDoctors); }, 5000);
+            }
+
+            // Auto-poblar fecha de consulta
+            const fechaCita = cita.fechaCita || cita.fecha || '';
+            if (fechaCita) {
+                const fechaStr = fechaCita.substring(0, 10);
+                document.getElementById('hcFechaConsulta').value = fechaStr;
+            }
+
+            // Auto-poblar motivo de consulta
+            const motivo = cita.motivo || cita.motivoConsulta || '';
+            if (motivo) {
+                document.getElementById('hcMotivoConsulta').value = motivo;
+            }
+
+            // Actualizar info del campo
+            const infoLabel = document.getElementById('hcCitaInfo');
+            if (infoLabel) {
+                infoLabel.textContent = '✓ Cita #' + citaId.substring(0, 8) + '... pre-seleccionada desde Cola de Espera.';
+                infoLabel.className = 'text-success fw-semibold';
+            }
+
+            // Botón para limpiar cita
+            document.getElementById('btnLimpiarCita').addEventListener('click', function() {
+                hcCitaId.value = '';
+                hcDoctorId.value = '';
+                document.getElementById('hcFechaConsulta').value = '';
+                document.getElementById('hcMotivoConsulta').value = '';
+                document.getElementById('hcNotasConsulta').value = '';
+                if (infoLabel) {
+                    infoLabel.textContent = 'Cita desvinculada. Puede ingresar manualmente.';
+                    infoLabel.className = 'text-muted';
+                }
+            });
+
+        } catch (err) {
+            console.error('Error al pre-fill cita:', err);
+        }
+    }
+
+    // ========== CARGAR CATÁLOGO GENÉRICO ==========
+    async function cargarCatalogo(url, selectId, labelField, valueField) {
+        try {
+            const res = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                console.warn(`Error al cargar catálogo ${url}: ${res.status}`);
+                return;
+            }
+            const json = await res.json();
+            // Puede venir como { success: true, data: [...] } o como array directo
+            let items = json.data || json;
+            if (!Array.isArray(items)) items = [];
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            // Limpiar opciones existentes (excepto la primera "placeholder")
+            while (sel.options.length > 1) {
+                sel.remove(1);
+            }
+            items.forEach(item => {
+                const op = document.createElement('option');
+                op.value = item[valueField] || '';
+                op.textContent = item[labelField] || 'Sin nombre';
+                sel.appendChild(op);
+            });
+        } catch (err) {
+            console.error(`Error al cargar catálogo ${url}:`, err);
         }
     }
 

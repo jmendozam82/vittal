@@ -333,7 +333,9 @@ public class LineaTiempoService : ILineaTiempoService
             Estado = entity.Estado,
             HoraLlegada = entity.HoraLlegada,
             HoraSalida = entity.HoraSalida,
-            DuracionFormateada = FormatearDuracion(entity.HoraLlegada, entity.HoraSalida, entity.Estado)
+            DuracionFormateada = FormatearDuracion(entity.HoraLlegada, entity.HoraSalida, entity.Estado),
+            PacienteNombre = entity.PacienteNombre ?? string.Empty,
+            SalaNombre = entity.SalaNombre
         };
 
         return dto;

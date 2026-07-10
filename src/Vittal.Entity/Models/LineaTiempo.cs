@@ -35,6 +35,13 @@ public class LineaTiempo
     /// <summary>Hora en que el paciente salió del paso (TIME nullable).</summary>
     public TimeSpan? HoraSalida { get; set; }
 
+    // ── Campos JOIN (desnormalizados desde consultas) ────────────
+    /// <summary>Nombre completo del paciente (JOIN con pacientes).</summary>
+    public string? PacienteNombre { get; set; }
+
+    /// <summary>Nombre de la sala (JOIN con salas).</summary>
+    public string? SalaNombre { get; set; }
+
     // ── Campos de estado y auditoría ──────────────────────────────
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

@@ -28,21 +28,21 @@ public class AntecedentePacienteRepository : IAntecedentePacienteRepository
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             SELECT 
-                ap.id,
-                ap.clinica_id,
-                ap.expediente_id,
-                ap.sala_id,
-                ap.tipo_antecedente_id,
-                ap.valor,
-                ap.fecha_actualizacion,
-                ap.actualizado_por,
-                ap.activo,
-                ap.fecha_creacion,
-                ap.fecha_modificacion,
-                ta.nombre,
-                ta.categoria,
-                ta.tipo_dato,
-                ta.orden
+                ap.id                    AS Id,
+                ap.clinica_id            AS ClinicaId,
+                ap.expediente_id         AS ExpedienteId,
+                ap.sala_id               AS SalaId,
+                ap.tipo_antecedente_id   AS TipoAntecedenteId,
+                ap.valor                 AS Valor,
+                ap.fecha_actualizacion   AS FechaActualizacion,
+                ap.actualizado_por       AS ActualizadoPor,
+                ap.activo                AS Activo,
+                ap.fecha_creacion        AS FechaCreacion,
+                ap.fecha_modificacion    AS FechaModificacion,
+                ta.nombre                AS Nombre,
+                ta.categoria             AS Categoria,
+                ta.tipo_dato             AS TipoDato,
+                ta.orden                 AS Orden
             FROM public.antecedentes_paciente ap
             INNER JOIN public.tipos_antecedente ta ON ap.tipo_antecedente_id = ta.id
             WHERE ap.clinica_id = @ClinicaId
@@ -58,7 +58,7 @@ public class AntecedentePacienteRepository : IAntecedentePacienteRepository
                 ap.TipoAntecedente = ta;
                 return ap;
             },
-            splitOn: "nombre",
+            splitOn: "Nombre",
             param: new { ClinicaId = clinicaId, ExpedienteId = expedienteId, SalaId = salaId }
         );
 
@@ -73,21 +73,21 @@ public class AntecedentePacienteRepository : IAntecedentePacienteRepository
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             SELECT 
-                ap.id,
-                ap.clinica_id,
-                ap.expediente_id,
-                ap.sala_id,
-                ap.tipo_antecedente_id,
-                ap.valor,
-                ap.fecha_actualizacion,
-                ap.actualizado_por,
-                ap.activo,
-                ap.fecha_creacion,
-                ap.fecha_modificacion,
-                ta.nombre,
-                ta.categoria,
-                ta.tipo_dato,
-                ta.orden
+                ap.id                    AS Id,
+                ap.clinica_id            AS ClinicaId,
+                ap.expediente_id         AS ExpedienteId,
+                ap.sala_id               AS SalaId,
+                ap.tipo_antecedente_id   AS TipoAntecedenteId,
+                ap.valor                 AS Valor,
+                ap.fecha_actualizacion   AS FechaActualizacion,
+                ap.actualizado_por       AS ActualizadoPor,
+                ap.activo                AS Activo,
+                ap.fecha_creacion        AS FechaCreacion,
+                ap.fecha_modificacion    AS FechaModificacion,
+                ta.nombre                AS Nombre,
+                ta.categoria             AS Categoria,
+                ta.tipo_dato             AS TipoDato,
+                ta.orden                 AS Orden
             FROM public.antecedentes_paciente ap
             INNER JOIN public.tipos_antecedente ta ON ap.tipo_antecedente_id = ta.id
             WHERE ap.id = @Id AND ap.clinica_id = @ClinicaId AND ap.activo = true";
@@ -99,7 +99,7 @@ public class AntecedentePacienteRepository : IAntecedentePacienteRepository
                 ap.TipoAntecedente = ta;
                 return ap;
             },
-            splitOn: "nombre",
+            splitOn: "Nombre",
             param: new { Id = id, ClinicaId = clinicaId }
         );
 

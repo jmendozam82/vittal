@@ -9,8 +9,6 @@ namespace Vittal.DAL.Repositories;
 /// Repositorio para la tabla public.hoja_diagnosticos.
 /// Implementa IHojaDiagnosticoRepository con Dapper y PostgreSQL.
 /// Historia de Usuario: HU20 — Expedientes
-/// 
-/// NOTA DE MAPEO: Entity usa 'Observaciones', BD usa 'descripcion'
 /// </summary>
 public class HojaDiagnosticoRepository : IHojaDiagnosticoRepository
 {
@@ -22,13 +20,13 @@ public class HojaDiagnosticoRepository : IHojaDiagnosticoRepository
     }
 
     // ── Columnas base para SELECT con JOIN ──────────────────────────────
-    // NOTA: descripcion AS Observaciones (mapeo entity ↔ sql)
+    // NOTA: observaciones AS Observaciones (mapeo entity ↔ sql)
     private const string SelectColumns = @"
         hd.id                       AS Id,
         hd.clinica_id               AS ClinicaId,
         hd.hoja_cita_id             AS HojaCitaId,
         hd.diagnostico_id           AS DiagnosticoId,
-        hd.descripcion              AS Observaciones,
+        hd.observaciones            AS Observaciones,
         hd.activo                   AS Activo,
         hd.fecha_creacion           AS FechaCreacion,
         hd.fecha_modificacion       AS FechaModificacion,
@@ -75,7 +73,6 @@ public class HojaDiagnosticoRepository : IHojaDiagnosticoRepository
 
     // ────────────────────────────────────────────────────────────────────
     // 3. CreateAsync — Inserta un nuevo diagnóstico en hoja. Retorna el ID autogenerado.
-    // NOTA: Observaciones (entity) → descripcion (sql)
     // ────────────────────────────────────────────────────────────────────
     public async Task<Guid> CreateAsync(HojaDiagnostico entity)
     {
@@ -83,7 +80,7 @@ public class HojaDiagnosticoRepository : IHojaDiagnosticoRepository
         var sql = @"
             INSERT INTO public.hoja_diagnosticos (
                 clinica_id, hoja_cita_id, diagnostico_id,
-                descripcion,
+                observaciones,
                 activo, fecha_creacion
             )
             VALUES (
@@ -98,14 +95,13 @@ public class HojaDiagnosticoRepository : IHojaDiagnosticoRepository
 
     // ────────────────────────────────────────────────────────────────────
     // 4. UpdateAsync — Actualiza un diagnóstico existente
-    // NOTA: Observaciones (entity) → descripcion (sql)
     // ────────────────────────────────────────────────────────────────────
     public async Task<bool> UpdateAsync(HojaDiagnostico entity)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             UPDATE public.hoja_diagnosticos
-            SET descripcion           = @Observaciones,
+            SET observaciones         = @Observaciones,
                 fecha_modificacion    = NOW()
             WHERE id = @Id AND clinica_id = @ClinicaId";
 

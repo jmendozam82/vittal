@@ -2,7 +2,7 @@ namespace Vittal.Entity.Models;
 
 /// <summary>
 /// Tratamiento y/o medicamento recetado en una hoja de cita médica.
-/// Tabla: public.hojas_tratamientos
+/// Tabla: public.hoja_tratamientos
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
 public class HojaTratamiento

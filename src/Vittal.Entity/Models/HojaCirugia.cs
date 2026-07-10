@@ -2,7 +2,7 @@ namespace Vittal.Entity.Models;
 
 /// <summary>
 /// Cirugía registrada en una hoja de cita médica.
-/// Tabla: public.hojas_cirugias
+/// Tabla: public.hoja_cirugias
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
 public class HojaCirugia

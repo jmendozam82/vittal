@@ -192,6 +192,7 @@ public class SidebarViewComponent : ViewComponent
 
         model.PuedeVerAgenda = true;
         model.PuedeVerExpedientes = true;
+        model.PuedeVerConstancias = true;
         model.PuedeVerReportes = true;
         model.PuedeVerAlertas = true;
     }
@@ -236,6 +237,7 @@ public class SidebarViewComponent : ViewComponent
         // ── Módulos individuales ──
         model.PuedeVerAgenda = modulos.Contains("agenda");
         model.PuedeVerExpedientes = modulos.Contains("expedientes");
+        model.PuedeVerConstancias = modulos.Contains("constancias");
         model.PuedeVerReportes = modulos.Contains("reportes");
         model.PuedeVerAlertas = modulos.Contains("alertas");
     }
@@ -278,6 +280,7 @@ public class SidebarViewModel
     // ── Módulos individuales ──
     public bool PuedeVerAgenda { get; set; }
     public bool PuedeVerExpedientes { get; set; }
+    public bool PuedeVerConstancias { get; set; }
     public bool PuedeVerReportes { get; set; }
     public bool PuedeVerAlertas { get; set; }
 

@@ -37,10 +37,14 @@ public class LineaTiempoRepository : ILineaTiempoRepository
         lt.hora_salida          AS HoraSalida,
         lt.activo               AS Activo,
         lt.fecha_creacion       AS FechaCreacion,
-        lt.fecha_modificacion   AS FechaModificacion";
+        lt.fecha_modificacion   AS FechaModificacion,
+        CONCAT(p.primer_nombre, ' ', p.primer_apellido) AS PacienteNombre,
+        s.nombre                AS SalaNombre";
 
     private const string FromTable = @"
-        FROM public.linea_tiempo lt";
+        FROM public.linea_tiempo lt
+        LEFT JOIN public.pacientes p ON p.id = lt.paciente_id
+        LEFT JOIN public.salas s ON s.id = lt.sala_id";
 
     // ────────────────────────────────────────────────────────────────────
     // 1. GetByCitaIdAsync — Obtiene todos los pasos de una cita
@@ -83,9 +87,9 @@ public class LineaTiempoRepository : ILineaTiempoRepository
             WHERE lt.clinica_id = @ClinicaId
               AND lt.activo = true
               AND c.estado != 'atendida'
-              AND DATE(lt.fecha_creacion) = @Fecha
+              AND c.fecha_cita = @Fecha
               AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
-            ORDER BY lt.fecha_creacion DESC";
+            ORDER BY c.fecha_cita, lt.orden ASC";
 
         try
         {

@@ -28,25 +28,25 @@ public class SignosVitalesHojaRepository : ISignosVitalesHojaRepository
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             SELECT 
-                svh.id,
-                svh.clinica_id,
-                svh.hoja_cita_id,
-                svh.sala_id,
-                svh.tipo_signo_vital_id,
-                svh.valor,
-                svh.unidad,
-                svh.fuera_de_rango,
-                svh.fecha_hora,
-                svh.registrado_por,
-                svh.activo,
-                svh.fecha_creacion,
-                svh.fecha_modificacion,
-                tsv.nombre,
-                tsv.unidad,
-                tsv.valor_min,
-                tsv.valor_max,
-                tsv.orden,
-                tsv.es_obligatorio
+                svh.id                    AS Id,
+                svh.clinica_id            AS ClinicaId,
+                svh.hoja_cita_id          AS HojaCitaId,
+                svh.sala_id               AS SalaId,
+                svh.tipo_signo_vital_id   AS TipoSignoVitalId,
+                svh.valor                 AS Valor,
+                svh.unidad                AS Unidad,
+                svh.fuera_de_rango        AS FueraDeRango,
+                svh.fecha_hora            AS FechaHora,
+                svh.registrado_por        AS RegistradoPor,
+                svh.activo                AS Activo,
+                svh.fecha_creacion        AS FechaCreacion,
+                svh.fecha_modificacion    AS FechaModificacion,
+                tsv.nombre                AS Nombre,
+                tsv.unidad                AS Unidad,
+                tsv.valor_min             AS ValorMin,
+                tsv.valor_max             AS ValorMax,
+                tsv.orden                 AS Orden,
+                tsv.es_obligatorio        AS EsObligatorio
             FROM public.signos_vitales_hoja svh
             INNER JOIN public.tipos_signo_vital tsv ON svh.tipo_signo_vital_id = tsv.id
             WHERE svh.clinica_id = @ClinicaId
@@ -61,7 +61,7 @@ public class SignosVitalesHojaRepository : ISignosVitalesHojaRepository
                 svh.TipoSignoVital = tsv;
                 return svh;
             },
-            splitOn: "nombre",
+            splitOn: "Nombre",
             param: new { ClinicaId = clinicaId, HojaCitaId = hojaCitaId }
         );
 
@@ -76,25 +76,25 @@ public class SignosVitalesHojaRepository : ISignosVitalesHojaRepository
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             SELECT 
-                svh.id,
-                svh.clinica_id,
-                svh.hoja_cita_id,
-                svh.sala_id,
-                svh.tipo_signo_vital_id,
-                svh.valor,
-                svh.unidad,
-                svh.fuera_de_rango,
-                svh.fecha_hora,
-                svh.registrado_por,
-                svh.activo,
-                svh.fecha_creacion,
-                svh.fecha_modificacion,
-                tsv.nombre,
-                tsv.unidad,
-                tsv.valor_min,
-                tsv.valor_max,
-                tsv.orden,
-                tsv.es_obligatorio
+                svh.id                    AS Id,
+                svh.clinica_id            AS ClinicaId,
+                svh.hoja_cita_id          AS HojaCitaId,
+                svh.sala_id               AS SalaId,
+                svh.tipo_signo_vital_id   AS TipoSignoVitalId,
+                svh.valor                 AS Valor,
+                svh.unidad                AS Unidad,
+                svh.fuera_de_rango        AS FueraDeRango,
+                svh.fecha_hora            AS FechaHora,
+                svh.registrado_por        AS RegistradoPor,
+                svh.activo                AS Activo,
+                svh.fecha_creacion        AS FechaCreacion,
+                svh.fecha_modificacion    AS FechaModificacion,
+                tsv.nombre                AS Nombre,
+                tsv.unidad                AS Unidad,
+                tsv.valor_min             AS ValorMin,
+                tsv.valor_max             AS ValorMax,
+                tsv.orden                 AS Orden,
+                tsv.es_obligatorio        AS EsObligatorio
             FROM public.signos_vitales_hoja svh
             INNER JOIN public.tipos_signo_vital tsv ON svh.tipo_signo_vital_id = tsv.id
             WHERE svh.id = @Id AND svh.clinica_id = @ClinicaId AND svh.activo = true";
@@ -106,7 +106,7 @@ public class SignosVitalesHojaRepository : ISignosVitalesHojaRepository
                 svh.TipoSignoVital = tsv;
                 return svh;
             },
-            splitOn: "nombre",
+            splitOn: "Nombre",
             param: new { Id = id, ClinicaId = clinicaId }
         );
 

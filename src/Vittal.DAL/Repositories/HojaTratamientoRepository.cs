@@ -9,8 +9,6 @@ namespace Vittal.DAL.Repositories;
 /// Repositorio para la tabla public.hoja_tratamientos.
 /// Implementa IHojaTratamientoRepository con Dapper y PostgreSQL.
 /// Historia de Usuario: HU20 — Expedientes
-/// 
-/// NOTA DE MAPEO: Entity usa 'Instrucciones', BD usa 'indicaciones'
 /// </summary>
 public class HojaTratamientoRepository : IHojaTratamientoRepository
 {
@@ -22,7 +20,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
     }
 
     // ── Columnas base para SELECT con JOIN ──────────────────────────────
-    // NOTA: indicaciones AS Instrucciones (mapeo entity ↔ sql)
+    // NOTA: instrucciones AS Instrucciones (mapeo entity ↔ sql)
     private const string SelectColumns = @"
         ht.id                       AS Id,
         ht.clinica_id               AS ClinicaId,
@@ -32,7 +30,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
         ht.dosis                     AS Dosis,
         ht.frecuencia                AS Frecuencia,
         ht.duracion                  AS Duracion,
-        ht.indicaciones               AS Instrucciones,
+        ht.instrucciones              AS Instrucciones,
         ht.activo                     AS Activo,
         ht.fecha_creacion           AS FechaCreacion,
         ht.fecha_modificacion       AS FechaModificacion,
@@ -78,8 +76,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 3. CreateAsync — Inserta un nuevo tratamiento en hoja. Retorna el ID autogenerado.
-    // NOTA: Instrucciones (entity) → indicaciones (sql)
+    // 3. CreateAsync — Inserta un nuevo tratamiento en hoja de cita. Retorna ID autogenerado.
     // ────────────────────────────────────────────────────────────────────
     public async Task<Guid> CreateAsync(HojaTratamiento entity)
     {
@@ -87,7 +84,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
         var sql = @"
             INSERT INTO public.hoja_tratamientos (
                 clinica_id, hoja_cita_id, medicamento_id, tratamiento_id,
-                dosis, frecuencia, duracion, indicaciones,
+                dosis, frecuencia, duracion, instrucciones,
                 activo, fecha_creacion
             )
             VALUES (
@@ -102,7 +99,6 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
 
     // ────────────────────────────────────────────────────────────────────
     // 4. UpdateAsync — Actualiza un tratamiento existente
-    // NOTA: Instrucciones (entity) → indicaciones (sql)
     // ────────────────────────────────────────────────────────────────────
     public async Task<bool> UpdateAsync(HojaTratamiento entity)
     {
@@ -114,7 +110,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
                 dosis                 = @Dosis,
                 frecuencia            = @Frecuencia,
                 duracion              = @Duracion,
-                indicaciones          = @Instrucciones,
+                instrucciones         = @Instrucciones,
                 fecha_modificacion    = NOW()
             WHERE id = @Id AND clinica_id = @ClinicaId";
 

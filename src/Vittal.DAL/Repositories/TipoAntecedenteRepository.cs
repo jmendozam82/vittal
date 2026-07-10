@@ -14,11 +14,24 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
         _dbConnectionFactory = dbConnectionFactory;
     }
 
+    private const string SelectColumns = @"
+        id                  AS Id,
+        clinica_id          AS ClinicaId,
+        sala_id             AS SalaId,
+        nombre              AS Nombre,
+        categoria           AS Categoria,
+        tipo_dato           AS TipoDato,
+        orden               AS Orden,
+        activo              AS Activo,
+        fecha_creacion      AS FechaCreacion,
+        fecha_modificacion  AS FechaModificacion,
+        creado_por          AS CreadoPor";
+
     public async Task<IEnumerable<TipoAntecedente>> GetAllAsync(Guid clinicaId, Guid salaId)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = @"
-            SELECT * FROM tipos_antecedente 
+        var sql = $@"
+            SELECT {SelectColumns} FROM tipos_antecedente 
             WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
             ORDER BY orden, nombre";
             
@@ -28,14 +41,14 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
     public async Task<TipoAntecedente?> GetByIdAsync(Guid clinicaId, Guid id)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = "SELECT * FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
+        var sql = $"SELECT {SelectColumns} FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
         return await connection.QuerySingleOrDefaultAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, Id = id });
     }
 
     public async Task<TipoAntecedente?> GetBySalaAndNameAsync(Guid clinicaId, Guid salaId, string nombre)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = "SELECT * FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND LOWER(nombre) = LOWER(@Nombre)";
+        var sql = $"SELECT {SelectColumns} FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND LOWER(nombre) = LOWER(@Nombre)";
         return await connection.QuerySingleOrDefaultAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, SalaId = salaId, Nombre = nombre });
     }
 

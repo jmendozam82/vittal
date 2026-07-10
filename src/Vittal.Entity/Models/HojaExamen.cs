@@ -2,7 +2,7 @@ namespace Vittal.Entity.Models;
 
 /// <summary>
 /// Examen registrado en una hoja de cita médica.
-/// Tabla: public.hojas_examenes
+/// Tabla: public.hoja_examenes
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
 public class HojaExamen

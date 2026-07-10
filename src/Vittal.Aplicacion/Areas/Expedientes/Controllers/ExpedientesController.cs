@@ -96,7 +96,7 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(Guid id)
+        public async Task<IActionResult> Details(Guid id, Guid? citaId = null)
         {
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{id}");
 
@@ -115,6 +115,18 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
 
             ViewBag.Expediente = data;
             ViewBag.ExpedienteId = id;
+            ViewBag.CitaId = citaId;  // Para auto-seleccionar en el modal de Nueva Hoja de Cita
+
+            // Si viene una citaId, obtener sus datos para el modal
+            if (citaId.HasValue)
+            {
+                var (citaSuccess, citaResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{citaId.Value}");
+                if (citaSuccess)
+                {
+                    ViewBag.CitaData = ExtractDataObject(citaResponse);
+                }
+            }
+
             return View();
         }
 
@@ -321,6 +333,71 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             return Json(new { success = true, data = doctores });
+        }
+
+        /// <summary>Catálogo de diagnósticos — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonDiagnosticosCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Diagnosticos");
+            if (!success)
+            {
+                _logger.LogWarning("JsonDiagnosticosCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Catálogo de medicamentos — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonMedicamentosCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Medicamentos");
+            if (!success)
+            {
+                _logger.LogWarning("JsonMedicamentosCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Catálogo de tratamientos — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonTratamientosCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Tratamientos");
+            if (!success)
+            {
+                _logger.LogWarning("JsonTratamientosCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Catálogo de cirugías — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonCirugiasCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Cirugias");
+            if (!success)
+            {
+                _logger.LogWarning("JsonCirugiasCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Catálogo de exámenes — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonExamenesCatalogo()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Examenes");
+            if (!success)
+            {
+                _logger.LogWarning("JsonExamenesCatalogo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
         }
 
         /// <summary>Busca pacientes por término — para autocomplete en Create</summary>

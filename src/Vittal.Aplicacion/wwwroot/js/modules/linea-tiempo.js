@@ -183,6 +183,7 @@
                     grupos[key] = {
                         citaId: key,
                         pacienteId: paso.pacienteId || '',
+                        pacienteNombre: paso.pacienteNombre || '',
                         pasos: []
                     };
                 }
@@ -197,8 +198,8 @@
                 var pCompletados = pPasos.filter(function (p) { return p.estado === 'completado'; }).length;
                 var pProgreso = pPasos.length > 0 ? Math.round((pCompletados / pPasos.length) * 100) : 0;
 
-                // Usar pacienteId como identificador (6 chars)
-                var pacienteLabel = grupo.pacienteId ? grupo.pacienteId.substring(0, 8) : 'Paciente';
+                // Mostrar nombre del paciente (desde JOIN en API), o fallback a ID
+                var pacienteLabel = grupo.pacienteNombre || (grupo.pacienteId ? grupo.pacienteId.substring(0, 8) : 'Paciente');
 
                 html += '<div class="vittal-card mb-3">';
                 html += '<div class="card-header d-flex align-items-center justify-content-between p-2">';

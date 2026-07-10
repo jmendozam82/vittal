@@ -389,9 +389,14 @@ window.vittalColaEspera = (function() {
 
             if (result.success) {
                 showToast('Atención iniciada: ' + nombre, 'info');
-                // Redirigir a la Línea de Tiempo de este paciente
-                var pacienteParam = encodeURIComponent(nombre);
-                window.location.href = '/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(id) + '&paciente=' + pacienteParam;
+                // Redirigir al expediente del paciente con la citaId pre-seleccionada
+                if (result.expedienteId) {
+                    window.location.href = '/Expedientes/Expedientes/Details/' + encodeURIComponent(result.expedienteId) + '?citaId=' + encodeURIComponent(result.citaId || id);
+                } else {
+                    // Fallback: si no hay expediente, ir a línea de tiempo como antes
+                    var pacienteParam = encodeURIComponent(nombre);
+                    window.location.href = '/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(id) + '&paciente=' + pacienteParam;
+                }
             } else {
                 showToast(result.message || 'Error al iniciar atención', 'error');
             }

@@ -32,6 +32,61 @@ public class DateOnlyTypeHandler : SqlMapper.TypeHandler<DateOnly>
 }
 
 /// <summary>
+/// TypeHandler para DateTime — acepta DateOnly de Npgsql 8+ para columnas DATE.
+/// Convierte DateOnly → DateTime (con hora 00:00:00 UTC).
+/// </summary>
+public class DateTimeTypeHandler : SqlMapper.TypeHandler<DateTime>
+{
+    public override DateTime Parse(object value)
+    {
+        return value switch
+        {
+            DateTime dt => dt,
+            DateOnly d => d.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+            string s => DateTime.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to DateTime")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, DateTime value)
+    {
+        parameter.Value = value;
+        parameter.DbType = DbType.DateTime;
+    }
+}
+
+/// <summary>
+/// TypeHandler para DateTime? — acepta DateOnly de Npgsql 8+ para columnas DATE.
+/// </summary>
+public class NullableDateTimeTypeHandler : SqlMapper.TypeHandler<DateTime?>
+{
+    public override DateTime? Parse(object value)
+    {
+        if (value is null or DBNull) return null;
+        return value switch
+        {
+            DateTime dt => dt,
+            DateOnly d => d.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+            string s => DateTime.Parse(s),
+            _ => throw new InvalidCastException($"Cannot convert {value.GetType().Name} to DateTime?")
+        };
+    }
+
+    public override void SetValue(IDbDataParameter parameter, DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            parameter.Value = value.Value;
+            parameter.DbType = DbType.DateTime;
+        }
+        else
+        {
+            parameter.Value = DBNull.Value;
+        }
+    }
+}
+
+/// <summary>
 /// TypeHandler para DateOnly? (nullable).
 /// </summary>
 public class NullableDateOnlyTypeHandler : SqlMapper.TypeHandler<DateOnly?>
@@ -189,6 +244,13 @@ public class DbConnectionFactory
         SqlMapper.AddTypeHandler(new NullableTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new TimeSpanTypeHandler());
         SqlMapper.AddTypeHandler(new NullableTimeSpanTypeHandler());
+        SqlMapper.AddTypeHandler(new DateTimeTypeHandler());
+        SqlMapper.AddTypeHandler(new NullableDateTimeTypeHandler());
+
+        // Mapeo snake_case → PascalCase automático para Dapper.
+        // Hace que clinica_id → ClinicaId, fecha_creacion → FechaCreacion, etc.
+        // Es una red de seguridad complementaria a los AS alias explícitos.
+        DefaultTypeMap.MatchNamesWithUnderscores = true;
     }
 
     private readonly IConfiguration _configuration;

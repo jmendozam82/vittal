@@ -14,11 +14,26 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
         _dbConnectionFactory = dbConnectionFactory;
     }
 
+    private const string SelectColumns = @"
+        id                  AS Id,
+        clinica_id          AS ClinicaId,
+        sala_id             AS SalaId,
+        nombre              AS Nombre,
+        unidad              AS Unidad,
+        valor_min           AS ValorMin,
+        valor_max           AS ValorMax,
+        orden               AS Orden,
+        es_obligatorio      AS EsObligatorio,
+        activo              AS Activo,
+        fecha_creacion      AS FechaCreacion,
+        fecha_modificacion  AS FechaModificacion,
+        creado_por          AS CreadoPor";
+
     public async Task<IEnumerable<TipoSignoVital>> GetAllAsync(Guid clinicaId, Guid salaId)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = @"
-            SELECT * FROM tipos_signo_vital 
+        var sql = $@"
+            SELECT {SelectColumns} FROM tipos_signo_vital 
             WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
             ORDER BY orden, nombre";
             
@@ -28,14 +43,14 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
     public async Task<TipoSignoVital?> GetByIdAsync(Guid clinicaId, Guid id)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = "SELECT * FROM tipos_signo_vital WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
+        var sql = $"SELECT {SelectColumns} FROM tipos_signo_vital WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
         return await connection.QuerySingleOrDefaultAsync<TipoSignoVital>(sql, new { ClinicaId = clinicaId, Id = id });
     }
 
     public async Task<TipoSignoVital?> GetBySalaAndNameAsync(Guid clinicaId, Guid salaId, string nombre)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = "SELECT * FROM tipos_signo_vital WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND LOWER(nombre) = LOWER(@Nombre)";
+        var sql = $"SELECT {SelectColumns} FROM tipos_signo_vital WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND LOWER(nombre) = LOWER(@Nombre)";
         return await connection.QuerySingleOrDefaultAsync<TipoSignoVital>(sql, new { ClinicaId = clinicaId, SalaId = salaId, Nombre = nombre });
     }
 

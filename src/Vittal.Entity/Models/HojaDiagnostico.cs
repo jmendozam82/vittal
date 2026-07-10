@@ -2,7 +2,7 @@ namespace Vittal.Entity.Models;
 
 /// <summary>
 /// Diagnóstico registrado en una hoja de cita médica.
-/// Tabla: public.hojas_diagnosticos
+/// Tabla: public.hoja_diagnosticos
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
 public class HojaDiagnostico
