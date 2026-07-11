@@ -1,6 +1,7 @@
 using Xunit;
 using Moq;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
@@ -13,6 +14,8 @@ namespace Vittal.BLL.Tests.Services;
 public class CitaServiceTests
 {
     private readonly Mock<ICitaRepository> _repoMock;
+    private readonly Mock<ILineaTiempoService> _lineaTiempoMock;
+    private readonly Mock<ILogger<CitaService>> _loggerMock;
     private readonly CitaService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
     private readonly Guid _doctorId = Guid.NewGuid();
@@ -22,7 +25,9 @@ public class CitaServiceTests
     public CitaServiceTests()
     {
         _repoMock = new Mock<ICitaRepository>();
-        _service = new CitaService(_repoMock.Object);
+        _lineaTiempoMock = new Mock<ILineaTiempoService>();
+        _loggerMock = new Mock<ILogger<CitaService>>();
+        _service = new CitaService(_repoMock.Object, _lineaTiempoMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -31,8 +36,8 @@ public class CitaServiceTests
         // Arrange
         var citas = new List<Cita>
         {
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateTime.UtcNow, HoraCita = new TimeSpan(9, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateTime.UtcNow, HoraCita = new TimeSpan(10, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow }
+            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateOnly.FromDateTime(DateTime.UtcNow), HoraCita = new TimeOnly(9, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateOnly.FromDateTime(DateTime.UtcNow), HoraCita = new TimeOnly(10, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow }
         };
         _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(citas);
 
@@ -69,8 +74,8 @@ public class CitaServiceTests
             ClinicaId = _clinicaId,
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow,
-            HoraCita = new TimeSpan(9, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow),
+            HoraCita = new TimeOnly(9, 0, 0),
             Estado = "agendada",
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -109,8 +114,8 @@ public class CitaServiceTests
         {
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow.AddDays(1),
-            HoraCita = new TimeSpan(9, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
             Estado = "agendada"
         };
         var newId = Guid.NewGuid();
@@ -147,8 +152,8 @@ public class CitaServiceTests
         {
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow.AddDays(1),
-            HoraCita = new TimeSpan(9, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
             Estado = "agendada"
         };
         _repoMock.Setup(r => r.CreateAsync(It.IsAny<Cita>())).ThrowsAsync(new Exception("DB error"));
@@ -171,8 +176,8 @@ public class CitaServiceTests
             ClinicaId = _clinicaId,
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow.AddDays(1),
-            HoraCita = new TimeSpan(9, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
             Estado = "agendada",
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -181,8 +186,8 @@ public class CitaServiceTests
         {
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow.AddDays(2),
-            HoraCita = new TimeSpan(10, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+            HoraCita = new TimeOnly(10, 0, 0),
             Estado = "agendada"
         };
 
@@ -206,8 +211,8 @@ public class CitaServiceTests
         {
             PacienteId = _pacienteId,
             DoctorId = _doctorId,
-            FechaCita = DateTime.UtcNow.AddDays(1),
-            HoraCita = new TimeSpan(9, 0, 0),
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
             Estado = "agendada"
         };
         _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync((Cita?)null);

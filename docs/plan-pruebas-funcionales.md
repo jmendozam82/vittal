@@ -585,9 +585,23 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 - [x] **Compilación**: 0 errores en todos los proyectos ✅
 - [x] **Commit+Push**: `8d1cd36` → `origin/main` ✅
 
-### 5.3 Imprimir Receta Médica ◻️
-- [ ] **Pendiente**: Funcionalidad de frontend exclusivamente (vista de impresión Razor)
-- [ ] **Endpoints API verificados**: `GET /api/hojas-tratamiento/hoja-cita/{id}` retorna datos completos de receta (medicamentos + tratamientos) ✅
+### 5.3 Imprimir Receta Médica ✅
+- [x] **Completado: Stack completo implementado** (2026-07-10):
+  - **ViewModel**: `RecetaMedicaViewModel`, `MedicamentoReceta`, `TratamientoReceta` en ExpedientesController
+  - **MVC Action**: `GET /Expedientes/Expedientes/ImprimirReceta?hojaCitaId={id}` — obtiene datos desde 4 APIs (hojas-cita, expedientes, pacientes, hojas-tratamiento, clinicas)
+  - **Vista Razor**: `ImprimirReceta.cshtml` con diseño profesional de receta médica:
+    - Encabezado: clínica + "Receta Médica" + número de receta
+    - Datos del paciente (nombre, email, celular, dirección)
+    - Datos del doctor + fecha de consulta
+    - Tabla de medicamentos con dosis, frecuencia, duración, instrucciones
+    - Lista de tratamientos no farmacológicos
+    - Línea de firma del médico
+    - `@media print` CSS optimizado para impresión
+    - Botones "Imprimir Receta" + "Cerrar" (solo en pantalla)
+  - **Botón en UI**: 🖨️ **Receta** en cada accordion de hoja de cita (Details.cshtml), abre nueva pestaña
+  - **Compilación**: 0 errores en todos los proyectos ✅
+  - **Commit+Push**: `08e035e` → `origin/main` ✅
+- [x] **Endpoints API verificados**: `GET /api/hojas-tratamiento/hoja-cita/{id}` retorna datos completos de receta ✅
 
 ### 5.4 Constancias Médicas (HU-E07) ✅
 - [x] **Endpoint disponible**: `POST /api/Constancias` → **201 Created**
@@ -617,6 +631,7 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 - ✅ **Entity comments**: Corregidos typos (`hojas_` → `hoja_`) en HojaDiagnostico, HojaTratamiento, HojaCirugia, HojaExamen
 - ✅ **Build**: 0 errores, 0 warnings tras todas las correcciones
 - ✅ **HojaRecomendacion stack**: Migración SQL (`hojas_recomendaciones`), Entity, DTOs, DAL, BLL, API Controller, IOC, frontend proxy-actions + modal. Commit `8d1cd36` → `origin/main`
+- ✅ **Imprimir Receta Médica**: ViewModel + action MVC + vista Razor con `@media print` + botón 🖨️ Receta en Details.cshtml. Commit `08e035e` → `origin/main`
 
 ---
 
@@ -801,6 +816,7 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 | F5 | Antecedentes del Paciente | HU-E05 | ✅ |
 | F6 | Segundo Paciente (Integración) | — | ✅ |
 | — | Recomendaciones en Hoja | HU20 (parcial) | ✅ |
+| — | Imprimir Receta Médica | HU20 (parcial) | ✅ |
 | — | Archivos Adjuntos (Storage) | HU20 (parcial) | ◻️ |
 | — | Imprimir Receta | HU20 | ◻️ |
 | — | Dashboard | HU23 | ◻️ |
@@ -846,5 +862,5 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 
 ---
 
-*Documento generado el 2026-07-01 | Última actualización: 2026-07-10 (hojas_recomendaciones) | Próxima revisión: Al completar cada fase*
+*Documento generado el 2026-07-01 | Última actualización: 2026-07-10 (Imprimir Receta) | Próxima revisión: Al completar cada fase*
 *Vittal v1.0.0 — Plan de Pruebas Funcionales*

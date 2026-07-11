@@ -200,7 +200,7 @@ namespace Vittal.Aplicacion.Helpers
         /// </summary>
         public async Task<(bool Success, T? Data, string? ErrorMessage)> PostAsync<T>(
             string endpoint,
-            object payload)
+            object? payload)
         {
             try
             {
