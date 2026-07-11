@@ -310,6 +310,59 @@ namespace Vittal.Aplicacion.Helpers
         }
 
         /// <summary>
+        /// POST multipart/form-data autenticado con campos adicionales.
+        /// Para subir archivos con metadata (expedienteId, hojaCitaId, etc.)
+        /// </summary>
+        public async Task<(bool Success, T? Data, string? ErrorMessage)> PostMultipartAsync<T>(
+            string endpoint,
+            string fileName,
+            Stream fileStream,
+            string contentType,
+            Dictionary<string, string>? fields = null,
+            string fileFieldName = "file")
+        {
+            try
+            {
+                using var formContent = new MultipartFormDataContent();
+                using var streamContent = new StreamContent(fileStream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                formContent.Add(streamContent, fileFieldName, fileName);
+
+                if (fields != null)
+                {
+                    foreach (var kvp in fields)
+                    {
+                        formContent.Add(new StringContent(kvp.Value), kvp.Key);
+                    }
+                }
+
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Post, endpoint, formContent);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    return (true, result, null);
+                }
+
+                var errorMsg = ExtractErrorMessage(responseBody);
+                _logger.LogWarning("API POST multipart {Endpoint} failed: {Status} - {Error}",
+                    endpoint, (int)response.StatusCode, errorMsg);
+                return (false, default, errorMsg);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error de conexion al subir archivo a {Endpoint}", endpoint);
+                return (false, default, "No se pudo conectar con el servidor.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al subir archivo a {Endpoint}", endpoint);
+                return (false, default, "Ocurrio un error inesperado.");
+            }
+        }
+
+        /// <summary>
         /// PATCH autenticado (actualizaci\u00f3n parcial).
         /// </summary>
         public async Task<(bool Success, T? Data, string? ErrorMessage)> PatchAsync<T>(

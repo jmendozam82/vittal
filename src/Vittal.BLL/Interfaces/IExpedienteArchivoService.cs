@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Vittal.DTO.ExpedienteArchivo;
 using Vittal.Utility.Results;
@@ -24,14 +25,23 @@ public interface IExpedienteArchivoService
     /// <summary>Obtiene todos los archivos activos de una hoja de cita.</summary>
     Task<ServiceResult<IEnumerable<ExpedienteArchivoResponseDto>>> GetByHojaCitaIdAsync(Guid clinicaId, Guid hojaCitaId);
 
-    /// <summary>Sube un nuevo archivo al expediente.</summary>
-    Task<ServiceResult<ExpedienteArchivoResponseDto>> CreateAsync(ExpedienteArchivoRequestDto dto, Guid clinicaId, Guid creadoPor);
+    /// <summary>
+    /// Sube un archivo a Supabase Storage y crea el registro en BD.
+    /// storagePath = {clinicaId}/{expedienteId}/{Guid}{extension}
+    /// El BLL recibe Stream + metadata (sin dependencia de ASP.NET Core).
+    /// </summary>
+    Task<ServiceResult<ExpedienteArchivoResponseDto>> UploadAsync(
+        Stream fileStream, string fileName, string contentType, long fileSize,
+        Guid expedienteId, Guid? hojaCitaId, Guid clinicaId, Guid creadoPor);
 
-    /// <summary>Actualiza los metadatos de un archivo.</summary>
+    /// <summary>Actualiza el nombre de un archivo.</summary>
     Task<ServiceResult<ExpedienteArchivoResponseDto>> UpdateAsync(Guid id, ExpedienteArchivoRequestDto dto, Guid clinicaId);
 
-    /// <summary>Desactiva un archivo y lo elimina del storage físico.</summary>
-    Task<ServiceResult<bool>> DeleteFromStorageAsync(Guid clinicaId, Guid id);
+    /// <summary>Obtiene una URL firmada temporal (3600s) para descargar el archivo.</summary>
+    Task<ServiceResult<string>> GetSignedUrlAsync(Guid clinicaId, Guid id);
+
+    /// <summary>Elimina el archivo de Supabase Storage y desactiva el registro (activo = false).</summary>
+    Task<ServiceResult<bool>> DeleteAsync(Guid clinicaId, Guid id);
 
     /// <summary>Desactiva un archivo (activo = false). No elimina el archivo físico.</summary>
     Task<ServiceResult<bool>> DeactivateAsync(Guid clinicaId, Guid id);

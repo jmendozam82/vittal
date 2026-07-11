@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
@@ -14,6 +15,7 @@ namespace Vittal.API.Controllers;
 /// <summary>
 /// API REST para gestión de Archivos Adjuntos a Expedientes.
 /// Historia de Usuario: HU20 — Expedientes
+/// Enfoque A: Upload server-side (Browser → API → Supabase Storage)
 /// </summary>
 [ApiController]
 [Route("api/expedientes-archivos")]
@@ -78,16 +80,38 @@ public class ExpedientesArchivosController : ControllerBase
         return result.ToActionResult();
     }
 
-    /// <summary>Sube un nuevo archivo al expediente.</summary>
-    [HttpPost]
+    /// <summary>
+    /// Sube un archivo al expediente (Enfoque A: server-side upload).
+    /// El archivo se envía como multipart/form-data.
+    /// El storagePath se genera automáticamente: {clinicaId}/{expedienteId}/{Guid}{ext}
+    /// </summary>
+    [HttpPost("upload")]
     [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<ExpedienteArchivoResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] ExpedienteArchivoRequestDto dto)
+    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB max
+    public async Task<IActionResult> Upload(
+        [FromForm] IFormFile file,
+        [FromForm] Guid expedienteId,
+        [FromForm] Guid? hojaCitaId = null)
     {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Debe seleccionar un archivo para subir."
+            });
+        }
+
         var clinicaId = User.GetClinicaId();
         var creadoPor = User.GetInternalUserId();
-        var result = await _service.CreateAsync(dto, clinicaId, creadoPor);
+
+        // Convertir IFormFile → Stream para BLL (sin dependencia ASP.NET Core)
+        using var stream = file.OpenReadStream();
+        var result = await _service.UploadAsync(
+            stream, file.FileName, file.ContentType, file.Length,
+            expedienteId, hojaCitaId, clinicaId, creadoPor);
 
         if (result.IsSuccess && result.Data != null)
         {
@@ -103,29 +127,29 @@ public class ExpedientesArchivosController : ControllerBase
         return result.ToActionResult();
     }
 
-    /// <summary>Actualiza los metadatos de un archivo.</summary>
-    [HttpPut("{id:guid}")]
-    [RequirePermission("expedientes", PermissionType.Update)]
-    [ProducesResponseType(typeof(ApiResponse<ExpedienteArchivoResponseDto>), StatusCodes.Status200OK)]
+    /// <summary>
+    /// Obtiene una URL firmada temporal (3600s) para descargar el archivo desde Supabase Storage.
+    /// </summary>
+    [HttpGet("{id:guid}/signed-url")]
+    [RequirePermission("expedientes", PermissionType.Read)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ExpedienteArchivoRequestDto dto)
+    public async Task<IActionResult> GetSignedUrl([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.UpdateAsync(id, dto, clinicaId);
+        var result = await _service.GetSignedUrlAsync(clinicaId, id);
         return result.ToActionResult();
     }
 
-    /// <summary>
-    /// Desactiva un archivo y lo elimina del storage físico.
-    /// </summary>
-    [HttpPatch("{id:guid}/eliminar-storage")]
+    /// <summary>Elimina un archivo de Supabase Storage y desactiva el registro en BD.</summary>
+    [HttpDelete("{id:guid}")]
     [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EliminarStorage([FromRoute] Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.DeleteFromStorageAsync(clinicaId, id);
+        var result = await _service.DeleteAsync(clinicaId, id);
         return result.ToActionResult();
     }
 

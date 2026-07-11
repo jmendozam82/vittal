@@ -132,17 +132,14 @@ public class ExpedienteArchivoRepository : IExpedienteArchivoRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 6. UpdateAsync — Actualiza un archivo existente
-    // NOTA: Esta tabla no tiene fecha_modificacion según el modelo
+    // 6. UpdateAsync — Actualiza el nombre de un archivo existente
     // ────────────────────────────────────────────────────────────────────
     public async Task<bool> UpdateAsync(ExpedienteArchivo entity)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @"
             UPDATE public.expediente_archivos
-            SET nombre_archivo          = @NombreArchivo,
-                tipo_mime               = @TipoMime,
-                url_publica             = @UrlPublica
+            SET nombre_archivo = @NombreArchivo
             WHERE id = @Id AND clinica_id = @ClinicaId";
 
         var rowsAffected = await connection.ExecuteAsync(sql, entity);
@@ -150,18 +147,7 @@ public class ExpedienteArchivoRepository : IExpedienteArchivoRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 7. DeleteFromStorageAsync — Desactiva archivo (marca para eliminación)
-    // NOTA: La eliminación física del storage se hace en capa superior (BLL/API)
-    // ────────────────────────────────────────────────────────────────────
-    public async Task<bool> DeleteFromStorageAsync(Guid clinicaId, Guid id)
-    {
-        // A nivel de BD, esto es igual a DeactivateAsync
-        // La eliminación física del archivo en Supabase Storage corresponde a otra capa
-        return await DeactivateAsync(clinicaId, id);
-    }
-
-    // ────────────────────────────────────────────────────────────────────
-    // 8. DeactivateAsync — Desactiva archivo (activo = false). Nunca DELETE.
+    // 7. DeactivateAsync — Desactiva archivo (activo = false). Nunca DELETE.
     // ────────────────────────────────────────────────────────────────────
     public async Task<bool> DeactivateAsync(Guid clinicaId, Guid id)
     {

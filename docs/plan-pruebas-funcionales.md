@@ -615,10 +615,39 @@ Antes de comenzar las pruebas funcionales, confirmar que todo está operativo:
 
 > **Nota:** El endpoint usa `GET /api/Constancias` (plural), no `/api/Constancium` ni otra variante. El tipo debe estar en minúsculas y usar guión bajo: `constancia_atencion`, no `ASISTENCIA` ni `Constancia Atencion`.
 
-### 5.5 Archivos Adjuntos (HU20 — Storage) ◻️
-- [ ] **Pendiente**: Endpoint `POST /api/expedientes-archivos` disponible pero requiere `storagePath` y `urlPublica` reales
-- [ ] **Requiere**: Subida previa a Supabase Storage para obtener las URLs
-- [ ] **Endpoint verificado**: `GET /api/expedientes-archivos/hoja-cita/{hojaCitaId}` → 200 OK (lista vacía) ✅
+### 5.5 Archivos Adjuntos (HU20 — Storage) ✅ (2026-07-11)
+
+**Stack completo implementado y verificado (Enfoque A: Server-Side Upload):**
+
+- [x] **Migración SQL**: Tabla `expediente_archivos` con RLS, índices en `expediente_id`, `hoja_cita_id`, `activo`, y `UNIQUE(hoja_cita_id, storage_path)`
+- [x] **Entity**: `ExpedienteArchivo.cs` — `clinica_id`, `expediente_id`, `hoja_cita_id`, `nombre_archivo`, `tipo_mime`, `storage_path`, `url_publica`, `tamano_bytes`, `activo`, `fecha_creacion`, `creado_por`
+- [x] **DTOs**: `ExpedienteArchivoRequestDto`, `ExpedienteArchivoResponseDto`
+- [x] **DAL**: `IExpedienteArchivoRepository` + `ExpedienteArchivoRepository` (Dapper) — `GetAllAsync`, `GetByIdAsync`, `GetByExpedienteIdAsync`, `GetByHojaCitaIdAsync`, `CreateAsync`, `UpdateAsync`, `DeactivateAsync`
+- [x] **BLL**: `IExpedienteArchivoService` + `ExpedienteArchivoService`:
+  - `UploadAsync` — Valida MIME (PDF, imágenes, Word, Excel, TXT) + tamaño (50MB), genera `storagePath` `{clinicaId}/{expedienteId}/{Guid}{ext}`, sube a Supabase Storage vía REST API (PUT), crea registro en BD
+  - `GetSignedUrlAsync` — POST `/storage/v1/object/sign/{bucket}/{path}` genera URL firmada temporal (3600s)
+  - `DeleteAsync` — DELETE de Supabase Storage + desactivar registro en BD
+- [x] **API Controller**: `ExpedientesArchivosController.cs`
+  - `GET /api/expedientes-archivos` → listar todos
+  - `GET /api/expedientes-archivos/expediente/{expedienteId}` → por expediente
+  - `GET /api/expedientes-archivos/hoja-cita/{hojaCitaId}` → por hoja de cita
+  - `POST /api/expedientes-archivos/upload` → `[FromForm]` multipart con `RequestSizeLimit(50MB)`
+  - `GET /api/expedientes-archivos/{id}/signed-url` → URL firmada temporal
+  - `DELETE /api/expedientes-archivos/{id}` → eliminar de Storage + desactivar BD
+  - `PATCH /api/expedientes-archivos/{id}/desactivar` → solo desactivar BD
+- [x] **MVC Frontend**: 
+  - Proxy actions: `JsonArchivos`, `JsonSubirArchivo` (multipart forward), `JsonSignedUrl`, `JsonEliminarArchivo`
+  - `ApiClientHelper.PostMultipartAsync<T>()` — nuevo método para enviar archivos + campos via multipart/form-data
+  - `Details.cshtml` — Botón **+ Archivo** en cada accordion de hoja de cita, modal con file picker + drag & drop + vista previa + barra de progreso, listado de archivos por hoja con botones descargar/eliminar
+- [x] **Supabase Storage**: Bucket `expedientes` (privado, 50MB max, MIME: PDF, JPEG, PNG, WebP, DOC, DOCX)
+- [x] **Build**: 0 errores, 0 warnings
+- [x] **Pruebas funcionales**:
+  - Upload PDF e imagen a hoja de cita → Supabase Storage + BD ✓
+  - Listado de archivos por hoja de cita se muestra correctamente ✓
+  - Descarga/visualización de archivos vía URL firmada ✓
+  - Toast notifications con UX mejorada (gradientes + iconos + animación slide-in) ✓
+
+> **Hallazgo resuelto (2026-07-11):** El `signedURL` retornado por Supabase Storage viene como `/object/sign/...` (sin prefijo `/storage/v1`). El código original concatenaba `{supabaseUrl}{signedPath}` generando una URL 404. Fix: `{supabaseUrl}/storage/v1{signedPath}`. Verificado con PowerShell directo: sin prefijo → 404, con prefijo → 200 OK (486KB imagen).
 
 ### 5.6 Correcciones Técnicas Realizadas (2026-07-10) ✅
 
@@ -817,8 +846,8 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 | F6 | Segundo Paciente (Integración) | — | ✅ |
 | — | Recomendaciones en Hoja | HU20 (parcial) | ✅ |
 | — | Imprimir Receta Médica | HU20 (parcial) | ✅ |
-| — | Archivos Adjuntos (Storage) | HU20 (parcial) | ◻️ |
-| — | Imprimir Receta | HU20 | ◻️ |
+| — | **Archivos Adjuntos (Storage)** | **HU20 (parcial)** | **✅** |
+| — | Imprimir Constancia Médica | HU-E07 | ◻️ |
 | — | Dashboard | HU23 | ◻️ |
 | — | Reportes | HU22 | ◻️ |
 | — | Alertas | HU23 | ◻️ |
@@ -862,5 +891,5 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 
 ---
 
-*Documento generado el 2026-07-01 | Última actualización: 2026-07-10 (Imprimir Receta) | Próxima revisión: Al completar cada fase*
+*Documento generado el 2026-07-01 | Última actualización: 2026-07-11 (Archivos Adjuntos Storage + UX Toast) | Próxima revisión: Al completar cada fase*
 *Vittal v1.0.0 — Plan de Pruebas Funcionales*

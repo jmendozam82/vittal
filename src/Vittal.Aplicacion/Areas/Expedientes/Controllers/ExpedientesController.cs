@@ -314,11 +314,25 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             return Json(new { success = true, data = data });
         }
 
-        /// <summary>Obtiene archivos de un expediente — para fetch() desde Details</summary>
+        /// <summary>Obtiene archivos de un expediente o de una hoja de cita — para fetch() desde Details</summary>
         [HttpGet]
-        public async Task<IActionResult> JsonArchivos(Guid expedienteId)
+        public async Task<IActionResult> JsonArchivos(Guid? expedienteId = null, Guid? hojaCitaId = null)
         {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/expedientes-archivos/expediente/{expedienteId}");
+            string apiEndpoint;
+            if (hojaCitaId.HasValue)
+            {
+                apiEndpoint = $"api/expedientes-archivos/hoja-cita/{hojaCitaId}";
+            }
+            else if (expedienteId.HasValue)
+            {
+                apiEndpoint = $"api/expedientes-archivos/expediente/{expedienteId}";
+            }
+            else
+            {
+                return Json(new { success = false, message = "Se requiere expedienteId o hojaCitaId." });
+            }
+
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(apiEndpoint);
 
             if (!success)
             {
@@ -328,6 +342,73 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
 
             var data = ExtractDataArray(response);
             return Json(new { success = true, data = data });
+        }
+
+        /// <summary>Proxy para subir archivos: recibe multipart/form-data y reenvía al API</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonSubirArchivo(IFormFile file, Guid expedienteId, Guid? hojaCitaId = null)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Debe seleccionar un archivo." });
+            }
+
+            var fields = new Dictionary<string, string>
+            {
+                { "expedienteId", expedienteId.ToString() }
+            };
+            if (hojaCitaId.HasValue)
+            {
+                fields["hojaCitaId"] = hojaCitaId.Value.ToString();
+            }
+
+            using var stream = file.OpenReadStream();
+            var (success, data, errorMessage) = await _apiClient.PostMultipartAsync<JsonElement>(
+                "api/expedientes-archivos/upload",
+                file.FileName,
+                stream,
+                file.ContentType,
+                fields);
+
+            if (!success)
+            {
+                _logger.LogWarning("JsonSubirArchivo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al subir archivo" });
+            }
+
+            return Json(new { success = true, message = "Archivo subido exitosamente.", data });
+        }
+
+        /// <summary>Proxy para descargar archivo (URL firmada) desde el API</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonSignedUrl(Guid id)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(
+                $"api/expedientes-archivos/{id}/signed-url");
+
+            if (!success)
+            {
+                _logger.LogWarning("JsonSignedUrl API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al obtener URL" });
+            }
+
+            return Json(new { success = true, data = response.TryGetProperty("data", out var d) ? d.GetString() : "" });
+        }
+
+        /// <summary>Proxy para eliminar archivo desde el API</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonEliminarArchivo(Guid id)
+        {
+            var (success, response, errorMessage) = await _apiClient.PatchAsync<JsonElement>(
+                $"api/expedientes-archivos/{id}/desactivar", new { });
+
+            if (!success)
+            {
+                _logger.LogWarning("JsonEliminarArchivo API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al eliminar archivo" });
+            }
+
+            return Json(new { success = true, message = "Archivo eliminado exitosamente." });
         }
 
         /// <summary>Obtiene pacientes para el dropdown — para fetch() desde Create/Edit</summary>

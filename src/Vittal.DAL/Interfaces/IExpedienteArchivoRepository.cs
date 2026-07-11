@@ -23,11 +23,8 @@ public interface IExpedienteArchivoRepository
     /// <summary>Crea un nuevo archivo y retorna su ID.</summary>
     Task<Guid> CreateAsync(ExpedienteArchivo entity);
 
-    /// <summary>Actualiza un archivo existente.</summary>
+    /// <summary>Actualiza el nombre de un archivo existente.</summary>
     Task<bool> UpdateAsync(ExpedienteArchivo entity);
-
-    /// <summary>Desactiva un archivo y elimina físicamente el archivo del storage (activo = false).</summary>
-    Task<bool> DeleteFromStorageAsync(Guid clinicaId, Guid id);
 
     /// <summary>Desactiva un archivo (activo = false). No elimina el archivo físico.</summary>
     Task<bool> DeactivateAsync(Guid clinicaId, Guid id);

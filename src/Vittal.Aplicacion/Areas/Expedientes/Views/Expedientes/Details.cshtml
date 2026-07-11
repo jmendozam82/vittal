@@ -63,20 +63,6 @@
         </div>
 
         <hr class="mt-4" />
-
-        <!-- Sección: Archivos -->
-        <h6 class="text-primary border-bottom pb-2 mb-3">
-            <i class="bi bi-paperclip me-2"></i>Archivos Adjuntos
-            <span class="badge bg-secondary rounded-pill ms-2" id="archivosCount">0</span>
-        </h6>
-
-        <div id="archivosContainer">
-            <div class="d-flex justify-content-center p-4">
-                <div class="spinner-border text-secondary" role="status">
-                    <span class="visually-hidden">Cargando archivos...</span>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -307,48 +293,45 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formArchivo">
-                    <input type="hidden" id="archExpedienteId" value="@expedienteId" />
-                    <div class="mb-3">
-                        <label for="archHojaCitaId" class="form-label fw-semibold">Asociar a Hoja de Cita (opcional)</label>
-                        <select class="form-select" id="archHojaCitaId">
-                            <option value="">-- General del expediente --</option>
-                        </select>
+                <input type="hidden" id="archExpedienteId" value="@expedienteId" />
+                <input type="hidden" id="archHojaCitaIdHidden" value="" />
+
+                <!-- Drop zone -->
+                <div id="dropZone" class="border border-2 border-dashed rounded-3 p-4 text-center mb-3"
+                     style="cursor:pointer; transition: border-color 0.2s, background 0.2s;">
+                    <i class="bi bi-cloud-arrow-up fs-1 text-muted d-block mb-2"></i>
+                    <p class="mb-1 fw-semibold text-muted">Arrastra un archivo aquí o haz clic para seleccionar</p>
+                    <small class="text-muted">PDF, imágenes, Word, Excel — Máx. 50 MB</small>
+                    <input type="file" id="archFileInput" class="d-none"
+                           accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt" />
+                </div>
+
+                <!-- Preview del archivo seleccionado -->
+                <div id="filePreview" class="d-none mb-3">
+                    <div class="d-flex align-items-center gap-2 p-2 bg-light rounded">
+                        <i id="filePreviewIcon" class="bi fs-4"></i>
+                        <div class="flex-grow-1">
+                            <div id="filePreviewName" class="fw-semibold small"></div>
+                            <small id="filePreviewSize" class="text-muted"></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnRemoveFile" title="Quitar archivo">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="archNombre" class="form-label fw-semibold">Nombre del Archivo <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="archNombre" required maxlength="255" placeholder="Nombre del archivo" />
+                </div>
+
+                <!-- Progress bar -->
+                <div id="uploadProgress" class="d-none mb-3">
+                    <div class="progress" style="height: 8px;">
+                        <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="archTipoMime" class="form-label fw-semibold">Tipo MIME <span class="text-danger">*</span></label>
-                        <select class="form-select" id="archTipoMime" required>
-                            <option value="">-- Seleccione --</option>
-                            <option value="application/pdf">PDF</option>
-                            <option value="image/jpeg">JPEG</option>
-                            <option value="image/png">PNG</option>
-                            <option value="image/webp">WebP</option>
-                            <option value="text/plain">Texto plano</option>
-                            <option value="application/msword">Word</option>
-                            <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="archStoragePath" class="form-label fw-semibold">Ruta de Storage <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="archStoragePath" required maxlength="500" placeholder="ej: clinicaId/pacienteId/archivo.pdf" />
-                    </div>
-                    <div class="mb-3">
-                        <label for="archUrl" class="form-label fw-semibold">URL Pública (opcional)</label>
-                        <input type="text" class="form-control" id="archUrl" maxlength="1000" placeholder="URL pública firmada" />
-                    </div>
-                    <div class="mb-3">
-                        <label for="archTamano" class="form-label fw-semibold">Tamaño (bytes, opcional)</label>
-                        <input type="number" class="form-control" id="archTamano" placeholder="0" />
-                    </div>
-                </form>
+                    <small id="uploadProgressText" class="text-muted mt-1 d-block text-center">Subiendo...</small>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary btn-sm" id="btnSubirArchivo">
+                <button type="button" class="btn btn-primary btn-sm" id="btnSubirArchivo" disabled>
                     <i class="bi bi-upload me-1"></i> Subir Archivo
                 </button>
             </div>
@@ -393,7 +376,6 @@
 <script>
     const EXPEDIENTE_ID = '@expedienteId';
     let hojasCita = [];
-    let archivos = [];
 
     // URLs seguras desde el servidor
     const URLS = {
@@ -405,6 +387,9 @@
         examenes: '@Url.Action("JsonExamenes")',
         recomendaciones: '@Url.Action("JsonRecomendaciones")',
         archivos: '@Url.Action("JsonArchivos")',
+        subirArchivo: '@Url.Action("JsonSubirArchivo")',
+        signedUrlArchivo: '@Url.Action("JsonSignedUrl")',
+        eliminarArchivo: '@Url.Action("JsonEliminarArchivo")',
         crearHojaCita: '@Url.Action("JsonCrearHojaCita")',
         crearDiagnostico: '@Url.Action("JsonCrearDiagnostico")',
         crearTratamiento: '@Url.Action("JsonCrearTratamiento")',
@@ -425,7 +410,6 @@
         await cargarExpediente();
         await Promise.all([
             cargarHojasCita(),
-            cargarArchivos(),
             cargarDoctoresDropdown()
         ]);
 
@@ -701,8 +685,11 @@
                             <button class="btn btn-outline-secondary btn-sm" onclick="abrirModalRecomendacion('${h.id}')">
                                 <i class="bi bi-chat-quote me-1"></i> + Recomendación
                             </button>
+                            <button class="btn btn-outline-dark btn-sm" onclick="abrirModalArchivo('${h.id}')">
+                                <i class="bi bi-paperclip me-1"></i> + Archivo
+                            </button>
                             <a href="/Expedientes/Expedientes/ImprimirReceta?hojaCitaId=${h.id}" target="_blank" class="btn btn-outline-dark btn-sm" title="Imprimir receta médica">
-                                <i class="bi bi-printer me-1"></i> 🖨️ Receta
+                                <i class="bi bi-printer me-1"></i> Receta
                             </a>
                         </div>
                         <hr class="my-2">
@@ -722,6 +709,9 @@
                         <div id="recomendaciones_${h.id}">
                             <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-secondary"></div></div>
                         </div>
+                        <div id="archivos_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-dark"></div></div>
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -732,13 +722,14 @@
 
     // ========== CARGAR DETALLES DE HOJA (diagnósticos, tratamientos, etc.) ==========
     async function cargarDetallesHoja(hojaCitaId, idx) {
-        // Cargar diagnósticos, tratamientos, cirugías, exámenes
+        // Cargar diagnósticos, tratamientos, cirugías, exámenes, recomendaciones, archivos
         await Promise.all([
             cargarDiagnosticos(hojaCitaId),
             cargarTratamientos(hojaCitaId),
             cargarCirugias(hojaCitaId),
             cargarExamenes(hojaCitaId),
-            cargarRecomendaciones(hojaCitaId)
+            cargarRecomendaciones(hojaCitaId),
+            cargarArchivosHoja(hojaCitaId)
         ]);
     }
 
@@ -833,70 +824,87 @@
         }
     }
 
-    // ========== CARGAR ARCHIVOS ==========
-    async function cargarArchivos() {
+    // ========== CARGAR ARCHIVOS POR HOJA DE CITA ==========
+    async function cargarArchivosHoja(hojaCitaId) {
+        const container = document.getElementById('archivos_' + hojaCitaId);
+        if (!container) return;
         try {
-            const res = await fetch(`${URLS.archivos}?expedienteId=${EXPEDIENTE_ID}`, {
+            const res = await fetch(`${URLS.archivos}?hojaCitaId=${hojaCitaId}`, {
                 headers: { 'Content-Type': 'application/json' }
             });
             if (!res.ok) {
-                document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-warning">Error al cargar archivos.</div>';
+                container.innerHTML = '<div class="text-danger small">Error al cargar archivos.</div>';
                 return;
             }
             const json = await res.json();
-            if (!json.success) {
-                document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-warning">' + (json.message || 'Error al cargar.') + '</div>';
-                return;
+            const data = json.success ? (json.data || []) : [];
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin archivos adjuntos.</div>';
+            } else {
+                container.innerHTML = '<strong class="small text-dark"><i class="bi bi-paperclip me-1"></i>Archivos:</strong>' +
+                    data.map(a => {
+                        const icono = a.tipoMime?.includes('pdf') ? 'bi-filetype-pdf text-danger' :
+                                      a.tipoMime?.includes('image') ? 'bi-filetype-jpg text-info' :
+                                      'bi-file-earmark text-muted';
+                        const tamanoStr = a.tamanoBytes ? formatBytes(a.tamanoBytes) : '';
+                        return `<div class="d-flex justify-content-between align-items-center small ms-2 py-1 border-bottom">
+                            <div>
+                                <i class="bi ${icono} me-1"></i>
+                                <span>${escapeHtml(a.nombreArchivo || '')}</span>
+                                ${tamanoStr ? '<small class="text-muted ms-1">(' + tamanoStr + ')</small>' : ''}
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="descargarArchivo('${a.id}')" title="Descargar">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="eliminarArchivo('${a.id}', '${hojaCitaId}')" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                    }).join('');
             }
-
-            archivos = json.data || [];
-            document.getElementById('archivosCount').textContent = archivos.length;
-            renderArchivos(archivos);
         } catch (err) {
-            document.getElementById('archivosContainer').innerHTML = '<div class="alert alert-danger">Error de conexión.</div>';
+            container.innerHTML = '<div class="text-danger small">Error de conexión.</div>';
         }
     }
 
-    function renderArchivos(archivos) {
-        if (archivos.length === 0) {
-            document.getElementById('archivosContainer').innerHTML = `
-                <div class="text-center py-4 text-muted">
-                    <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
-                    No hay archivos adjuntos.
-                    <br><button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
-                        <i class="bi bi-upload me-1"></i>Subir archivo
-                    </button>
-                </div>`;
-            return;
+    // ========== DESCARGAR ARCHIVO (URL firmada) ==========
+    window.descargarArchivo = async function(archivoId) {
+        try {
+            const res = await fetch(`${URLS.signedUrlArchivo}?id=${archivoId}`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (json.success && json.data) {
+                window.open(json.data, '_blank');
+            } else {
+                showToast('danger', json.message || 'No se pudo generar la URL de descarga.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error al descargar archivo.');
         }
+    };
 
-        const items = archivos.map(a => {
-            const icono = a.tipoMime?.includes('pdf') ? 'bi-filetype-pdf text-danger' :
-                          a.tipoMime?.includes('image') ? 'bi-filetype-jpg text-info' :
-                          'bi-file-earmark text-muted';
-            const tamanoStr = a.tamanoBytes ? formatBytes(a.tamanoBytes) : '';
-            return `
-            <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                <div>
-                    <i class="bi ${icono} me-2 fs-5"></i>
-                    <strong>${escapeHtml(a.nombreArchivo || '')}</strong>
-                    ${tamanoStr ? '<br><small class="text-muted">' + tamanoStr + '</small>' : ''}
-                </div>
-                <div>
-                    ${a.urlPublica ? `<a href="${escapeHtml(a.urlPublica)}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Ver archivo"><i class="bi bi-eye"></i></a>` : ''}
-                </div>
-            </div>`;
-        }).join('');
-
-        document.getElementById('archivosContainer').innerHTML = `
-            <div class="d-flex justify-content-between mb-2">
-                <span></span>
-                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
-                    <i class="bi bi-upload me-1"></i> Subir Archivo
-                </button>
-            </div>
-            <div class="list-group">${items}</div>`;
-    }
+    // ========== ELIMINAR ARCHIVO ==========
+    window.eliminarArchivo = async function(archivoId, hojaCitaId) {
+        if (!confirm('¿Está seguro de eliminar este archivo?')) return;
+        try {
+            const res = await fetch(`${URLS.eliminarArchivo}?id=${archivoId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            if (json.success) {
+                showToast('success', 'Archivo eliminado.');
+                await cargarArchivosHoja(hojaCitaId);
+            } else {
+                showToast('danger', json.message || 'Error al eliminar.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión.');
+        }
+    };
 
     // ========== MODALES: ACCIONES ==========
 
@@ -1158,45 +1166,160 @@
         }
     });
 
-    // --- SUBIR ARCHIVO ---
-    document.getElementById('btnSubirArchivo').addEventListener('click', async function() {
-        const nombre = document.getElementById('archNombre').value.trim();
-        const tipoMime = document.getElementById('archTipoMime').value;
-        const storagePath = document.getElementById('archStoragePath').value.trim();
+    // --- SUBIR ARCHIVO (Enfoque A: FormData → API → Supabase Storage) ---
+    let selectedFile = null;
+    let currentUploadHojaCitaId = null;
 
-        if (!nombre) { showToast('danger', 'El nombre del archivo es obligatorio.'); return; }
-        if (!tipoMime) { showToast('danger', 'Seleccione un tipo MIME.'); return; }
-        if (!storagePath) { showToast('danger', 'La ruta de storage es obligatoria.'); return; }
+    // Abrir modal con hojaCitaId preseleccionado
+    window.abrirModalArchivo = function(hojaCitaId) {
+        currentUploadHojaCitaId = hojaCitaId;
+        document.getElementById('archHojaCitaIdHidden').value = hojaCitaId;
+        resetFileUpload();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSubirArchivo')).show();
+    };
+
+    function resetFileUpload() {
+        selectedFile = null;
+        document.getElementById('archFileInput').value = '';
+        document.getElementById('filePreview').classList.add('d-none');
+        document.getElementById('uploadProgress').classList.add('d-none');
+        document.getElementById('btnSubirArchivo').disabled = true;
+        const dropZone = document.getElementById('dropZone');
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+    }
+
+    // Drop zone events
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('archFileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#0d6efd';
+        dropZone.style.background = '#e7f1ff';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+        if (e.dataTransfer.files.length > 0) {
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        const allowedTypes = [
+            'application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+            showToast('danger', 'Tipo de archivo no permitido. Solo: PDF, imágenes, Word, Excel, TXT.');
+            return;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('danger', 'El archivo supera el tamaño máximo de 50 MB.');
+            return;
+        }
+
+        selectedFile = file;
+
+        // Mostrar preview
+        const iconEl = document.getElementById('filePreviewIcon');
+        iconEl.className = 'bi fs-4 ' + (
+            file.type.includes('pdf') ? 'bi-filetype-pdf text-danger' :
+            file.type.includes('image') ? 'bi-filetype-jpg text-info' :
+            'bi-file-earmark text-muted'
+        );
+        document.getElementById('filePreviewName').textContent = file.name;
+        document.getElementById('filePreviewSize').textContent = formatBytes(file.size);
+        document.getElementById('filePreview').classList.remove('d-none');
+        document.getElementById('btnSubirArchivo').disabled = false;
+    }
+
+    // Botón quitar archivo
+    document.getElementById('btnRemoveFile').addEventListener('click', resetFileUpload);
+
+    // Botón subir archivo
+    document.getElementById('btnSubirArchivo').addEventListener('click', async function() {
+        if (!selectedFile) { showToast('danger', 'Seleccione un archivo.'); return; }
 
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Subiendo...';
 
+        const progress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('uploadProgressBar');
+        const progressText = document.getElementById('uploadProgressText');
+        progress.classList.remove('d-none');
+        progressBar.style.width = '30%';
+        progressText.textContent = 'Subiendo archivo al servidor...';
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('expedienteId', EXPEDIENTE_ID);
+        formData.append('hojaCitaId', currentUploadHojaCitaId || '');
+
         try {
-            const res = await fetch('/api/expedientes-archivos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    expedienteId: EXPEDIENTE_ID,
-                    hojaCitaId: document.getElementById('archHojaCitaId').value || null,
-                    nombreArchivo: nombre,
-                    tipoMime: tipoMime,
-                    storagePath: storagePath,
-                    urlPublica: document.getElementById('archUrl').value.trim() || null,
-                    tamanoBytes: parseInt(document.getElementById('archTamano').value) || null
-                })
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', URLS.subirArchivo, true);
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressText.textContent = `Subiendo... ${pct}%`;
+                }
             });
-            const json = await res.json();
-            if (res.ok && json.success) {
-                showToast('success', 'Archivo subido exitosamente.');
-                bootstrap.Modal.getInstance(document.getElementById('modalSubirArchivo')).hide();
-                await cargarArchivos();
-                document.getElementById('formArchivo').reset();
+
+            const result = await new Promise((resolve, reject) => {
+                xhr.onload = function() {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch {
+                        reject(new Error('Respuesta inválida del servidor.'));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Error de conexión.'));
+                xhr.send(formData);
+            });
+
+            if (xhr.status >= 200 && xhr.status < 300 && result.success) {
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Archivo subido exitosamente.';
+                showToast('success', result.message || '<i class="bi bi-file-earmark-check me-1"></i>Archivo subido exitosamente.');
+
+                // Recargar archivos de la hoja
+                if (currentUploadHojaCitaId) {
+                    await cargarArchivosHoja(currentUploadHojaCitaId);
+                }
+
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalSubirArchivo')).hide();
+                    resetFileUpload();
+                }, 800);
             } else {
-                showToast('danger', json.message || 'Error al subir archivo.');
+                showToast('danger', result.message || 'Error al subir archivo.');
+                progress.classList.add('d-none');
             }
         } catch (err) {
-            showToast('danger', 'Error de conexión.');
+            showToast('danger', 'Error de conexión: ' + err.message);
+            progress.classList.add('d-none');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-upload me-1"></i> Subir Archivo';
@@ -1223,14 +1346,20 @@
         return size.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
     }
 
-    function showToast(message, type) {
+    function showToast(type, message) {
         const container = document.getElementById('toastContainer') || createToastContainer();
+        const icons = { success: 'bi-check-circle-fill', danger: 'bi-exclamation-triangle-fill', warning: 'bi-exclamation-circle-fill', info: 'bi-info-circle-fill' };
+        const icon = icons[type] || 'bi-info-circle-fill';
         const toast = document.createElement('div');
-        toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
-        toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:450px;';
-        toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        toast.className = `toast-vittal toast-${type} shadow`;
+        toast.innerHTML = `
+            <div class="toast-vittal-icon"><i class="bi ${icon}"></i></div>
+            <div class="toast-vittal-body">${message}</div>
+            <button type="button" class="toast-vittal-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>`;
         container.appendChild(toast);
-        setTimeout(() => toast.remove(), 5000);
+        // Trigger entrance animation
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
     }
 
     function createToastContainer() {
@@ -1240,4 +1369,33 @@
         return div;
     }
 </script>
+
+<style>
+    #toastContainer {
+        position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+        display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .toast-vittal {
+        display: flex; align-items: center; gap: 0.65rem;
+        padding: 0.75rem 1rem; border-radius: 0.5rem;
+        min-width: 320px; max-width: 450px;
+        font-size: 0.875rem; color: #fff;
+        transform: translateX(120%); transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s;
+        opacity: 0; cursor: default;
+    }
+    .toast-vittal.show { transform: translateX(0); opacity: 1; }
+    .toast-vittal-icon { font-size: 1.25rem; flex-shrink: 0; }
+    .toast-vittal-body { flex: 1; line-height: 1.4; }
+    .toast-vittal-close {
+        background: none; border: none; color: rgba(255,255,255,0.7);
+        font-size: 1.1rem; cursor: pointer; padding: 0; line-height: 1;
+    }
+    .toast-vittal-close:hover { color: #fff; }
+    .toast-success { background: linear-gradient(135deg, #28a745, #218838); }
+    .toast-danger  { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .toast-warning { background: linear-gradient(135deg, #ffc107, #e0a800); color: #333; }
+    .toast-warning .toast-vittal-close { color: rgba(0,0,0,0.5); }
+    .toast-warning .toast-vittal-close:hover { color: #000; }
+    .toast-info    { background: linear-gradient(135deg, #17a2b8, #138496); }
+</style>
 }
