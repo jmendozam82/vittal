@@ -1,0 +1,219 @@
+@model Vittal.DTO.ContactoLanding.ContactoLandingRequestDto
+@{
+    Layout = "_LayoutLanding";
+    ViewData["Title"] = "Contacto - Software Vittal";
+}
+
+<!-- ════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-hero" style="min-height: 40vh; padding: 6rem 0 3rem;">
+    <div class="container text-center">
+        <div class="hero-badge">Contacto</div>
+        <h1 class="hero-title" style="font-size: 2.5rem;">
+            Hablemos sobre <span class="highlight">tu clínica</span>
+        </h1>
+        <p class="hero-subtitle mx-auto">
+            Cuéntanos sobre tu clínica y te contactaremos para mostrarte
+            cómo Vittal puede ayudarte.
+        </p>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CONTACT FORM
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-contact">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="row g-5">
+                    <!-- Formulario -->
+                    <div class="col-lg-7">
+                        <div class="contact-card">
+                            <h4 class="mb-1">Envíanos un mensaje</h4>
+                            <p class="text-muted small mb-4">
+                                Completa el formulario y te responderemos a la brevedad.
+                            </p>
+
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    Corrige los errores en el formulario antes de enviar.
+                                    <div asp-validation-summary="ModelOnly" class="mt-1"></div>
+                                    <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+
+                            <form asp-action="Contacto" method="post" id="contactoForm" novalidate>
+                                @Html.AntiForgeryToken()
+
+                                <div class="mb-3">
+                                    <label asp-for="NombreCompleto" class="form-label fw-semibold small">
+                                        Nombre completo <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="NombreCompleto"
+                                           class="form-control form-control-lg"
+                                           placeholder="Ej. Juan Pérez López"
+                                           autocomplete="name" />
+                                    <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="Email" class="form-label fw-semibold small">
+                                            Correo electrónico <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="Email"
+                                               class="form-control form-control-lg"
+                                               placeholder="correo@ejemplo.com"
+                                               autocomplete="email" />
+                                        <span asp-validation-for="Email" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Telefono" class="form-label fw-semibold small">
+                                            Teléfono
+                                        </label>
+                                        <input asp-for="Telefono"
+                                               class="form-control form-control-lg"
+                                               placeholder="+52 55 1234 5678"
+                                               autocomplete="tel" />
+                                        <span asp-validation-for="Telefono" class="text-danger small"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Rol" class="form-label fw-semibold small">
+                                        ¿Cuál es tu rol? <span class="text-danger">*</span>
+                                    </label>
+                                    <select asp-for="Rol"
+                                            class="form-select form-select-lg">
+                                        <option value="">Selecciona tu rol</option>
+                                        <option value="director">Director / Dueño</option>
+                                        <option value="gerente">Gerente / Administrador</option>
+                                        <option value="doctor">Doctor / Médico</option>
+                                        <option value="admin">Administrativo</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <span asp-validation-for="Rol" class="text-danger small"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="Mensaje" class="form-label fw-semibold small">
+                                        Mensaje <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea asp-for="Mensaje"
+                                              class="form-control form-control-lg"
+                                              rows="4"
+                                              placeholder="Cuéntanos sobre tu clínica, qué necesidades tienes o cualquier pregunta que tengas..."></textarea>
+                                    <span asp-validation-for="Mensaje" class="text-danger small"></span>
+                                </div>
+
+                                <button type="submit" class="hero-cta-primary w-100 justify-content-center" id="btnEnviar">
+                                    <i class="bi bi-send"></i> Enviar mensaje
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Información de contacto -->
+                    <div class="col-lg-5">
+                        <div class="contact-card h-100">
+                            <h4 class="mb-4">Información de contacto</h4>
+
+                            <div class="contact-info-item">
+                                <div class="contact-info-icon">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <div>
+                                    <h6>Correo electrónico</h6>
+                                    <p>jorgemendozamartinez@@gmail.com</p>
+                                </div>
+                            </div>
+
+                            <div class="contact-info-item">
+                                <div class="contact-info-icon">
+                                    <i class="bi bi-telephone"></i>
+                                </div>
+                                <div>
+                                    <h6>Teléfono</h6>
+                                    <p>+(505) 8920 4755</p>
+                                </div>
+                            </div>
+
+                            <div class="contact-info-item">
+                                <div class="contact-info-icon">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <div>
+                                    <h6>Ubicación</h6>
+                                    <p>Managua, Nicaragua</p>
+                                </div>
+                            </div>
+
+                            <div class="contact-info-item">
+                                <div class="contact-info-icon">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+                                <div>
+                                    <h6>Horario de atención</h6>
+                                    <p>Lun - Vie: 9:00 AM - 6:00 PM</p>
+                                </div>
+                            </div>
+
+                            <hr class="my-4" />
+
+                            <h6 class="fw-semibold mb-3">Síguenos</h6>
+                            <div class="d-flex gap-3">
+                                <a href="#" class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                   style="width: 44px; height: 44px;" aria-label="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                   style="width: 44px; height: 44px;" aria-label="Twitter / X">
+                                    <i class="bi bi-twitter-x"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                   style="width: 44px; height: 44px;" aria-label="LinkedIn">
+                                    <i class="bi bi-linkedin"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // ── jQuery Validate: mensajes en español ──────────────────
+        (function ($) {
+            if ($.validator) {
+                $.extend($.validator.messages, {
+                    required: 'Este campo es obligatorio.',
+                    email: 'Ingresa un correo electrónico válido.',
+                    maxlength: $.validator.format('Máximo {0} caracteres.'),
+                    minlength: $.validator.format('Mínimo {0} caracteres.'),
+                });
+            }
+        })(jQuery);
+
+        // ── Loading state on submit ───────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('contactoForm');
+            const btn = document.getElementById('btnEnviar');
+
+            if (form && btn) {
+                form.addEventListener('submit', function () {
+                    if (form.checkValidity()) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Enviando...';
+                    }
+                });
+            }
+        });
+    </script>
+}

@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
+using Vittal.BLL.Validators;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
 using Vittal.DAL.Repositories;
@@ -110,6 +112,20 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IAlertaEsperaService, AlertaEsperaService>();
         services.AddScoped<IReporteService, ReporteService>();
+
+        // ══════════════════════════════════════════════
+        // HU-L01 — Landing Page Informativa
+        // ══════════════════════════════════════════════
+        services.AddScoped<IContactoLandingRepository, ContactoLandingRepository>();
+        services.AddScoped<IContactoLandingService, ContactoLandingService>();
+
+        // ══════════════════════════════════════════════
+        // Servicios compartidos
+        // ══════════════════════════════════════════════
+        services.AddScoped<IEmailService, EmailService>();
+
+        // FluentValidation — auto-register validators from BLL assembly
+        services.AddValidatorsFromAssemblyContaining<ContactoLandingRequestValidator>();
 
         return services;
     }

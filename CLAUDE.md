@@ -20,7 +20,7 @@
 
 ### Descripción del sistema
 
-Vittal es una plataforma médica web multi-tenant que centraliza la gestión de citas, expedientes clínicos, diagnósticos, tratamientos, cirugías y toda la información médica de los pacientes. Está diseñada para ser adoptada por múltiples clínicas médicas como servicio SaaS, y expone su API como BaaS para que sistemas externos puedan integrarse.
+Vittal es una plataforma médica web multi-tenant que centraliza la gestión de citas, expedientes clínicos, diagnósticos, tratamientos, cirugías y toda la información médica de los pacientes. Está diseñada para ser adoptada por múltiples clínicas médicas como servicio SaaS, y expone su API como BaaS para que sistemas externos puedan integrarse. Incluye una Landing Page informativa como punto de entrada público para prospectos y futuros socios.
 
 ---
 
@@ -255,13 +255,15 @@ Sala lista para atender pacientes en segundos
 | HU23 | Dashboard | Dashboard | Media | 80 | 10 |
 | HU22 | Reportes | Reportes | Media | 80 | 6 |
 | HU23 | Alertas Configurables | Alertas | Media | 70 | 2 |
+| **HU-L01** | **Landing Page Informativa** | **Landing** | **Alta** | **90** | **3** |
 
-**Total estimado: ~153 días de desarrollo** *(+11 días por Sprint de Especialidades por Sala)*
+**Total estimado: ~156 días de desarrollo** *(+11 días por Sprint de Especialidades por Sala)*
 
 ### Áreas MVC del Frontend
 
 ```
 Vittal.Aplicacion/Areas/
+├── Landing/         ← HU-L01 (Público — sin auth)
 ├── Login/           ← HU02
 ├── Administracion/  ← HU03, HU04, HU05, HU06
 ├── Catalogos/       ← HU07 al HU17

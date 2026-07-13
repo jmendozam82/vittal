@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 24/7 Clock -->
+  <circle cx="12" cy="12" r="10"/>
+  <polyline points="12,6 12,12 16,14"/>
+  <circle cx="12" cy="12" r="3" fill="#2563EB" opacity="0.3"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB"/>
+      <stop offset="100%" style="stop-color:#1E40AF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="100" cy="100" r="200" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="1100" cy="530" r="300" fill="rgba(255,255,255,0.05)"/>
+  
+  <!-- Vittal text -->
+  <text x="600" y="280" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="96" font-weight="800" fill="white">VITTAL</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="360" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="400" fill="rgba(255,255,255,0.9)">Software de Gestión Clínica Inteligente</text>
+  
+  <!-- Tagline -->
+  <text x="600" y="420" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="300" fill="rgba(255,255,255,0.7)">Expedientes • Agenda • Citas • Reportes</text>
+  
+  <!-- Bottom line -->
+  <rect x="500" y="460" width="200" height="4" rx="2" fill="rgba(255,255,255,0.5)"/>
+</svg>

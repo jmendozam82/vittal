@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- History/Antecedentes / Antecedentes -->
+  <circle cx="12" cy="12" r="10"/>
+  <polyline points="12,6 12,12 16,14"/>
+  <path d="M2.05 12h.01"/>
+  <path d="M4.93 4.93l.01.01"/>
+  <path d="M19.07 4.93l-.01.01"/>
+  <path d="M21.95 12h-.01"/>
+  <path d="M19.07 19.07l-.01-.01"/>
+  <path d="M4.93 19.07l.01-.01"/>
+  <circle cx="12" cy="12" r="3" fill="#2563EB" opacity="0.3"/>
+</svg>

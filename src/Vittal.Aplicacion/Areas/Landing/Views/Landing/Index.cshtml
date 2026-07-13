@@ -1,0 +1,213 @@
+@{
+    Layout = "_LayoutLanding";
+    ViewData["Title"] = "Software de Gestión Clínica Inteligente";
+}
+
+<!-- ════════════════════════════════════════════════════════════════
+     HERO SECTION
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 animate-fade-in-up">
+                <div class="hero-badge">
+                    <i class="bi bi-star-fill me-1"></i> SaaS Médico Multi-Tenant
+                </div>
+                <h1 class="hero-title">
+                    Gestiona tu clínica<br />
+                    <span class="highlight">de forma inteligente</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Vittal centraliza citas, expedientes clínicos, diagnósticos,
+                    tratamientos y toda la información médica de tus pacientes
+                    en un solo lugar. Diseñado para clínicas médicas modernas.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <a href="/Landing/Landing/Funcionalidades" class="hero-cta-primary">
+                        <i class="bi bi-info-circle"></i> Conocer más
+                    </a>
+                    <a href="/Landing/Landing/Contacto" class="hero-cta-secondary">
+                        <i class="bi bi-chat-dots"></i> Solicitar demo
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="hero-stat-number">100%</div>
+                            <div class="hero-stat-label">Web Cloud</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat-number">Multi</div>
+                            <div class="hero-stat-label">Tenant</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="hero-stat-number">24/7</div>
+                            <div class="hero-stat-label">Disponible</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 hero-mockup animate-fade-in-up animate-fade-in-up-delay-2">
+                <img src="~/images/landing/screenshots/dashboard.png"
+                     alt="Panel principal de Vittal - Gestión Clínica"
+                     class="hero-mockup-img"
+                     loading="lazy"
+                     onerror="this.onerror=null; this.src='~/images/landing/dashboard-preview.svg'" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FEATURES OVERVIEW
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-features" id="funcionalidades">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">Funcionalidades</div>
+            <h2>Todo lo que necesitas en un solo lugar</h2>
+            <p>
+                Vittal integra todos los módulos esenciales para la gestión
+                eficiente de tu clínica médica.
+            </p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon blue">
+                        <i class="bi bi-file-medical"></i>
+                    </div>
+                    <h5>Expedientes Clínicos</h5>
+                    <p>
+                        Gestión completa de expedientes electrónicos con historial
+                        médico, diagnósticos, tratamientos y más.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon green">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <h5>Agenda Médica</h5>
+                    <p>
+                        Programa y gestiona citas médicas con asignación a doctores,
+                        control de estados y recordatorios.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon orange">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5>Cola de Espera en Tiempo Real</h5>
+                    <p>
+                        Visualiza el flujo de pacientes en tiempo real con estados:
+                        agendado, en espera, en atención y atendido.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon purple">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                    </div>
+                    <h5>Diagnósticos y Tratamientos</h5>
+                    <p>
+                        Registro detallado de diagnósticos por tipo, tratamientos
+                        con receta médica y seguimiento de medicamentos.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon red">
+                        <i class="bi bi-hospital"></i>
+                    </div>
+                    <h5>Gestión de Cirugías</h5>
+                    <p>
+                        Control de cirugías programadas con tipos, fechas,
+                        doctores asignados y notas quirúrgicas.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon teal">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h5>Reportes y Dashboard</h5>
+                    <p>
+                        Dashboards interactivos y reportes personalizados con
+                        métricas clave de tu clínica en tiempo real.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon indigo">
+                        <i class="bi bi-bell"></i>
+                    </div>
+                    <h5>Alertas Configurables</h5>
+                    <p>
+                        Notificaciones push cuando un paciente excede el tiempo
+                        de espera configurado. Visibles para todo el personal.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon blue">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5>Seguridad Multi-Tenant</h5>
+                    <p>
+                        Aislamiento completo de datos por clínica con Row Level
+                        Security y autenticación JWT.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon green">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                    </div>
+                    <h5>Almacenamiento en la Nube</h5>
+                    <p>
+                        Archivos médicos, imágenes y documentos almacenados de
+                        forma segura en Supabase Storage.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CTA BANNER
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-benefits">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="fw-bold mb-3" style="color: var(--landing-dark);">
+                    ¿Listo para transformar tu clínica?
+                </h2>
+                <p class="text-muted mb-4" style="font-size: 1.1rem;">
+                    Únete a las clínicas que ya confían en Vittal para gestionar
+                    su operación diaria de forma inteligente.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    <a href="/Landing/Landing/Contacto" class="hero-cta-primary">
+                        <i class="bi bi-rocket-takeoff"></i> Solicitar demo
+                    </a>
+                    <a href="/Login/Auth/Login" class="btn btn-lg btn-outline-primary rounded-pill px-4 fw-semibold"
+                       style="border-color: var(--landing-primary); color: var(--landing-primary);">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

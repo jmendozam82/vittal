@@ -1,0 +1,277 @@
+@{
+    Layout = "_LayoutLanding";
+    ViewData["Title"] = "Funcionalidades - Software Vittal";
+}
+
+<!-- ════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-hero" style="min-height: 40vh; padding: 6rem 0 3rem;">
+    <div class="container text-center">
+        <div class="hero-badge">Funcionalidades</div>
+        <h1 class="hero-title" style="font-size: 2.5rem;">
+            Módulos completos para<br />
+            <span class="highlight">tu clínica</span>
+        </h1>
+        <p class="hero-subtitle mx-auto">
+            Vittal ofrece un conjunto integral de módulos diseñados para cubrir
+            cada aspecto de la gestión clínica moderna.
+        </p>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREENSHOT GALLERY — MODULOS REALES DEL SISTEMA
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-features" id="galeria">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge"><i class="bi bi-camera-reels me-1"></i> Galería</div>
+            <h2>Así se ve Vittal en acción</h2>
+            <p>
+                Capturas reales de los módulos del sistema. Diseño intuitivo,
+                moderno y responsive para tu comodidad.
+            </p>
+        </div>
+
+        <!-- Screenshot destacado: Dashboard -->
+        <div class="screenshot-featured mb-5">
+            <div class="screenshot-featured-wrapper screenshot-clickable"
+                 data-src="~/images/landing/screenshots/dashboard.png"
+                 data-title="Dashboard Interactivo"
+                 data-desc="Métricas clave de tu clínica en tiempo real: pacientes atendidos, citas del día, ingresos y más.">
+                <img src="~/images/landing/screenshots/dashboard.png"
+                     alt="Dashboard de Vittal - Métricas y gráficas en tiempo real"
+                     class="screenshot-featured-img"
+                     loading="lazy"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-graph-up-arrow\'></i><span>Dashboard — Captura pendiente</span></div>'" />
+                <div class="screenshot-zoom-hint">
+                    <i class="bi bi-zoom-in"></i> Click para ampliar
+                </div>
+            </div>
+            <div class="screenshot-caption text-center mt-3">
+                <h4 class="fw-bold" style="color: var(--landing-dark);">Dashboard Interactivo</h4>
+                <p class="text-muted">Métricas clave de tu clínica en tiempo real: pacientes atendidos, citas del día, ingresos y más.</p>
+            </div>
+        </div>
+
+        <!-- Grid de screenshots de módulos -->
+        <div class="row g-4">
+            <!-- Expedientes -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card">
+                    <div class="screenshot-card-img-wrapper screenshot-clickable"
+                         data-src="~/images/landing/screenshots/expedientes.png"
+                         data-title="Expedientes Clínicos"
+                         data-desc="Historial completo del paciente: hojas de cita, diagnósticos, tratamientos, exámenes y archivos adjuntos.">
+                        <img src="~/images/landing/screenshots/expedientes.png"
+                             alt="Módulo de Expedientes Clínicos"
+                             class="screenshot-card-img"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-file-medical\'></i><span>Expedientes</span></div>'" />
+                        <div class="screenshot-zoom-hint">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-file-medical text-primary me-2"></i>Expedientes Clínicos</h5>
+                        <p>Historial completo del paciente: hojas de cita, diagnósticos, tratamientos, exámenes y archivos adjuntos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agenda -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card">
+                    <div class="screenshot-card-img-wrapper screenshot-clickable"
+                         data-src="~/images/landing/screenshots/agenda.png"
+                         data-title="Agenda Médica"
+                         data-desc="Calendario de citas con estados, asignación a doctores y filtrado por especialidad.">
+                        <img src="~/images/landing/screenshots/agenda.png"
+                             alt="Módulo de Agenda Médica"
+                             class="screenshot-card-img"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-calendar-check\'></i><span>Agenda</span></div>'" />
+                        <div class="screenshot-zoom-hint">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-calendar-check text-success me-2"></i>Agenda Médica</h5>
+                        <p>Calendario de citas con estados, asignación a doctores y filtrado por especialidad.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cola de Espera -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card">
+                    <div class="screenshot-card-img-wrapper screenshot-clickable"
+                         data-src="~/images/landing/screenshots/cola-espera.png"
+                         data-title="Cola de Espera en Tiempo Real"
+                         data-desc="Flujo de pacientes en tiempo real con actualización automática sin recargar la página.">
+                        <img src="~/images/landing/screenshots/cola-espera.png"
+                             alt="Cola de Espera en Tiempo Real"
+                             class="screenshot-card-img"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-people\'></i><span>Cola de Espera</span></div>'" />
+                        <div class="screenshot-zoom-hint">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-people text-warning me-2"></i>Cola de Espera</h5>
+                        <p>Flujo de pacientes en tiempo real con actualización automática sin recargar la página.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pacientes -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card">
+                    <div class="screenshot-card-img-wrapper screenshot-clickable"
+                         data-src="~/images/landing/screenshots/pacientes.png"
+                         data-title="Gestión de Pacientes"
+                         data-desc="Registro completo con datos personales, contacto, historial médico y foto del paciente.">
+                        <img src="~/images/landing/screenshots/pacientes.png"
+                             alt="Catálogo de Pacientes"
+                             class="screenshot-card-img"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-persons\'></i><span>Pacientes</span></div>'" />
+                        <div class="screenshot-zoom-hint">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-persons text-info me-2"></i>Gestión de Pacientes</h5>
+                        <p>Registro completo con datos personales, contacto, historial médico y foto del paciente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reportes -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card">
+                    <div class="screenshot-card-img-wrapper screenshot-clickable"
+                         data-src="~/images/landing/screenshots/reportes.png"
+                         data-title="Reportes y Estadísticas"
+                         data-desc="Análisis de productividad, ingresos, actividad médica y exportación a múltiples formatos.">
+                        <img src="~/images/landing/screenshots/reportes.png"
+                             alt="Reportes y Estadísticas"
+                             class="screenshot-card-img"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><i class=\'bi bi-file-bar-graph\'></i><span>Reportes</span></div>'" />
+                        <div class="screenshot-zoom-hint">
+                            <i class="bi bi-zoom-in"></i>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-file-bar-graph text-danger me-2"></i>Reportes</h5>
+                        <p>Análisis de productividad, ingresos, actividad médica y exportación a múltiples formatos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder para más screenshots -->
+            <div class="col-lg-4 col-md-6">
+                <div class="screenshot-card screenshot-card-more">
+                    <div class="screenshot-card-img-wrapper">
+                        <div class="screenshot-placeholder">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Próximamente más módulos</span>
+                        </div>
+                    </div>
+                    <div class="screenshot-card-body">
+                        <h5><i class="bi bi-collection text-secondary me-2"></i>26 Módulos Implementados</h5>
+                        <p>Diagnósticos, tratamientos, cirugías, exámenes, alertas, línea de tiempo y más.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CTA
+     ════════════════════════════════════════════════════════════════ -->
+<section class="landing-benefits">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="fw-bold mb-3" style="color: var(--landing-dark);">
+                    ¿Te gustaría verlo en acción?
+                </h2>
+                <p class="text-muted mb-4" style="font-size: 1.1rem;">
+                    Solicita una demo personalizada y descubre cómo Vittal
+                    puede transformar la gestión de tu clínica.
+                </p>
+                <a href="/Landing/Landing/Contacto" class="hero-cta-primary">
+                    <i class="bi bi-chat-dots"></i> Solicitar demo
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCREENSHOT LIGHTBOX MODAL
+     ════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="screenshotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content screenshot-modal-content">
+            <div class="modal-header screenshot-modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold" id="screenshotModalTitle"></h5>
+                    <small class="text-muted" id="screenshotModalDesc"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body screenshot-modal-body text-center">
+                <img src="" alt="" id="screenshotModalImg" class="screenshot-modal-img" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const modal = document.getElementById('screenshotModal');
+        const modalImg = document.getElementById('screenshotModalImg');
+        const modalTitle = document.getElementById('screenshotModalTitle');
+        const modalDesc = document.getElementById('screenshotModalDesc');
+        const bsModal = new bootstrap.Modal(modal);
+
+        // Resolve ~/ path to absolute
+        function resolveUrl(url) {
+            if (url.startsWith('~/')) {
+                return url.replace('~', window.location.origin);
+            }
+            return url;
+        }
+
+        // Attach click handlers to all screenshot-clickable elements
+        document.querySelectorAll('.screenshot-clickable').forEach(function (el) {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', function () {
+                var src = el.getAttribute('data-src');
+                var title = el.getAttribute('data-title') || '';
+                var desc = el.getAttribute('data-desc') || '';
+
+                if (src) {
+                    modalImg.src = resolveUrl(src);
+                    modalImg.alt = title;
+                    modalTitle.textContent = title;
+                    modalDesc.textContent = desc;
+                    bsModal.show();
+                }
+            });
+        });
+
+        // Clean up modal image on close
+        modal.addEventListener('hidden.bs.modal', function () {
+            modalImg.src = '';
+        });
+    })();
+</script>
+}

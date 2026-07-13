@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Vittal.IOC;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,9 @@ builder.Services.AddHttpClient("VittalApi", (sp, client) =>
 
 // Register application helpers
 builder.Services.AddScoped<Vittal.Aplicacion.Helpers.ApiClientHelper>();
+
+// Register Vittal BLL + DAL services (Repository, Service, FluentValidation)
+builder.Services.AddVittalServices(builder.Configuration);
 
 var app = builder.Build();
 
