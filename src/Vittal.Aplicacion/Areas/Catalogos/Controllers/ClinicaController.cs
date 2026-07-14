@@ -37,6 +37,12 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         public string? BdExterna2 { get; set; }
 
+        public string? HorarioApertura { get; set; }
+
+        public string? HorarioCierre { get; set; }
+
+        public string? DiasAtencion { get; set; }
+
     }
 
 
@@ -238,7 +244,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 bdExterna1 = string.IsNullOrWhiteSpace(dto.BdExterna1) ? null : dto.BdExterna1,
 
-                bdExterna2 = string.IsNullOrWhiteSpace(dto.BdExterna2) ? null : dto.BdExterna2
+                bdExterna2 = string.IsNullOrWhiteSpace(dto.BdExterna2) ? null : dto.BdExterna2,
+
+                horarioApertura = string.IsNullOrWhiteSpace(dto.HorarioApertura) ? null : dto.HorarioApertura,
+
+                horarioCierre = string.IsNullOrWhiteSpace(dto.HorarioCierre) ? null : dto.HorarioCierre,
+
+                diasAtencion = string.IsNullOrWhiteSpace(dto.DiasAtencion) ? null : dto.DiasAtencion
 
             };
 
@@ -304,7 +316,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 bdExterna1 = string.IsNullOrWhiteSpace(dto.BdExterna1) ? null : dto.BdExterna1,
 
-                bdExterna2 = string.IsNullOrWhiteSpace(dto.BdExterna2) ? null : dto.BdExterna2
+                bdExterna2 = string.IsNullOrWhiteSpace(dto.BdExterna2) ? null : dto.BdExterna2,
+
+                horarioApertura = string.IsNullOrWhiteSpace(dto.HorarioApertura) ? null : dto.HorarioApertura,
+
+                horarioCierre = string.IsNullOrWhiteSpace(dto.HorarioCierre) ? null : dto.HorarioCierre,
+
+                diasAtencion = string.IsNullOrWhiteSpace(dto.DiasAtencion) ? null : dto.DiasAtencion
 
             };
 
@@ -381,6 +399,57 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
 
             return Ok(new { success = true, message = "Clínica reactivada exitosamente" });
+
+        }
+
+
+        // ────────────────────────────────────────────────────────────────
+        // LOGO — Subir logo de la clínica (proxy multipart)
+        // ────────────────────────────────────────────────────────────────
+
+        /// <summary>Sube el logo de la clínica — para fetch() desde Create/Edit</summary>
+
+        [HttpPost]
+
+        public async Task<IActionResult> JsonSubirLogo(Guid clinicaId, IFormFile file)
+
+        {
+
+            if (file == null || file.Length == 0)
+
+            {
+
+                return BadRequest(new { success = false, message = "No se proporcionó ningún archivo." });
+
+            }
+
+
+            _logger.LogInformation("JsonSubirLogo called: clinicaId={ClinicaId}, archivo={Nombre}",
+
+                clinicaId, file.FileName);
+
+
+            using var stream = file.OpenReadStream();
+
+            var (success, response, errorMessage) = await _apiClient.PostMultipartAsync<JsonElement>(
+
+                $"api/Clinicas/{clinicaId}/logo", file.FileName, stream, file.ContentType, null, "file");
+
+
+            if (!success)
+
+            {
+
+                _logger.LogWarning("JsonSubirLogo API call failed: {Error}", errorMessage);
+
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al subir el logo" });
+
+            }
+
+
+            var data = ExtractDataObject(response);
+
+            return Ok(new { success = true, data = data, message = "Logo subido exitosamente" });
 
         }
 

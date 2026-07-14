@@ -24,4 +24,16 @@ public class ClinicaRequestDto
 
     public string? BdExterna1 { get; set; }
     public string? BdExterna2 { get; set; }
+
+    /// <summary>Hora de apertura (formato HH:mm). Ej: "08:00"</summary>
+    [StringLength(5, ErrorMessage = "El formato de hora debe ser HH:mm.")]
+    public string? HorarioApertura { get; set; }
+
+    /// <summary>Hora de cierre (formato HH:mm). Ej: "18:00"</summary>
+    [StringLength(5, ErrorMessage = "El formato de hora debe ser HH:mm.")]
+    public string? HorarioCierre { get; set; }
+
+    /// <summary>Días de atención separados por coma. Ej: "L,M,MI,J,V"</summary>
+    [StringLength(100, ErrorMessage = "Los días de atención no pueden exceder 100 caracteres.")]
+    public string? DiasAtencion { get; set; }
 }

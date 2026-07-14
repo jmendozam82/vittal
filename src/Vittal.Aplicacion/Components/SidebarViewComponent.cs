@@ -87,6 +87,7 @@ public class SidebarViewComponent : ViewComponent
                             if (id == clinicaIdActual)
                             {
                                 model.ClinicaActualNombre = nombre;
+                                model.ClinicaActualLogoUrl = item.TryGetProperty("logoUrl", out var logoProp) ? logoProp.GetString() : null;
                             }
                         }
                     }
@@ -153,10 +154,26 @@ public class SidebarViewComponent : ViewComponent
             _logger.LogError(ex, "Error al cargar permisos para el sidebar");
         }
 
-        // ── Para no-Super Admin: leer nombre de la clínica desde claims ──
+        // ── Para no-Super Admin: leer nombre y logo de la clínica desde la API ──
         if (!esSuperAdmin && string.IsNullOrEmpty(model.ClinicaActualNombre))
         {
             model.ClinicaActualNombre = claimsUser?.FindFirst("app_clinica_nombre")?.Value ?? "Clínica";
+
+            // Obtener logo de la clínica actual (endpoint público, sin permiso de módulo)
+            try
+            {
+                var (success, responseJson, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/current-logo");
+                if (success && responseJson.TryGetProperty("data", out var dataProp))
+                {
+                    model.ClinicaActualLogoUrl = dataProp.TryGetProperty("logoUrl", out var logoProp) && logoProp.ValueKind != JsonValueKind.Null
+                        ? logoProp.GetString()
+                        : null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo cargar el logo de la clínica para el sidebar");
+            }
         }
 
         return View(model);
@@ -291,6 +308,7 @@ public class SidebarViewModel
     // ── Super Admin: Lista de clínicas para el workspace switcher ──
     public bool EsSuperAdmin { get; set; }
     public string ClinicaActualNombre { get; set; } = string.Empty;
+    public string? ClinicaActualLogoUrl { get; set; }
     public List<ClinicaItem> Clinicas { get; set; } = new();
 }
 

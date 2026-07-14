@@ -1,7 +1,11 @@
 using Vittal.BLL.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Clinica;
@@ -18,11 +22,31 @@ namespace Vittal.BLL.Services;
 public class ClinicaService : IClinicaService
 {
     private readonly IClinicaRepository _repo;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<ClinicaService> _logger;
 
-    public ClinicaService(IClinicaRepository repo, ILogger<ClinicaService> logger)
+    // Tipos MIME permitidos para logo
+    private static readonly HashSet<string> AllowedLogoMimeTypes = new()
+    {
+        "image/jpeg", "image/png", "image/webp"
+    };
+
+    // Tamaño máximo: 5 MB
+    private const long MaxLogoSizeBytes = 5L * 1024 * 1024;
+
+    // Bucket de Supabase Storage
+    private const string BucketName = "avatares";
+
+    public ClinicaService(
+        IClinicaRepository repo,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<ClinicaService> logger)
     {
         _repo = repo;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -136,6 +160,9 @@ public class ClinicaService : IClinicaService
                 TiempoEsperaMinutos = dto.TiempoEsperaMinutos,
                 BdExterna1 = dto.BdExterna1,
                 BdExterna2 = dto.BdExterna2,
+                HorarioApertura = dto.HorarioApertura,
+                HorarioCierre = dto.HorarioCierre,
+                DiasAtencion = dto.DiasAtencion,
                 Activo = true
             };
 
@@ -195,6 +222,9 @@ public class ClinicaService : IClinicaService
             existing.TiempoEsperaMinutos = dto.TiempoEsperaMinutos;
             existing.BdExterna1 = dto.BdExterna1;
             existing.BdExterna2 = dto.BdExterna2;
+            existing.HorarioApertura = dto.HorarioApertura;
+            existing.HorarioCierre = dto.HorarioCierre;
+            existing.DiasAtencion = dto.DiasAtencion;
             existing.FechaModificacion = DateTime.UtcNow;
 
             var updated = await _repo.UpdateAsync(existing);
@@ -299,6 +329,118 @@ public class ClinicaService : IClinicaService
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // 8. UploadLogoAsync — Sube logo a Supabase Storage (bucket avatares)
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<ServiceResult<string>> UploadLogoAsync(
+        Stream fileStream, string fileName, string contentType, long fileSize, Guid clinicaId)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Subiendo logo para clínica {ClinicaId}: {Nombre} ({Tamano} bytes)",
+                clinicaId, fileName, fileSize);
+
+            // 1. Validar tipo MIME
+            if (!AllowedLogoMimeTypes.Contains(contentType))
+            {
+                return ServiceResult<string>.Failure(
+                    $"Tipo de imagen no permitido: {contentType}. " +
+                    $"Tipos permitidos: JPEG, PNG, WebP.",
+                    ServiceErrorType.Validation);
+            }
+
+            // 2. Validar tamaño
+            if (fileSize > MaxLogoSizeBytes)
+            {
+                return ServiceResult<string>.Failure(
+                    $"El archivo supera el tamaño máximo de {MaxLogoSizeBytes / (1024 * 1024)} MB.",
+                    ServiceErrorType.Validation);
+            }
+
+            if (fileSize == 0)
+            {
+                return ServiceResult<string>.Failure(
+                    "El archivo está vacío.", ServiceErrorType.Validation);
+            }
+
+            // 3. Verificar que la clínica existe
+            var clinica = await _repo.GetByIdAsync(clinicaId);
+            if (clinica == null)
+            {
+                return ServiceResult<string>.Failure(
+                    "Clínica no encontrada.", ServiceErrorType.NotFound);
+            }
+
+            // 4. Construir storagePath: logos/{clinicaId}/{Guid}{extension}
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension)) extension = ".png";
+            var fileGuid = Guid.NewGuid();
+            var storagePath = $"logos/{clinicaId}/{fileGuid}{extension}";
+
+            // 5. Obtener configuración de Supabase
+            var supabaseUrl = _configuration["Supabase:Url"]
+                ?? throw new InvalidOperationException("Supabase:Url no está configurado.");
+            var serviceRoleKey = _configuration["Supabase:ServiceRoleKey"]
+                ?? throw new InvalidOperationException("Supabase:ServiceRoleKey no está configurado.");
+
+            // 6. Subir a Supabase Storage via REST API (PUT)
+            var fileBytes = await ReadFullyAsync(fileStream);
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("apikey", serviceRoleKey);
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {serviceRoleKey}");
+
+            var content = new ByteArrayContent(fileBytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+
+            var uploadUrl = $"{supabaseUrl}/storage/v1/object/{BucketName}/{storagePath}";
+            var response = await client.PutAsync(uploadUrl, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Error subiendo logo a Supabase Storage: {Status} - {Error}",
+                    response.StatusCode, errorBody);
+                return ServiceResult<string>.Failure(
+                    "Error al subir el logo al almacenamiento. Intente nuevamente.",
+                    ServiceErrorType.InternalError);
+            }
+
+            _logger.LogInformation("Logo subido exitosamente a Supabase Storage: {StoragePath}", storagePath);
+
+            // 7. Construir URL pública (bucket avatares es público)
+            var publicUrl = $"{supabaseUrl}/storage/v1/object/public/{BucketName}/{storagePath}";
+
+            // 8. Actualizar logo_url en la clínica
+            clinica.LogoUrl = publicUrl;
+            clinica.FechaModificacion = DateTime.UtcNow;
+            var updated = await _repo.UpdateAsync(clinica);
+
+            if (!updated)
+            {
+                _logger.LogWarning("Logo subido pero no se pudo actualizar logo_url en clínica {ClinicaId}", clinicaId);
+                // No es error fatal — el archivo ya está en storage
+            }
+
+            return ServiceResult<string>.Success(publicUrl, "Logo subido exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al subir logo para clínica {ClinicaId}", clinicaId);
+            return ServiceResult<string>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>Lee un stream completo a un array de bytes.</summary>
+    private static async Task<byte[]> ReadFullyAsync(Stream stream)
+    {
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        return memoryStream.ToArray();
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Mapping: Entity → DTO
     // ────────────────────────────────────────────────────────────────────────
     private static ClinicaResponseDto MapClinicaToDto(Clinica c)
@@ -314,6 +456,9 @@ public class ClinicaService : IClinicaService
             TiempoEsperaMinutos = c.TiempoEsperaMinutos,
             BdExterna1 = c.BdExterna1,
             BdExterna2 = c.BdExterna2,
+            HorarioApertura = c.HorarioApertura,
+            HorarioCierre = c.HorarioCierre,
+            DiasAtencion = c.DiasAtencion,
             Activo = c.Activo,
             FechaCreacion = c.FechaCreacion,
             FechaModificacion = c.FechaModificacion

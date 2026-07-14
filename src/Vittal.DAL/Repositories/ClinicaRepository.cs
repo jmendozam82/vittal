@@ -37,6 +37,9 @@ public class ClinicaRepository : IClinicaRepository
         c.tiempo_espera_minutos AS TiempoEsperaMinutos,
         c.bd_externa_1          AS BdExterna1,
         c.bd_externa_2          AS BdExterna2,
+        c.horario_apertura      AS HorarioApertura,
+        c.horario_cierre        AS HorarioCierre,
+        c.dias_atencion         AS DiasAtencion,
         c.activo                AS Activo,
         c.fecha_creacion        AS FechaCreacion,
         c.fecha_modificacion    AS FechaModificacion";
@@ -143,11 +146,13 @@ public class ClinicaRepository : IClinicaRepository
             INSERT INTO public.clinicas (
                 nombre, direccion, telefono, email, logo_url,
                 tiempo_espera_minutos, bd_externa_1, bd_externa_2,
+                horario_apertura, horario_cierre, dias_atencion,
                 activo, fecha_creacion
             )
             VALUES (
                 @Nombre, @Direccion, @Telefono, @Email, @LogoUrl,
                 @TiempoEsperaMinutos, @BdExterna1, @BdExterna2,
+                @HorarioApertura, @HorarioCierre, @DiasAtencion,
                 true, NOW()
             )
             RETURNING id;";
@@ -179,6 +184,9 @@ public class ClinicaRepository : IClinicaRepository
                 tiempo_espera_minutos   = @TiempoEsperaMinutos,
                 bd_externa_1            = @BdExterna1,
                 bd_externa_2            = @BdExterna2,
+                horario_apertura        = @HorarioApertura,
+                horario_cierre          = @HorarioCierre,
+                dias_atencion           = @DiasAtencion,
                 fecha_modificacion      = NOW()
             WHERE id = @Id;";
 

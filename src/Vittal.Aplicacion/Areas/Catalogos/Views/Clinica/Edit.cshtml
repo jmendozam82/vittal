@@ -144,30 +144,93 @@
 
 
 
-            <!-- Imagen y Config -->
-
+            <!-- Logo -->
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-
-                <i class="bi bi-image me-2"></i>Logo e Integración
-
+                <i class="bi bi-image me-2"></i>Logo de la Clínica
             </h6>
 
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <div id="logoUploadArea" style="border:2px dashed #dee2e6; border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.borderColor='#0d6efd'" onmouseout="this.style.borderColor='#dee2e6'">
+                        <div id="logoPreviewEmpty">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                            <p class="mb-1 mt-2 text-muted fw-semibold">Seleccione o arrastre el logo</p>
+                            <small class="text-muted">JPEG, PNG o WebP — Máximo 5 MB</small>
+                        </div>
+                        <div id="logoPreviewContainer" style="display:none;">
+                            <img id="logoPreviewImg" src="" alt="Preview" style="max-width:160px; max-height:160px; border-radius:8px; object-fit:contain; border:1px solid #dee2e6;">
+                            <p id="logoFileName" class="mb-1 mt-2 text-muted small"></p>
+                            <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="limpiarLogo()">
+                                <i class="bi bi-x-lg me-1"></i>Quitar
+                            </button>
+                        </div>
+                    </div>
+                    <input type="file" id="logoFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    <input type="hidden" id="logoUrl" name="logoUrl">
+                    <div id="logoUploadProgress" style="display:none;" class="mt-2">
+                        <div class="progress" style="height:6px;">
+                            <div id="logoProgressBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
+                        </div>
+                        <small id="logoUploadStatus" class="text-muted"></small>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Horario de Atención -->
+            <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+                <i class="bi bi-clock me-2"></i>Horario de Atención <span class="text-muted small fw-normal">(Opcional)</span>
+            </h6>
 
             <div class="row g-3 mb-3">
-
                 <div class="col-md-12">
-
-                    <label for="logoUrl" class="form-label fw-semibold">URL del Logo</label>
-
-                    <input type="url" class="form-control" id="logoUrl" name="logoUrl"
-
-                           placeholder="https://ejemplo.com/logo.png">
-
-                    <div class="form-text small">URL pública de la imagen del logo de la clínica</div>
-
+                    <label class="form-label fw-semibold">Días de Atención</label>
+                    <div class="d-flex flex-wrap gap-3" id="diasAtencion">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="L" id="diaL">
+                            <label class="form-check-label" for="diaL">Lunes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="M" id="diaM">
+                            <label class="form-check-label" for="diaM">Martes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="MI" id="diaMI">
+                            <label class="form-check-label" for="diaMI">Miércoles</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="J" id="diaJ">
+                            <label class="form-check-label" for="diaJ">Jueves</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="V" id="diaV">
+                            <label class="form-check-label" for="diaV">Viernes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="S" id="diaS">
+                            <label class="form-check-label" for="diaS">Sábado</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="D" id="diaD">
+                            <label class="form-check-label" for="diaD">Domingo</label>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="horarioApertura" class="form-label fw-semibold">Hora de Apertura</label>
+                    <input type="time" class="form-control" id="horarioApertura" name="horarioApertura">
+                </div>
+                <div class="col-md-6">
+                    <label for="horarioCierre" class="form-label fw-semibold">Hora de Cierre</label>
+                    <input type="time" class="form-control" id="horarioCierre" name="horarioCierre">
+                </div>
+            </div>
+
+            <div class="alert alert-info small" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                Si configura horario, las citas solo podrán crearse dentro del horario de atención de la clínica.
             </div>
 
 
@@ -270,7 +333,147 @@
 
 <script>
 
-    // Cargar datos de la clínica al iniciar
+    // ── Logo Upload ──────────────────────────────────────────────
+
+    const logoUploadArea = document.getElementById('logoUploadArea');
+
+    const logoFileInput = document.getElementById('logoFileInput');
+
+    let logoSeleccionado = null;
+
+
+    logoUploadArea.addEventListener('click', () => logoFileInput.click());
+
+    logoUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); logoUploadArea.style.borderColor = '#0d6efd'; logoUploadArea.style.backgroundColor = '#f0f7ff'; });
+
+    logoUploadArea.addEventListener('dragleave', () => { logoUploadArea.style.borderColor = '#dee2e6'; logoUploadArea.style.backgroundColor = ''; });
+
+    logoUploadArea.addEventListener('drop', (e) => {
+
+        e.preventDefault();
+
+        logoUploadArea.style.borderColor = '#dee2e6';
+
+        logoUploadArea.style.backgroundColor = '';
+
+        const files = e.dataTransfer.files;
+
+        if (files.length > 0) manejarArchivoLogo(files[0]);
+
+    });
+
+    logoFileInput.addEventListener('change', (e) => {
+
+        if (e.target.files.length > 0) manejarArchivoLogo(e.target.files[0]);
+
+    });
+
+
+    function manejarArchivoLogo(file) {
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!allowedTypes.includes(file.type)) {
+
+            showToast('danger', 'Tipo de archivo no permitido. Use JPEG, PNG o WebP.');
+
+            return;
+
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+
+            showToast('danger', 'El archivo supera el tamaño máximo de 5 MB.');
+
+            return;
+
+        }
+
+
+        logoSeleccionado = file;
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+
+            document.getElementById('logoPreviewEmpty').style.display = 'none';
+
+            document.getElementById('logoPreviewContainer').style.display = 'block';
+
+            document.getElementById('logoPreviewImg').src = e.target.result;
+
+            document.getElementById('logoFileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+
+        };
+
+        reader.readAsDataURL(file);
+
+    }
+
+
+    function limpiarLogo() {
+
+        logoSeleccionado = null;
+
+        logoFileInput.value = '';
+
+        document.getElementById('logoPreviewEmpty').style.display = '';
+
+        document.getElementById('logoPreviewContainer').style.display = 'none';
+
+        document.getElementById('logoUrl').value = '';
+
+    }
+
+
+    function cargarLogoExistente(url) {
+
+        if (!url) return;
+
+        document.getElementById('logoPreviewEmpty').style.display = 'none';
+
+        document.getElementById('logoPreviewContainer').style.display = 'block';
+
+        document.getElementById('logoPreviewImg').src = url;
+
+        document.getElementById('logoFileName').textContent = 'Logo actual';
+
+        document.getElementById('logoUrl').value = url;
+
+    }
+
+
+    // ── Horarios ──────────────────────────────────────────────
+
+    function obtenerDiasSeleccionados() {
+
+        const dias = [];
+
+        document.querySelectorAll('#diasAtencion .form-check-input:checked').forEach(cb => dias.push(cb.value));
+
+        return dias.length > 0 ? dias.join(',') : null;
+
+    }
+
+
+    function cargarDiasAtencion(diasStr) {
+
+        if (!diasStr) return;
+
+        const dias = diasStr.split(',');
+
+        dias.forEach(d => {
+
+            const cb = document.querySelector(`#diasAtencion .form-check-input[value="${d}"]`);
+
+            if (cb) cb.checked = true;
+
+        });
+
+    }
+
+
+    // ── Cargar datos ──────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -279,13 +482,9 @@
     });
 
 
-
     function cargarDatosClinica() {
 
-        // Los datos vienen del servidor en ViewBag.Clinica
-
         const c = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Clinica, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
-
 
 
         if (!c) {
@@ -295,7 +494,6 @@
             return;
 
         }
-
 
 
         document.getElementById('clinicaId').value = c.id || '';
@@ -308,14 +506,25 @@
 
         document.getElementById('email').value = c.email || '';
 
-        document.getElementById('logoUrl').value = c.logoUrl || '';
-
         document.getElementById('tiempoEsperaMinutos').value = c.tiempoEsperaMinutos || 30;
 
         document.getElementById('bdExterna1').value = c.bdExterna1 || '';
 
         document.getElementById('bdExterna2').value = c.bdExterna2 || '';
 
+
+        // Logo existente
+
+        cargarLogoExistente(c.logoUrl);
+
+
+        // Horarios
+
+        document.getElementById('horarioApertura').value = c.horarioApertura || '';
+
+        document.getElementById('horarioCierre').value = c.horarioCierre || '';
+
+        cargarDiasAtencion(c.diasAtencion);
 
 
         // Mostrar estado
@@ -335,7 +544,6 @@
         }
 
 
-
         // Fechas
 
         if (c.fechaCreacion) {
@@ -344,20 +552,11 @@
 
             document.getElementById('fechaCreacion').textContent = fechaCre.toLocaleDateString('es-ES', {
 
-                year: 'numeric',
-
-                month: 'long',
-
-                day: 'numeric',
-
-                hour: '2-digit',
-
-                minute: '2-digit'
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
 
             });
 
         }
-
 
 
         if (c.fechaModificacion) {
@@ -366,22 +565,13 @@
 
             document.getElementById('fechaModificacion').textContent = fechaMod.toLocaleDateString('es-ES', {
 
-                year: 'numeric',
-
-                month: 'long',
-
-                day: 'numeric',
-
-                hour: '2-digit',
-
-                minute: '2-digit'
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
 
             });
 
             document.getElementById('fechaModificacionContainer').style.display = 'inline';
 
         }
-
 
 
         // Nombre en el título
@@ -393,13 +583,11 @@
     }
 
 
-
-    // Submit del formulario
+    // ── Submit del formulario ──────────────────────────────────
 
     document.getElementById('formClinica').addEventListener('submit', async function(e) {
 
         e.preventDefault();
-
 
 
         const form = this;
@@ -413,6 +601,28 @@
         }
 
 
+        // Validar horarios
+
+        const apertura = document.getElementById('horarioApertura').value;
+
+        const cierre = document.getElementById('horarioCierre').value;
+
+        if ((apertura && !cierre) || (!apertura && cierre)) {
+
+            showToast('danger', 'Si configura horario, debe indicar tanto apertura como cierre.');
+
+            return;
+
+        }
+
+        if (apertura && cierre && apertura >= cierre) {
+
+            showToast('danger', 'La hora de cierre debe ser posterior a la de apertura.');
+
+            return;
+
+        }
+
 
         const btn = document.getElementById('btnGuardar');
 
@@ -423,13 +633,11 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
 
 
-
         const id = document.getElementById('clinicaId').value;
 
         const tiempoEsperaValue = document.getElementById('tiempoEsperaMinutos').value;
 
         const tiempoEspera = parseInt(tiempoEsperaValue) || 30;
-
 
 
         const data = {
@@ -448,10 +656,15 @@
 
             bdExterna1: document.getElementById('bdExterna1').value.trim() || null,
 
-            bdExterna2: document.getElementById('bdExterna2').value.trim() || null
+            bdExterna2: document.getElementById('bdExterna2').value.trim() || null,
+
+            horarioApertura: apertura || null,
+
+            horarioCierre: cierre || null,
+
+            diasAtencion: obtenerDiasSeleccionados()
 
         };
-
 
 
         try {
@@ -467,12 +680,18 @@
             });
 
 
-
             const json = await res.json();
 
 
-
             if (res.ok && json.success) {
+
+                // Si hay logo nuevo seleccionado, subirlo
+
+                if (logoSeleccionado) {
+
+                    await subirLogo(id);
+
+                }
 
                 showToast('success', json.message || 'Clínica actualizada exitosamente.');
 
@@ -505,6 +724,70 @@
     });
 
 
+    async function subirLogo(clinicaId) {
+
+        const progressDiv = document.getElementById('logoUploadProgress');
+
+        const progressBar = document.getElementById('logoProgressBar');
+
+        const statusText = document.getElementById('logoUploadStatus');
+
+
+        progressDiv.style.display = 'block';
+
+        statusText.textContent = 'Subiendo logo...';
+
+        progressBar.style.width = '50%';
+
+
+        const formData = new FormData();
+
+        formData.append('file', logoSeleccionado);
+
+
+        try {
+
+            const res = await fetch(`@Url.Action("JsonSubirLogo")?clinicaId=${clinicaId}`, {
+
+                method: 'POST',
+
+                body: formData
+
+            });
+
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+
+                progressBar.style.width = '100%';
+
+                statusText.textContent = 'Logo subido ✓';
+
+                document.getElementById('logoUrl').value = json.data || '';
+
+            } else {
+
+                statusText.textContent = 'Error: ' + (json.message || 'No se pudo subir el logo');
+
+                progressBar.classList.remove('bg-success');
+
+                progressBar.classList.add('bg-danger');
+
+            }
+
+        } catch (err) {
+
+            statusText.textContent = 'Error de conexión al subir logo';
+
+            progressBar.classList.remove('bg-success');
+
+            progressBar.classList.add('bg-danger');
+
+        }
+
+    }
+
 
     function escapeHtml(text) {
 
@@ -517,7 +800,6 @@
         return div.innerHTML;
 
     }
-
 
 
     function showToast(type, message) {
@@ -537,7 +819,6 @@
         setTimeout(() => toast.remove(), 5000);
 
     }
-
 
 
     function createToastContainer() {

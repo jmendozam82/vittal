@@ -15,13 +15,108 @@ public class CitaService : ICitaService
 {
     private readonly ICitaRepository _repository;
     private readonly ILineaTiempoService _lineaTiempoService;
+    private readonly IClinicaService _clinicaService;
     private readonly ILogger<CitaService> _logger;
 
-    public CitaService(ICitaRepository repository, ILineaTiempoService lineaTiempoService, ILogger<CitaService> logger)
+    public CitaService(
+        ICitaRepository repository,
+        ILineaTiempoService lineaTiempoService,
+        IClinicaService clinicaService,
+        ILogger<CitaService> logger)
     {
         _repository = repository;
         _lineaTiempoService = lineaTiempoService;
+        _clinicaService = clinicaService;
         _logger = logger;
+    }
+
+    // ── Mapeo de días de atención ─────────────────────────────────
+    // DiasAtencion en BD: "L,M,MI,J,V" (abreviaturas en español)
+    // JS DayOfWeek: 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+    private static readonly Dictionary<int, string> DayMapping = new()
+    {
+        { 1, "L" },    // Lunes
+        { 2, "M" },    // Martes
+        { 3, "MI" },   // Miércoles
+        { 4, "J" },    // Jueves
+        { 5, "V" },    // Viernes
+        { 6, "S" },    // Sábado
+        { 0, "D" }     // Domingo
+    };
+
+    /// <summary>
+    /// Valida si una fecha y hora están dentro del horario de atención de la clínica.
+    /// Retorna null si es válido, o un mensaje de error si no lo es.
+    /// </summary>
+    private async Task<string?> ValidarHorarioAtencionAsync(
+        DateOnly fechaCita, TimeOnly horaCita, TimeOnly? horaFin, Guid clinicaId)
+    {
+        var clinicaResult = await _clinicaService.GetByIdAsync(clinicaId);
+        if (!clinicaResult.IsSuccess || clinicaResult.Data == null)
+        {
+            _logger.LogWarning("No se pudo cargar la clínica {ClinicaId} para validar horario", clinicaId);
+            return null; // Si no se puede cargar la clínica, no bloquear
+        }
+
+        var clinica = clinicaResult.Data;
+
+        // Si no tiene horarios configurados, no validar
+        if (string.IsNullOrWhiteSpace(clinica.HorarioApertura) ||
+            string.IsNullOrWhiteSpace(clinica.HorarioCierre) ||
+            string.IsNullOrWhiteSpace(clinica.DiasAtencion))
+        {
+            return null;
+        }
+
+        // 1. Validar día de atención
+        var dayOfWeek = fechaCita.DayOfWeek;
+        if (!DayMapping.TryGetValue((int)dayOfWeek, out var dayCode))
+        {
+            return null;
+        }
+
+        var diasAtencion = clinica.DiasAtencion
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (!diasAtencion.Contains(dayCode))
+        {
+            var diaNombre = dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Lunes",
+                DayOfWeek.Tuesday => "Martes",
+                DayOfWeek.Wednesday => "Miércoles",
+                DayOfWeek.Thursday => "Jueves",
+                DayOfWeek.Friday => "Viernes",
+                DayOfWeek.Saturday => "Sábado",
+                DayOfWeek.Sunday => "Domingo",
+                _ => dayOfWeek.ToString()
+            };
+            return $"La clínica no atiende los días {diaNombre}. Días de atención: {string.Join(", ", diasAtencion)}";
+        }
+
+        // 2. Validar rango de horas
+        if (TimeOnly.TryParse(clinica.HorarioApertura, out var apertura) &&
+            TimeOnly.TryParse(clinica.HorarioCierre, out var cierre))
+        {
+            if (horaCita < apertura || horaCita >= cierre)
+            {
+                return $"La hora de inicio ({horaCita:HH:mm}) está fuera del horario de atención ({apertura:HH:mm} — {cierre:HH:mm}).";
+            }
+
+            // Validar hora_fin si se proporciona
+            if (horaFin.HasValue && horaFin.Value > cierre)
+            {
+                return $"La hora de fin ({horaFin.Value:HH:mm}) excede el horario de cierre ({cierre:HH:mm}).";
+            }
+
+            // Validar que hora_fin > hora_cita
+            if (horaFin.HasValue && horaFin.Value <= horaCita)
+            {
+                return "La hora de fin debe ser posterior a la hora de inicio.";
+            }
+        }
+
+        return null;
     }
 
     public async Task<ServiceResult<IEnumerable<CitaResponseDto>>> GetAllAsync(Guid clinicaId)
@@ -63,6 +158,15 @@ public class CitaService : ICitaService
     {
         try
         {
+            // ── Validar horario de atención de la clínica ──────────────
+            var horarioError = await ValidarHorarioAtencionAsync(
+                dto.FechaCita, dto.HoraCita, dto.HoraFin, clinicaId);
+            if (horarioError != null)
+            {
+                _logger.LogWarning("Validación de horario rechazó cita: {Error}", horarioError);
+                return ServiceResult<CitaResponseDto>.Failure(horarioError, ServiceErrorType.Validation);
+            }
+
             var entity = new Cita
             {
                 ClinicaId = clinicaId,
@@ -112,6 +216,15 @@ public class CitaService : ICitaService
             if (entity == null)
             {
                 return ServiceResult<CitaResponseDto>.Failure("Cita no encontrada.", ServiceErrorType.NotFound);
+            }
+
+            // ── Validar horario de atención de la clínica ──────────────
+            var horarioError = await ValidarHorarioAtencionAsync(
+                dto.FechaCita, dto.HoraCita, dto.HoraFin, clinicaId);
+            if (horarioError != null)
+            {
+                _logger.LogWarning("Validación de horario rechazó actualización de cita: {Error}", horarioError);
+                return ServiceResult<CitaResponseDto>.Failure(horarioError, ServiceErrorType.Validation);
             }
 
             entity.PacienteId = dto.PacienteId;

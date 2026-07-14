@@ -6,6 +6,7 @@ using Vittal.BLL.Interfaces;
 using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cita;
+using Vittal.DTO.Clinica;
 using Vittal.Entity.Models;
 using Vittal.Utility.Results;
 
@@ -15,6 +16,7 @@ public class CitaServiceTests
 {
     private readonly Mock<ICitaRepository> _repoMock;
     private readonly Mock<ILineaTiempoService> _lineaTiempoMock;
+    private readonly Mock<IClinicaService> _clinicaServiceMock;
     private readonly Mock<ILogger<CitaService>> _loggerMock;
     private readonly CitaService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
@@ -26,8 +28,21 @@ public class CitaServiceTests
     {
         _repoMock = new Mock<ICitaRepository>();
         _lineaTiempoMock = new Mock<ILineaTiempoService>();
+        _clinicaServiceMock = new Mock<IClinicaService>();
         _loggerMock = new Mock<ILogger<CitaService>>();
-        _service = new CitaService(_repoMock.Object, _lineaTiempoMock.Object, _loggerMock.Object);
+
+        // Default: clinic has no schedule configured (validation skipped)
+        _clinicaServiceMock
+            .Setup(s => s.GetByIdAsync(_clinicaId))
+            .ReturnsAsync(ServiceResult<ClinicaResponseDto>.Success(new ClinicaResponseDto
+            {
+                Id = _clinicaId,
+                HorarioApertura = null,
+                HorarioCierre = null,
+                DiasAtencion = null
+            }));
+
+        _service = new CitaService(_repoMock.Object, _lineaTiempoMock.Object, _clinicaServiceMock.Object, _loggerMock.Object);
     }
 
     [Fact]

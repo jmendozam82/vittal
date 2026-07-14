@@ -21,6 +21,7 @@
     var jsonCambiarEstadoUrl = Url.Action("JsonCambiarEstado");
     var jsonDesactivarUrl = Url.Action("JsonDesactivar");
     var jsonBuscarPacientesUrl = Url.Action("JsonBuscarPacientes");
+    var jsonHorarioClinicaUrl = Url.Action("JsonHorarioClinica");
 }
 
 @{/* ── Toolbar superior ────────────────────────────────────────── */}
@@ -122,7 +123,7 @@
                     </div>
 
                     @{/* ── Fecha y Hora ──────────────────────────── */}
-                    <div class="row g-3 mb-3">
+                    <div class="row g-3 mb-2">
                         <div class="col-md-4">
                             <label for="citaFecha" class="form-label">Fecha <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="citaFecha" required />
@@ -131,12 +132,25 @@
                         <div class="col-md-4">
                             <label for="citaHora" class="form-label">Hora Inicio <span class="text-danger">*</span></label>
                             <input type="time" class="form-control" id="citaHora" required value="08:00" step="300" />
-                            <div class="invalid-feedback">La hora de inicio es obligatoria.</div>
+                            <div class="invalid-feedback hora-feedback" id="horaInicioFeedback">La hora de inicio es obligatoria.</div>
                         </div>
                         <div class="col-md-4">
                             <label for="citaHoraFin" class="form-label">Hora Fin</label>
                             <input type="time" class="form-control" id="citaHoraFin" step="300" />
                             <div class="form-text small text-muted">Opcional. Déjelo vacío si no tiene hora definida.</div>
+                        </div>
+                    </div>
+                    @{/* ── Badge de horario de atención ───────────── */}
+                    <div id="horarioBadge" class="d-none mb-3">
+                        <div class="horario-info-badge" id="horarioBadgeHoras">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Horario:</span>
+                            <span class="horario-valores" id="horarioBadgeValores">—</span>
+                        </div>
+                        <div class="horario-info-badge dias-atencion ms-2" id="horarioBadgeDias">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Días:</span>
+                            <span class="horario-valores" id="horarioBadgeDiasValores">—</span>
                         </div>
                     </div>
 
@@ -285,7 +299,8 @@
                 actualizar: '@jsonActualizarUrl',
                 cambiarEstado: '@jsonCambiarEstadoUrl',
                 desactivar: '@jsonDesactivarUrl',
-                buscarPacientes: '@jsonBuscarPacientesUrl'
+                buscarPacientes: '@jsonBuscarPacientesUrl',
+                horarioClinica: '@jsonHorarioClinicaUrl'
             }
         };
 

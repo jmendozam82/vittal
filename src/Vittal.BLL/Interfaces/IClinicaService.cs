@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Vittal.DTO.Clinica;
 using Vittal.Utility.Results;
@@ -20,4 +21,10 @@ public interface IClinicaService
     Task<ServiceResult<ClinicaResponseDto>> UpdateAsync(Guid id, ClinicaRequestDto dto);
     Task<ServiceResult<bool>> DeactivateAsync(Guid id);
     Task<ServiceResult<bool>> ReactivateAsync(Guid id);
+
+    /// <summary>
+    /// Sube el logo de la clínica a Supabase Storage (bucket avatares).
+    /// </summary>
+    Task<ServiceResult<string>> UploadLogoAsync(
+        Stream fileStream, string fileName, string contentType, long fileSize, Guid clinicaId);
 }

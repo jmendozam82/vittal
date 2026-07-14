@@ -30,9 +30,15 @@
   --agenda-card-cancelada-border: #E67E22;
   
   /* Tamaños */
-  --agenda-hour-height:      60px;
+  --agenda-hour-height:      72px;
   --agenda-sidebar-width:    70px;
-  --agenda-card-radius:      6px;
+  --agenda-card-radius:      8px;
+
+  /* Horario de atención */
+  --agenda-hour-in-range-bg: #F0FDF4;
+  --agenda-hour-out-range-bg: #FEF2F2;
+  --agenda-hour-in-range-border: #BBF7D0;
+  --agenda-hour-out-range-border: #FECACA;
 }
 
 /* ── Reset body para full-height ────────────────────────────────── */
@@ -398,21 +404,25 @@ body.agenda-page {
 /* ── TARJETA DE CITA EN EL GRID ────────────────────────────────── */
 .agenda-card {
   position: absolute;
-  left: 2px;
-  right: 2px;
+  left: 3px;
+  right: 3px;
   border-radius: var(--agenda-card-radius);
-  padding: 4px 6px;
-  font-size: 0.72rem;
+  padding: 6px 8px;
+  font-size: 0.75rem;
   cursor: pointer;
   overflow: hidden;
   z-index: 5;
   transition: box-shadow 0.15s, transform 0.1s;
-  border-left: 3px solid;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-left: 4px solid;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 1px;
 }
 
 .agenda-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
   z-index: 15;
   transform: scale(1.02);
 }
@@ -429,11 +439,12 @@ body.agenda-page {
 .agenda-card.estado-en_atencion {
   background: var(--agenda-card-en-atencion);
   border-left-color: var(--agenda-card-en-atencion-border);
+  animation: pulse-border 2s infinite;
 }
 .agenda-card.estado-atendida {
   background: var(--agenda-card-atendida);
   border-left-color: var(--agenda-card-atendida-border);
-  opacity: 0.75;
+  opacity: 0.8;
 }
 .agenda-card.estado-cancelada {
   background: var(--agenda-card-cancelada);
@@ -442,28 +453,35 @@ body.agenda-page {
   text-decoration: line-through;
 }
 
+@keyframes pulse-border {
+  0%, 100% { border-left-color: var(--agenda-card-en-atencion-border); }
+  50% { border-left-color: #D2B4DE; }
+}
+
 .agenda-card .card-time {
-  font-weight: 600;
+  font-weight: 700;
   color: #374151;
-  font-size: 0.68rem;
-  margin-bottom: 1px;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
 }
 
 .agenda-card .card-patient {
   font-weight: 600;
   color: #1F2937;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .agenda-card .card-doctor {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: var(--agenda-hour-label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-style: italic;
 }
 
 .agenda-card .card-more {
@@ -823,4 +841,62 @@ body.agenda-page {
   height: 2px;
   background: rgba(26,111,168,0.15);
   border-radius: 0 0 var(--agenda-card-radius) var(--agenda-card-radius);
+}
+
+/* ── CELDAS DENTRO/FUERA DE HORARIO LABORAL ────────────────────── */
+.agenda-day-cell.hora-en-atencion {
+  background: var(--agenda-hour-in-range-bg);
+  border-right-color: var(--agenda-hour-in-range-border);
+}
+
+.agenda-day-cell.hora-en-atencion:hover {
+  background: #DCFCE7;
+}
+
+.agenda-day-cell.hora-fuera-atencion {
+  background: var(--agenda-hour-out-range-bg);
+}
+
+.agenda-day-cell.hora-fuera-atencion:hover {
+  background: #FEE2E2;
+}
+
+/* ── INFO BADGE DE HORARIO EN MODAL ────────────────────────────── */
+.horario-info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  border: 1px solid #93C5FD;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #1E40AF;
+  margin-bottom: 12px;
+}
+
+.horario-info-badge i {
+  font-size: 0.9rem;
+}
+
+.horario-info-badge .horario-valores {
+  font-weight: 700;
+  color: #1E3A8A;
+}
+
+.horario-info-badge.dias-atencion {
+  background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+  border-color: #86EFAC;
+  color: #166534;
+}
+
+.horario-info-badge.dias-atencion .horario-valores {
+  color: #14532D;
+}
+
+/* ── ADVERTENCIA DE DÍA NO HABILITADO ──────────────────────────── */
+#horarioWarning {
+  border-left: 4px solid #F59E0B;
+  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
 }

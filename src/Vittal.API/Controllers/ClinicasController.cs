@@ -55,6 +55,84 @@ public class ClinicasController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Devuelve solo el logo de la clínica actual del usuario.
+    /// Endpoint ligero para el sidebar — solo requiere autenticación, sin permiso de módulo.
+    /// Usa el clinica_id del JWT directamente (no depende de PostgreSQL session variable).
+    /// </summary>
+    [HttpGet("current-logo")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCurrentLogo()
+    {
+        var clinicaId = User.GetClinicaId();
+        if (clinicaId == Guid.Empty)
+        {
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = new { logoUrl = (string?)null }
+            });
+        }
+
+        var result = await _service.GetByIdAsync(clinicaId);
+        if (result.IsSuccess && result.Data != null)
+        {
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = new { logoUrl = result.Data.LogoUrl }
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = new { logoUrl = (string?)null }
+        });
+    }
+
+    /// <summary>
+    /// Devuelve el horario de atención de la clínica actual del usuario.
+    /// Endpoint ligero para agenda — solo requiere autenticación, sin permiso de módulo.
+    /// </summary>
+    [HttpGet("current-schedule")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCurrentSchedule()
+    {
+        var clinicaId = User.GetClinicaId();
+        if (clinicaId == Guid.Empty)
+        {
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = new { horarioApertura = (string?)null, horarioCierre = (string?)null, diasAtencion = (string?)null }
+            });
+        }
+
+        var result = await _service.GetByIdAsync(clinicaId);
+        if (result.IsSuccess && result.Data != null)
+        {
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = new
+                {
+                    horarioApertura = result.Data.HorarioApertura,
+                    horarioCierre = result.Data.HorarioCierre,
+                    diasAtencion = result.Data.DiasAtencion
+                }
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = new { horarioApertura = (string?)null, horarioCierre = (string?)null, diasAtencion = (string?)null }
+        });
+    }
+
     /// <summary>Obtiene todas las clínicas del sistema. Por defecto solo activas.</summary>
     /// <param name="inactivos">Si true, incluye clínicas inactivas en el listado.</param>
     [HttpGet]
@@ -198,6 +276,49 @@ public class ClinicasController : ControllerBase
     public async Task<IActionResult> Reactivar([FromRoute] Guid id)
     {
         var result = await _service.ReactivateAsync(id);
+        return result.ToActionResult();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // LOGO — Subir logo de la clínica a Supabase Storage
+    // ────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Sube el logo de la clínica a Supabase Storage (bucket avatares).
+    /// Reemplaza el logo anterior si ya existe.
+    /// </summary>
+    /// <param name="id">GUID de la clínica</param>
+    /// <param name="file">Archivo de imagen (JPEG, PNG o WebP, máx 5MB)</param>
+    [HttpPost("{id:guid}/logo")]
+    [RequireSuperAdmin]
+    [RequestSizeLimit(5 * 1024 * 1024)] // 5 MB
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadLogo([FromRoute] Guid id, [FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "No se proporcionó ningún archivo."
+            });
+        }
+
+        using var stream = file.OpenReadStream();
+        var result = await _service.UploadLogoAsync(
+            stream, file.FileName, file.ContentType, file.Length, id);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = result.Message,
+                Data = result.Data
+            });
+        }
+
         return result.ToActionResult();
     }
 

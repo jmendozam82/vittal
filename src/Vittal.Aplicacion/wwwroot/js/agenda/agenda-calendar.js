@@ -18,7 +18,8 @@ const vittalAgenda = (function() {
         salas: [],              // lista de salas
         filterDoctor: 'todos',
         editingId: null,         // ID de cita en edición
-        detallesCita: null       // cita seleccionada para detalle
+        detallesCita: null,      // cita seleccionada para detalle
+        horario: null            // horario de atención de la clínica
     };
 
     // ── Utilidades ─────────────────────────────────────────────
@@ -135,6 +136,38 @@ const vittalAgenda = (function() {
         return cita.doctorNombre || cita.nombres + ' ' + cita.apellidos || 'Doctor';
     }
 
+    // ── Horario de atención ──────────────────────────────────────
+    const DAY_CODE_MAP = {
+        0: 'D',   // Domingo
+        1: 'L',   // Lunes
+        2: 'M',   // Martes
+        3: 'MI',  // Miércoles
+        4: 'J',   // Jueves
+        5: 'V',   // Viernes
+        6: 'S'    // Sábado
+    };
+
+    function isDiaAtencion(dateStr) {
+        if (!state.horario || !state.horario.diasAtencion) return true;
+        const d = new Date(dateStr + 'T12:00:00');
+        const code = DAY_CODE_MAP[d.getDay()];
+        const dias = state.horario.diasAtencion.split(',').map(s => s.trim());
+        return dias.includes(code);
+    }
+
+    function isHoraEnRango(timeStr) {
+        if (!state.horario || !state.horario.horarioApertura || !state.horario.horarioCierre) return true;
+        const mins = parseTimeToMinutes(timeStr);
+        const apertura = parseTimeToMinutes(state.horario.horarioApertura);
+        const cierre = parseTimeToMinutes(state.horario.horarioCierre);
+        return mins >= apertura && mins < cierre;
+    }
+
+    function getHorarioLabel() {
+        if (!state.horario || !state.horario.horarioApertura || !state.horario.horarioCierre) return '';
+        return `${state.horario.horarioApertura} — ${state.horario.horarioCierre}`;
+    }
+
     // ── DOM refs ───────────────────────────────────────────────
     let $ = (id) => document.getElementById(id);
     let container, dateTitleMain, dateTitleSub;
@@ -180,6 +213,11 @@ const vittalAgenda = (function() {
 
         // Guardar cita
         $('btnGuardarCita').addEventListener('click', saveCita);
+
+        // Actualizar restricciones de horario cuando cambia la fecha
+        $('citaFecha').addEventListener('change', function() {
+            aplicarRestriccionesHorario(this.value, $('citaHora').value);
+        });
 
         // Desactivar cita desde modal
         $('btnDesactivarCita').addEventListener('click', () => {
@@ -227,22 +265,27 @@ const vittalAgenda = (function() {
     // ── Carga de datos ─────────────────────────────────────────
     async function loadInitialData() {
         try {
-            const [citasRes, doctoresRes, pacientesRes, salasRes] = await Promise.all([
+            const [citasRes, doctoresRes, pacientesRes, salasRes, horarioRes] = await Promise.all([
                 fetch(config.urls.citas),
                 fetch(config.urls.doctores),
                 fetch(config.urls.pacientes),
-                fetch(config.urls.salas)
+                fetch(config.urls.salas),
+                fetch(config.urls.horarioClinica)
             ]);
 
             const citasJson = await citasRes.json();
             const doctoresJson = await doctoresRes.json();
             const pacientesJson = await pacientesRes.json();
             const salasJson = await salasRes.json();
+            const horarioJson = await horarioRes.json();
 
             if (citasJson.success) state.citas = citasJson.data || [];
             if (doctoresJson.success) state.doctores = doctoresJson.data || [];
             if (pacientesJson.success) state.pacientes = pacientesJson.data || [];
             if (salasJson.success) state.salas = salasJson.data || [];
+            if (horarioJson.success && horarioJson.data) {
+                state.horario = horarioJson.data;
+            }
 
             // Poblar selects
             populateDoctorFilter();
@@ -471,12 +514,15 @@ const vittalAgenda = (function() {
             days.forEach((d, di) => {
                 const today = isToday(d) ? 'today-cell' : '';
                 const dateKey = fmtDate(d);
+                const esDiaHorario = !state.horario || !state.horario.diasAtencion || isDiaAtencion(dateKey);
+                const esHoraHorario = esDiaHorario && (!state.horario || !state.horario.horarioApertura || (h >= parseTimeToMinutes(state.horario.horarioApertura) / 60 && h < parseTimeToMinutes(state.horario.horarioCierre) / 60));
+                const claseHorario = esHoraHorario ? 'hora-en-atencion' : (!esDiaHorario ? '' : 'hora-fuera-atencion');
                 const cellCitas = citas.filter(c => {
                     const cDate = c.fechaCita ? c.fechaCita.substring(0,10) : '';
                     return cDate === dateKey;
                 });
 
-                html += `<div class="agenda-day-cell ${today}" ` +
+                html += `<div class="agenda-day-cell ${today} ${claseHorario}" ` +
                         `data-date="${dateKey}" data-hour="${h}" ` +
                         `onclick="vittalAgenda.onCellClick('${dateKey}', ${h})">`;
 
@@ -572,7 +618,11 @@ const vittalAgenda = (function() {
             html += `<div class="time-row" style="display:grid;grid-template-columns:var(--agenda-sidebar-width) 1fr" data-hour="${h}">`;
             html += `<div class="agenda-time-label">${timeStr}</div>`;
 
-            html += `<div class="agenda-day-cell ${today ? 'today-cell' : ''}" ` +
+            const esDiaHorario = !state.horario || !state.horario.diasAtencion || isDiaAtencion(dateKey);
+            const esHoraHorario = esDiaHorario && (!state.horario || !state.horario.horarioApertura || (h >= parseTimeToMinutes(state.horario.horarioApertura) / 60 && h < parseTimeToMinutes(state.horario.horarioCierre) / 60));
+            const claseHorario = esHoraHorario ? 'hora-en-atencion' : (!esDiaHorario ? '' : 'hora-fuera-atencion');
+
+            html += `<div class="agenda-day-cell ${today ? 'today-cell' : ''} ${claseHorario}" ` +
                     `data-date="${dateKey}" data-hour="${h}" ` +
                     `onclick="vittalAgenda.onCellClick('${dateKey}', ${h})">`;
 
@@ -850,10 +900,8 @@ const vittalAgenda = (function() {
         $('citaEstado').value = 'agendada';
         $('btnDesactivarCita').classList.add('d-none');
 
-        // Calcular hora_fin por defecto (30 min después)
-        const parts = timeStr.split(':');
-        const mins = parseInt(parts[0]) * 60 + parseInt(parts[1]) + 30;
-        $('citaHoraFin').value = minutesToTimeStr(mins);
+        // ── Validar horario de atención ──────────────────────────
+        aplicarRestriccionesHorario(dateStr, timeStr);
 
         modalCita.show();
     }
@@ -880,7 +928,68 @@ const vittalAgenda = (function() {
         $('citaNotas').value = cita.notas || '';
         $('btnDesactivarCita').classList.remove('d-none');
 
+        // ── Validar horario de atención ──────────────────────────
+        aplicarRestriccionesHorario($('citaFecha').value, $('citaHora').value);
+
         modalCita.show();
+    }
+
+    /**
+     * Aplica restricciones de horario de atención en el modal de citas.
+     * - Muestra badge con horario y días de atención
+     * - Muestra advertencia si el día no es de atención
+     * - NO usa min/max HTML5 (causa mensajes nativos confusos)
+     */
+    function aplicarRestriccionesHorario(dateStr, currentTime) {
+        const horaInput = $('citaHora');
+        const horaFinInput = $('citaHoraFin');
+        const fechaInput = $('citaFecha');
+        const badge = $('horarioBadge');
+        const badgeValores = $('horarioBadgeValores');
+        const badgeDiasValores = $('horarioBadgeDiasValores');
+
+        // Remover advertencia previa
+        const prevWarning = document.getElementById('horarioWarning');
+        if (prevWarning) prevWarning.remove();
+
+        if (!state.horario) {
+            badge.classList.add('d-none');
+            return;
+        }
+
+        const apertura = state.horario.horarioApertura;
+        const cierre = state.horario.horarioCierre;
+        const diasAtencion = state.horario.diasAtencion;
+
+        // Mostrar badge de horario
+        if (apertura && cierre) {
+            badge.classList.remove('d-none');
+            badgeValores.textContent = `${apertura} — ${cierre}`;
+            badgeDiasValores.textContent = diasAtencion || 'Todos';
+        } else {
+            badge.classList.add('d-none');
+        }
+
+        // Verificar si el día seleccionado es de atención
+        if (diasAtencion && dateStr) {
+            const esDiaAtencion = isDiaAtencion(dateStr);
+            if (!esDiaAtencion) {
+                const warning = document.createElement('div');
+                warning.id = 'horarioWarning';
+                warning.className = 'alert alert-warning py-2 px-3 mb-2 small';
+                warning.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>` +
+                    `La clínica <strong>no atiende</strong> este día. ` +
+                    `Días de atención: <strong>${diasAtencion}</strong>. ` +
+                    `La cita se creará fuera del horario habitual.`;
+                $('formCita').prepend(warning);
+            }
+        }
+
+        // Actualizar placeholder con horario
+        if (apertura && cierre) {
+            horaInput.placeholder = apertura;
+            horaFinInput.placeholder = cierre;
+        }
     }
 
     // ── Guardar cita (crear o actualizar) ───────────────────────
@@ -889,6 +998,35 @@ const vittalAgenda = (function() {
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
             return;
+        }
+
+        // ── Validación client-side de horario de atención ─────────
+        const fechaVal = $('citaFecha').value;
+        const horaVal = $('citaHora').value;
+        const horaFinVal = $('citaHoraFin').value;
+
+        if (state.horario && state.horario.horarioApertura && state.horario.horarioCierre) {
+            const apertura = state.horario.horarioApertura;
+            const cierre = state.horario.horarioCierre;
+
+            // Validar hora_fin > hora_cita
+            if (horaFinVal && parseTimeToMinutes(horaFinVal) <= parseTimeToMinutes(horaVal)) {
+                showToast('La hora de fin debe ser posterior a la hora de inicio.', 'warning');
+                return;
+            }
+
+            // Validar día de atención
+            if (fechaVal && !isDiaAtencion(fechaVal)) {
+                const diaNombre = fmtDateLong(new Date(fechaVal + 'T12:00:00'));
+                showToast(`La clínica no atiende el ${diaNombre}. Días de atención: ${state.horario.diasAtencion}`, 'warning');
+                return;
+            }
+
+            // Validar hora dentro del rango
+            if (!isHoraEnRango(horaVal)) {
+                showToast(`La hora ${horaVal} está fuera del horario de atención (${apertura} — ${cierre}). Seleccione una hora entre ${apertura} y ${cierre}.`, 'warning');
+                return;
+            }
         }
 
         const id = $('citaId').value;
@@ -1031,7 +1169,8 @@ const vittalAgenda = (function() {
         goToDay,
         openNewCita,
         openEditCita,
-        refreshCitas
+        refreshCitas,
+        aplicarRestriccionesHorario
     };
 
 })();

@@ -215,6 +215,45 @@ public class AgendaController : Controller
         return Json(new { success = true, data });
     }
 
+    /// <summary>
+    /// Obtiene el horario de atención de la clínica actual del usuario.
+    /// Se usa en el frontend para validar horarios al crear/editar citas.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> JsonHorarioClinica()
+    {
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/current-schedule");
+
+        if (!success)
+        {
+            // Si falla, devolver vacío (no bloquear la agenda)
+            return Json(new { success = true, data = new { horarioApertura = (string?)null, horarioCierre = (string?)null, diasAtencion = (string?)null } });
+        }
+
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(response!.ToString());
+            if (doc.RootElement.TryGetProperty("data", out var dataProp))
+            {
+                var horarioApertura = dataProp.TryGetProperty("horarioApertura", out var ha) && ha.ValueKind != JsonValueKind.Null ? ha.GetString() : null;
+                var horarioCierre = dataProp.TryGetProperty("horarioCierre", out var hc) && hc.ValueKind != JsonValueKind.Null ? hc.GetString() : null;
+                var diasAtencion = dataProp.TryGetProperty("diasAtencion", out var da) && da.ValueKind != JsonValueKind.Null ? da.GetString() : null;
+
+                return Json(new
+                {
+                    success = true,
+                    data = new { horarioApertura, horarioCierre, diasAtencion }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al parsear horario de clínica");
+        }
+
+        return Json(new { success = true, data = new { horarioApertura = (string?)null, horarioCierre = (string?)null, diasAtencion = (string?)null } });
+    }
+
     // ──────────────────────────────────────────────────────────────
     //  OPERACIONES CRUD (proxy a la API)
     // ──────────────────────────────────────────────────────────────

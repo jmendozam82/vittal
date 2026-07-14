@@ -10,7 +10,14 @@
     @* ── Sidebar Header: Logo + Toggle ── *@
     <div class="sidebar-header">
         <a class="d-flex align-items-center text-decoration-none sidebar-logo" href="/">
-            <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
+            @if (!string.IsNullOrEmpty(Model.ClinicaActualLogoUrl))
+            {
+                <img src="@Model.ClinicaActualLogoUrl" alt="@Model.ClinicaActualNombre" height="32" class="me-2 rounded" style="object-fit:contain; max-width:32px; background:#fff; padding:2px;" loading="lazy" />
+            }
+            else
+            {
+                <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
+            }
             <span class="fw-bold text-white sidebar-brand-text" style="font-size:1.1rem;">Vittal</span>
         </a>
         <button class="sidebar-toggle btn btn-link text-white p-0 border-0" id="sidebarToggle"
