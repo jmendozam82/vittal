@@ -68,6 +68,16 @@
         connection.start()
             .then(function () {
                 console.log('[VittalAlertas] Conectado a SignalR.');
+                // Unirse al grupo de la clínica para recibir alertas
+                if (CLINICA_ID) {
+                    connection.invoke('JoinGroup', CLINICA_ID)
+                        .then(function () {
+                            console.log('[VittalAlertas] Unido al grupo clinica_' + CLINICA_ID);
+                        })
+                        .catch(function (err) {
+                            console.error('[VittalAlertas] Error al unirse al grupo:', err);
+                        });
+                }
                 actualizarBadge();
             })
             .catch(function (err) {

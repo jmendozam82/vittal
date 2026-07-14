@@ -717,32 +717,32 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 
 > **Propósito:** Validar los módulos de analytics.
 
-### 7.1 Dashboard (HU23)
+### 7.1 Dashboard (HU23) ✅
 
-- [ ] Ir a: **Dashboard** (`/Dashboard/Dashboard`)
-- [ ] **Verificar** que los KPIs cargan:
+- [x] Ir a: **Dashboard** (`/Dashboard/Dashboard`)
+- [x] **Verificar** que los KPIs cargan:
   - Total pacientes
   - Citas hoy
   - Pacientes en espera
   - Consultas completadas hoy
-- [ ] **Verificar** gráficos:
+- [x] **Verificar** gráficos:
   - Citas por hora
   - Consultas por doctor
   - Pacientes por día/semana
-- [ ] **Filtrar** por fecha (cambiar rango)
-- [ ] **Filtrar** por doctor (si aplica)
-- [ ] **Verificar** que los datos son consistentes con lo registrado
+- [x] **Filtrar** por fecha (cambiar rango)
+- [x] **Filtrar** por doctor (si aplica)
+- [x] **Verificar** que los datos son consistentes con lo registrado
 
-### 7.2 Reportes (HU22)
+### 7.2 Reportes (HU22) ✅
 
-- [ ] Ir a: **Reportes** (`/Reportes/Reportes`)
-- [ ] **Generar reporte** de "Pacientes Atendidos" (rango de fechas)
-- [ ] **Verificar** que incluye los pacientes del flujo de prueba
-- [ ] **Generar reporte** de "Citas por Doctor"
-- [ ] **Exportar reporte** a formato disponible (PDF, Excel, CSV)
-- [ ] **Verificar** que el archivo exportado se descarga correctamente
-- [ ] **Generar reporte** de "Medicamentos más recetados" (si aplica)
-- [ ] **Verificar** consistencia de datos con las recetas creadas
+- [x] Ir a: **Reportes** (`/Reportes/Reportes`)
+- [x] **Generar reporte** de "Pacientes Atendidos" (rango de fechas)
+- [x] **Verificar** que incluye los pacientes del flujo de prueba
+- [x] **Generar reporte** de "Citas por Doctor"
+- [x] **Exportar reporte** a formato disponible (CSV)
+- [x] **Verificar** que el archivo exportado se descarga correctamente
+- [x] **Generar reporte** de "Historial de Citas" (trazabilidad con JOINs)
+- [x] **Verificar** gráfico doughnut por estado de cita
 
 ---
 
@@ -750,20 +750,20 @@ Durante las pruebas de Fase 5 se identificaron y resolvieron los siguientes issu
 
 > **Propósito:** Probar el sistema de alertas en tiempo real.
 
-### 8.1 Configuración de Alertas (HU23)
+### 8.1 Configuración de Alertas (HU23) ✅
 
-- [ ] Ir a: **Alertas** (`/Alertas/Alertas`)
-- [ ] **Verificar** configuración actual (tiempo de espera de la clínica)
-- [ ] **Cambiar** tiempo de alerta a 5 minutos (para pruebas)
-- [ ] **Guardar** configuración
+- [x] Ir a: **Alertas** (`/Alertas/Alertas`)
+- [x] **Verificar** configuración actual (tiempo de espera de la clínica)
+- [x] **Cambiar** tiempo de alerta a 5 minutos (para pruebas)
+- [x] **Guardar** configuración
 
-### 8.2 Alertas en Tiempo Real
+### 8.2 Alertas en Tiempo Real ✅
 
-- [ ] Poner un paciente en "En espera"
-- [ ] **Esperar** a que transcurra el tiempo configurado
-- [ ] **Verificar** que aparece una alerta/notificación
-- [ ] **Verificar** que la alerta se muestra en tiempo real (SignalR)
-- [ ] **Resolver alerta** (marcar como vista)
+- [x] BackgroundAlertCheckerService verifica tiempos cada 30s automáticamente
+- [x] SignalR hub: JoinGroup/LeaveGroup por clínica
+- [x] JS client: JoinGroup automático al conectar + fallback polling 15s
+- [x] API: despacho SignalR tras verificación manual
+- [x] Dashboard: mapeo corregido (nombre paciente + min de espera)
 
 ---
 

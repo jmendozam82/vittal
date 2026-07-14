@@ -178,14 +178,14 @@ public class DashboardService : IDashboardService
             if (ultimasAlertasTask != null)
             {
                 var alertasData = await ultimasAlertasTask;
-                // Mapear DashboardGraficoDto a NotificacionResponseDto simplificado
+                // DashboardGraficoDto: Etiqueta = nombre del paciente, Valor = minutos de espera
                 dashboardData.UltimasAlertas = alertasData.Select(a => new NotificacionResponseDto
                 {
                     Id = Guid.Empty,
                     Tipo = "alerta_espera",
-                    Titulo = a.Etiqueta,
-                    Mensaje = $"Valor: {a.Valor}",
-                    Color = a.Color,
+                    Titulo = "Paciente en espera excede tiempo",
+                    Mensaje = $"{a.Etiqueta} lleva {a.Valor} min de espera",
+                    Color = "warning",
                     FechaCreacion = fecha
                 }).ToList();
             }

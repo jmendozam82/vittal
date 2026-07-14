@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vittal.API.Hubs;
 using Vittal.API.Middleware;
+using Vittal.API.Services;
 using Vittal.IOC;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -154,6 +155,9 @@ builder.Services.AddCors(options =>
 
 // SignalR hubs para tiempo real
 builder.Services.AddSignalR();
+
+// Background service para verificación periódica de alertas
+builder.Services.AddHostedService<BackgroundAlertCheckerService>();
 
 var app = builder.Build();
 
