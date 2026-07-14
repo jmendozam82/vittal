@@ -257,6 +257,106 @@ public class ReporteRepository : IReporteRepository
                 GROUP BY c.fecha_cita
                 ORDER BY c.fecha_cita ASC",
 
+            // ── Reportes del UI (tabs) ──────────────────────────────
+
+            "citas_atendidas" => @"
+                SELECT
+                    c.fecha_cita AS Fecha,
+                    COUNT(*)::int AS Cantidad
+                FROM public.citas c
+                WHERE c.clinica_id = @ClinicaId
+                  AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+                  AND c.estado = 'atendida'
+                  AND c.activo = true
+                  AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+                  AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+                GROUP BY c.fecha_cita
+                ORDER BY c.fecha_cita ASC",
+
+            "pacientes_atendidos" => @"
+                SELECT
+                    c.fecha_cita AS Fecha,
+                    COUNT(DISTINCT c.paciente_id)::int AS Cantidad
+                FROM public.citas c
+                WHERE c.clinica_id = @ClinicaId
+                  AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+                  AND c.estado = 'atendida'
+                  AND c.activo = true
+                  AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+                  AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+                GROUP BY c.fecha_cita
+                ORDER BY c.fecha_cita ASC",
+
+            "ingresos" => @"
+                SELECT
+                    c.fecha_cita AS Fecha,
+                    COUNT(*)::int AS Total
+                FROM public.citas c
+                WHERE c.clinica_id = @ClinicaId
+                  AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+                  AND c.estado = 'atendida'
+                  AND c.activo = true
+                  AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+                  AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+                GROUP BY c.fecha_cita
+                ORDER BY c.fecha_cita ASC",
+
+            "tiempos_espera" => @"
+                SELECT
+                    c.fecha_cita AS Fecha,
+                    COALESCE(
+                        ROUND(
+                            AVG(
+                                EXTRACT(EPOCH FROM (
+                                    (c.fecha_cita + c.hora_llegada) - (c.fecha_cita + c.hora_cita)
+                                )) / 60
+                            ), 1
+                        ), 0
+                    ) AS Promedio
+                FROM public.citas c
+                WHERE c.clinica_id = @ClinicaId
+                  AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+                  AND c.hora_llegada IS NOT NULL
+                  AND c.estado IN ('atendida', 'en_atencion')
+                  AND c.activo = true
+                  AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+                  AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+                GROUP BY c.fecha_cita
+                ORDER BY c.fecha_cita ASC",
+
+            // ── Reporte detallado: Historial de Citas ───────────────
+
+            "historial_citas" => @"
+                SELECT
+                    TO_CHAR(c.fecha_cita, 'DD/MM/YYYY')              AS FechaCita,
+                    c.hora_cita::text                                  AS HoraCita,
+                    COALESCE(c.hora_llegada::text, '—')               AS HoraLlegada,
+                    CASE c.estado
+                        WHEN 'agendada'    THEN 'Agendada'
+                        WHEN 'en_espera'   THEN 'En Espera'
+                        WHEN 'en_atencion' THEN 'En Atención'
+                        WHEN 'atendida'    THEN 'Atendida'
+                        WHEN 'cancelada'   THEN 'Cancelada'
+                        ELSE c.estado
+                    END                                               AS Estado,
+                    p.primer_nombre || ' ' ||
+                        COALESCE(p.segundo_nombre || ' ', '') ||
+                        p.primer_apellido || ' ' ||
+                        COALESCE(p.segundo_apellido, '')             AS Paciente,
+                    u.nombres || ' ' || u.apellidos                  AS Doctor,
+                    COALESCE(s.nombre, 'Sin asignar')                AS Sala,
+                    COALESCE(c.motivo, '')                            AS Motivo
+                FROM public.citas c
+                INNER JOIN public.pacientes p ON p.id = c.paciente_id
+                INNER JOIN public.usuarios  u ON u.id = c.doctor_id
+                LEFT  JOIN public.salas     s ON s.id = c.sala_id
+                WHERE c.clinica_id = @ClinicaId
+                  AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
+                  AND c.activo = true
+                  AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
+                  AND (@SalaId IS NULL OR c.sala_id = @SalaId)
+                ORDER BY c.fecha_cita DESC, c.hora_cita DESC",
+
             _ => throw new ArgumentException($"Tipo de reporte no soportado: {tipo}")
         };
     }

@@ -9,7 +9,8 @@ namespace Vittal.DTO.Reporte;
 public class ReporteRequestDto
 {
     /// <summary>
-    /// Tipo de reporte: citas_atendidas | pacientes_atendidos | ingresos | cirugias | examenes | personalizado.
+    /// Tipo de reporte: pacientes_por_dia | citas_por_estado | doctores_mas_activos | tiempo_promedio_espera |
+    ///   tiempos_espera | citas_atendidas | pacientes_atendidos | ingresos | historial_citas | cirugias | examenes.
     /// </summary>
     public string Tipo { get; set; } = string.Empty;
 

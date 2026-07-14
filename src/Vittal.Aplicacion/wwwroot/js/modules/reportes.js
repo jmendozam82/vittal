@@ -149,7 +149,7 @@
         var html = '';
         html += '<div class="d-flex align-items-center justify-content-between mb-3">';
         html += '<h6 class="mb-0 fw-semibold">' + escapeHtml(data.nombre || 'Reporte') + '</h6>';
-        html += '<small class="text-muted">' + (data.fechaCreacion ? new Date(data.fechaCreacion + 'Z').toLocaleDateString('es-MX') : '') + '</small>';
+        html += '<small class="text-muted">' + safeDate(data.fechaCreacion) + '</small>';
         html += '</div>';
 
         // Gráfico
@@ -315,6 +315,40 @@
                     }
                 };
 
+            case 'historial_citas':
+                // Doughnut de citas agrupadas por estado
+                var conteo = {};
+                var colores = {
+                    'Agendada': '#1A6FA8', 'En Espera': '#F39C12',
+                    'En Atención': '#2ECC71', 'Atendida': '#95A5A6', 'Cancelada': '#E74C3C'
+                };
+                datos.forEach(function (d) {
+                    var est = d.estado || 'Otro';
+                    conteo[est] = (conteo[est] || 0) + 1;
+                });
+                var labels = Object.keys(conteo);
+                var values = labels.map(function (l) { return conteo[l]; });
+                var bgColors = labels.map(function (l) { return colores[l] || '#BDC3C7'; });
+                return {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: bgColors,
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { padding: 16, usePointStyle: true } }
+                        }
+                    }
+                };
+
             default:
                 return null;
         }
@@ -376,14 +410,15 @@
             }
 
             DOM.historialContainer.innerHTML = reportes.map(function (r) {
-                var fecha = r.fechaCreacion ? new Date(r.fechaCreacion + 'Z').toLocaleString('es-MX') : '';
+                var fecha = safeDateTime(r.fechaCreacion);
                 var tipo = r.tipo || '—';
                 var nombre = r.nombre || 'Reporte';
                 var tipoLabel = {
                     'citas_atendidas': 'Citas',
                     'pacientes_atendidos': 'Pacientes',
                     'ingresos': 'Ingresos',
-                    'tiempos_espera': 'Espera'
+                    'tiempos_espera': 'Espera',
+                    'historial_citas': 'Trazabilidad'
                 }[tipo] || tipo;
 
                 return '<div class="reporte-historial-item">' +
@@ -407,5 +442,38 @@
         var div = document.createElement('div');
         div.textContent = String(text);
         return div.innerHTML;
+    }
+
+    function safeDate(val) {
+        if (!val) return '';
+        try {
+            var s = String(val);
+            var d = new Date(s);
+            if (isNaN(d.getTime())) return s;
+            var dd = d.getUTCDate();
+            var mm = d.getUTCMonth() + 1;
+            var yyyy = d.getUTCFullYear();
+            return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm + '/' + yyyy;
+        } catch (_) {
+            return String(val);
+        }
+    }
+
+    function safeDateTime(val) {
+        if (!val) return '';
+        try {
+            var s = String(val);
+            var d = new Date(s);
+            if (isNaN(d.getTime())) return s;
+            var dd = d.getUTCDate();
+            var mm = d.getUTCMonth() + 1;
+            var yyyy = d.getUTCFullYear();
+            var hh = d.getUTCHours();
+            var mi = d.getUTCMinutes();
+            return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm + '/' + yyyy +
+                   ' ' + (hh < 10 ? '0' : '') + hh + ':' + (mi < 10 ? '0' : '') + mi;
+        } catch (_) {
+            return String(val);
+        }
     }
 })();

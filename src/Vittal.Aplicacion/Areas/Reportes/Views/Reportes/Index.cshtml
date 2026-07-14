@@ -29,6 +29,9 @@
     <button class="reporte-tab" data-tipo="tiempos_espera" title="Tiempos de espera promedio">
         <i class="bi bi-hourglass-split"></i> Tiempos de Espera
     </button>
+    <button class="reporte-tab" data-tipo="historial_citas" title="Trazabilidad detallada de cada cita">
+        <i class="bi bi-list-ul"></i> Historial de Citas
+    </button>
 </div>
 
 <!-- ── Filtros ──────────────────────────────────────────────────── -->
@@ -96,5 +99,5 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script src="~/js/modules/reportes.js"></script>
+    <script src="~/js/modules/reportes.js" asp-append-version="true"></script>
 }

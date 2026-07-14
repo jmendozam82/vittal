@@ -88,7 +88,7 @@ public class ReporteService : IReporteService
             _logger.LogInformation("Generando reporte tipo {Tipo} para clínica {ClinicaId}", dto.Tipo, clinicaId);
 
             // Validar tipo de reporte
-            var tiposValidos = new[] { "pacientes_por_dia", "citas_por_estado", "doctores_mas_activos", "tiempo_promedio_espera", "citas_atendidas", "pacientes_atendidos", "ingresos", "cirugias", "examenes" };
+            var tiposValidos = new[] { "pacientes_por_dia", "citas_por_estado", "doctores_mas_activos", "tiempo_promedio_espera", "tiempos_espera", "citas_atendidas", "pacientes_atendidos", "ingresos", "historial_citas", "cirugias", "examenes" };
             if (!tiposValidos.Contains(dto.Tipo))
             {
                 return ServiceResult<ReporteResponseDto>.Failure(
@@ -115,9 +115,11 @@ public class ReporteService : IReporteService
                 "citas_por_estado" => "Citas por estado",
                 "doctores_mas_activos" => "Doctores más activos",
                 "tiempo_promedio_espera" => "Tiempo promedio de espera",
+                "tiempos_espera" => "Tiempos de espera",
                 "citas_atendidas" => "Citas atendidas",
                 "pacientes_atendidos" => "Pacientes atendidos",
                 "ingresos" => "Ingresos",
+                "historial_citas" => "Historial de Citas",
                 "cirugias" => "Cirugías",
                 "examenes" => "Exámenes",
                 _ => dto.Tipo
