@@ -662,21 +662,37 @@ const vittalAgenda = (function() {
         const horaFin = c.horaFin ? fmtTime(c.horaFin) : '';
         const paciente = getPatientName(c);
         const doctor = getDoctorName(c);
+        const sala = c.salaNombre || '';
         const id = c.id || '';
         const safePaciente = escapeHtml(paciente);
         const safeDoctor = escapeHtml(doctor);
+        const safeSala = escapeHtml(sala);
+        const estadoLabel = getEstadoLabel(estado);
 
         const heightStyle = heightPct > 0 ? `height:${heightPct}%` : 'height:30px';
         const topStyle = `top:${topOffset}%`;
+
+        // Doctor + sala en una línea compacta
+        let doctorLine = '';
+        if (safeDoctor && safeSala) {
+            doctorLine = `${safeDoctor} · ${safeSala}`;
+        } else if (safeDoctor) {
+            doctorLine = safeDoctor;
+        } else if (safeSala) {
+            doctorLine = safeSala;
+        }
 
         return `
             <div class="agenda-card estado-${estado}"
                  style="${topStyle}; ${heightStyle}"
                  onclick="event.stopPropagation(); vittalAgenda.onCitaClick('${id}')"
-                 title="${safePaciente} — ${horaInicio}${horaFin ? ' a ' + horaFin : ''}">
-                <div class="card-time">${horaInicio}${horaFin ? ' - ' + horaFin : ''}</div>
-                <div class="card-patient">${safePaciente}</div>
-                ${compact ? '' : `<div class="card-doctor">${safeDoctor}</div>`}
+                 title="${safePaciente} — ${horaInicio}${horaFin ? ' a ' + horaFin : ''} | ${doctorLine} | ${estadoLabel}">
+                <div class="card-row-main">
+                    <span class="card-time">${horaInicio}${horaFin ? '—' + horaFin : ''}</span>
+                    <span class="card-patient">${safePaciente}</span>
+                    <span class="card-estado-badge badge-estado-${estado}">${estadoLabel}</span>
+                </div>
+                ${(!compact && doctorLine) ? `<div class="card-row-sub">${doctorLine}</div>` : ''}
             </div>
         `;
     }
@@ -781,6 +797,21 @@ const vittalAgenda = (function() {
 
     // ── Event handlers ──────────────────────────────────────────
     function onCellClick(dateStr, hour) {
+        // Bloquear creación de citas en fechas pasadas
+        const hoyStr = fmtDate(new Date());
+        if (dateStr < hoyStr) {
+            showToast('No se pueden agendar citas en fechas pasadas.', 'warning');
+            return;
+        }
+        // Si es hoy, bloquear horas que ya pasaron
+        if (dateStr === hoyStr) {
+            const ahora = new Date();
+            const horaActualMin = ahora.getHours() * 60 + ahora.getMinutes();
+            if (hour * 60 < horaActualMin) {
+                showToast('Esta hora ya pasó. Seleccione una hora futura.', 'warning');
+                return;
+            }
+        }
         const timeStr = `${String(hour).padStart(2,'0')}:00`;
         openNewCitaAt(dateStr, timeStr);
     }
@@ -900,6 +931,9 @@ const vittalAgenda = (function() {
         $('citaEstado').value = 'agendada';
         $('btnDesactivarCita').classList.add('d-none');
 
+        // ── Restringir fecha mínima a hoy ────────────────────────
+        $('citaFecha').min = fmtDate(new Date());
+
         // ── Validar horario de atención ──────────────────────────
         aplicarRestriccionesHorario(dateStr, timeStr);
 
@@ -1000,10 +1034,26 @@ const vittalAgenda = (function() {
             return;
         }
 
-        // ── Validación client-side de horario de atención ─────────
+        // ── Validación: no agendar en fechas pasadas ─────────────
         const fechaVal = $('citaFecha').value;
         const horaVal = $('citaHora').value;
         const horaFinVal = $('citaHoraFin').value;
+        const hoyStr = fmtDate(new Date());
+
+        if (!state.editingId && fechaVal < hoyStr) {
+            showToast('No se pueden agendar citas en fechas pasadas. Seleccione el día de hoy o una fecha futura.', 'warning');
+            return;
+        }
+
+        // Si es hoy, validar que la hora no sea en el pasado
+        if (!state.editingId && fechaVal === hoyStr && horaVal) {
+            const ahora = new Date();
+            const horaActualMin = ahora.getHours() * 60 + ahora.getMinutes();
+            if (parseTimeToMinutes(horaVal) < horaActualMin) {
+                showToast(`La hora ${horaVal} ya pasó. Seleccione una hora posterior a las ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}.`, 'warning');
+                return;
+            }
+        }
 
         if (state.horario && state.horario.horarioApertura && state.horario.horarioCierre) {
             const apertura = state.horario.horarioApertura;

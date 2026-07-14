@@ -458,30 +458,77 @@ body.agenda-page {
   50% { border-left-color: #D2B4DE; }
 }
 
+/* ── LÍNEA PRINCIPAL: Hora · Paciente · Badge ─────────────────── */
+.agenda-card .card-row-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .agenda-card .card-time {
   font-weight: 700;
-  color: #374151;
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
+  color: #1E3A5F;
+  font-size: 0.68rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .agenda-card .card-patient {
   font-weight: 600;
   color: #1F2937;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.3;
+  min-width: 0;
+  flex: 1;
 }
 
-.agenda-card .card-doctor {
-  font-size: 0.68rem;
-  color: var(--agenda-hour-label);
+.agenda-card .card-estado-badge {
+  font-size: 0.5rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+/* ── LÍNEA SECUNDARIA: Doctor · Sala ──────────────────────────── */
+.agenda-card .card-row-sub {
+  font-size: 0.6rem;
+  color: #6B7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-style: italic;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+/* ── Colores de badges de estado ──────────────────────────────── */
+.badge-estado-agendada {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+.badge-estado-en_espera {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.badge-estado-en_atencion {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.badge-estado-atendida {
+  background: #E5E7EB;
+  color: #374151;
+}
+.badge-estado-cancelada {
+  background: #FEE2E2;
+  color: #991B1B;
 }
 
 .agenda-card .card-more {
