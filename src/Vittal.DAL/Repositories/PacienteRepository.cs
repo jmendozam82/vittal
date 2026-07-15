@@ -40,6 +40,8 @@ public class PacienteRepository : IPacienteRepository
         p.sexo                  AS Sexo,
         p.fecha_nacimiento      AS FechaNacimiento,
         p.foto_url              AS FotoUrl,
+        p.tipo_documento_identificacion AS TipoDocumentoIdentificacion,
+        p.numero_documento_identificacion AS NumeroDocumentoIdentificacion,
         p.observaciones         AS Observaciones,
         p.activo                AS Activo,
         p.fecha_creacion        AS FechaCreacion,
@@ -130,14 +132,16 @@ public class PacienteRepository : IPacienteRepository
                 clinica_id, doctor_id,
                 primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
                 email, celular, direccion, sexo, fecha_nacimiento,
-                foto_url, observaciones,
+                foto_url, tipo_documento_identificacion, numero_documento_identificacion,
+                observaciones,
                 activo, fecha_creacion, creado_por
             )
             VALUES (
                 @ClinicaId, @DoctorId,
                 @PrimerNombre, @SegundoNombre, @PrimerApellido, @SegundoApellido,
                 @Email, @Celular, @Direccion, @Sexo, @FechaNacimiento,
-                @FotoUrl, @Observaciones,
+                @FotoUrl, @TipoDocumentoIdentificacion, @NumeroDocumentoIdentificacion,
+                @Observaciones,
                 true, NOW(), @CreadoPor
             )
             RETURNING id;";
@@ -172,6 +176,8 @@ public class PacienteRepository : IPacienteRepository
                 sexo                = @Sexo,
                 fecha_nacimiento    = @FechaNacimiento,
                 foto_url            = @FotoUrl,
+                tipo_documento_identificacion = @TipoDocumentoIdentificacion,
+                numero_documento_identificacion = @NumeroDocumentoIdentificacion,
                 observaciones       = @Observaciones,
                 fecha_modificacion  = NOW(),
                 modificado_por      = @ModificadoPor
@@ -292,6 +298,35 @@ public class PacienteRepository : IPacienteRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de celular en clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 8. ExistsByNumeroDocumentoAsync — Verifica duplicado de documento en la clínica
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId)
+    {
+        const string sql = @"
+            SELECT COUNT(1) FROM pacientes
+            WHERE clinica_id = @ClinicaId
+              AND LOWER(numero_documento_identificacion) = LOWER(@NumeroDocumento)
+              AND (@ExcludeId IS NULL OR id != @ExcludeId)";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var count = await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                ClinicaId = clinicaId,
+                NumeroDocumento = numeroDocumento,
+                ExcludeId = excludeId
+            });
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking numero documento existence for clinica {ClinicaId}", clinicaId);
             throw;
         }
     }

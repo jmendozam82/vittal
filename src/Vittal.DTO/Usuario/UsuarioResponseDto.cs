@@ -20,6 +20,8 @@ public class UsuarioResponseDto
     public string? Celular { get; set; }
     public string? Direccion { get; set; }
     public string? FotoUrl { get; set; }
+    public string? TipoDocumentoIdentificacion { get; set; }
+    public string? NumeroDocumentoIdentificacion { get; set; }
     public bool EsDoctor { get; set; }
     public string ClinicaNombre { get; set; } = string.Empty;
     public string PerfilNombre { get; set; } = string.Empty;

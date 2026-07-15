@@ -37,4 +37,7 @@ public interface IPacienteRepository
 
     /// <summary>Verifica si ya existe un paciente con el mismo celular en la clínica.</summary>
     Task<bool> ExistsByCelularAsync(Guid clinicaId, string celular, Guid? excludeId = null);
+
+    /// <summary>Verifica si ya existe un número de documento de identificación en la clínica. excludeId para ignorar el mismo paciente en update.</summary>
+    Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId);
 }

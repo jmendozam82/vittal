@@ -39,6 +39,8 @@ public class UsuarioRepository : IUsuarioRepository
         u.direccion           AS Direccion,
         u.celular             AS Celular,
         u.foto_url            AS FotoUrl,
+        u.tipo_documento_identificacion AS TipoDocumentoIdentificacion,
+        u.numero_documento_identificacion AS NumeroDocumentoIdentificacion,
         u.es_doctor           AS EsDoctor,
         u.es_super_admin      AS EsSuperAdmin,
         u.activo              AS Activo,
@@ -153,13 +155,15 @@ public class UsuarioRepository : IUsuarioRepository
         const string sql = @"
             INSERT INTO public.usuarios (
                 clinica_id, perfil_id, auth_user_id, usuario, nombres, apellidos,
-                email, sexo, direccion, celular, es_doctor, activo,
-                fecha_creacion, creado_por
+                email, sexo, direccion, celular, es_doctor,
+                tipo_documento_identificacion, numero_documento_identificacion,
+                activo, fecha_creacion, creado_por
             )
             VALUES (
                 @ClinicaId, @PerfilId, @AuthUserId, @Username, @Nombres, @Apellidos,
-                @Email, @Sexo, @Direccion, @Celular, @EsDoctor, true,
-                NOW(), @CreadoPor
+                @Email, @Sexo, @Direccion, @Celular, @EsDoctor,
+                @TipoDocumentoIdentificacion, @NumeroDocumentoIdentificacion,
+                true, NOW(), @CreadoPor
             )
             RETURNING id;";
 
@@ -197,6 +201,8 @@ public class UsuarioRepository : IUsuarioRepository
                 direccion          = @Direccion,
                 celular            = @Celular,
                 foto_url           = @FotoUrl,
+                tipo_documento_identificacion = @TipoDocumentoIdentificacion,
+                numero_documento_identificacion = @NumeroDocumentoIdentificacion,
                 es_doctor          = @EsDoctor,
                 fecha_modificacion = NOW(),
                 modificado_por     = @ModificadoPor
@@ -365,7 +371,36 @@ public class UsuarioRepository : IUsuarioRepository
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 11. GetDoctoresAsync — Lista solo usuarios con es_doctor = true
+    // 11. ExistsByNumeroDocumentoAsync — Verifica duplicado de documento en la clínica
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId)
+    {
+        const string sql = @"
+            SELECT COUNT(1) FROM usuarios
+            WHERE clinica_id = @ClinicaId
+              AND LOWER(numero_documento_identificacion) = LOWER(@NumeroDocumento)
+              AND (@ExcludeId IS NULL OR id != @ExcludeId)";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var count = await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                ClinicaId = clinicaId,
+                NumeroDocumento = numeroDocumento,
+                ExcludeId = excludeId
+            });
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking numero documento existence for clinica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 12. GetDoctoresAsync — Lista solo usuarios con es_doctor = true
     // ────────────────────────────────────────────────────────────────────────
     public async Task<IEnumerable<Usuario>> GetDoctoresAsync(Guid clinicaId)
     {

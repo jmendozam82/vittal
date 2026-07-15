@@ -112,6 +112,23 @@ public class UsuarioService : IUsuarioService
         {
             _logger.LogInformation("Creando usuario con username: {Username} en clinica {ClinicaId}", dto.Username, clinicaId);
 
+            // Validate tipo documento
+            var tiposValidos = new[] { "CC", "CR", "PA" };
+            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate numero documento uniqueness
+            if (await _repo.ExistsByNumeroDocumentoAsync(clinicaId, dto.NumeroDocumentoIdentificacion, null))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "Ya existe un usuario con ese número de documento de identificación en esta clínica",
+                    ServiceErrorType.Conflict);
+            }
+
             // Validate uniqueness
             if (await _repo.ExistsByUsernameAsync(clinicaId, dto.Username))
             {
@@ -155,6 +172,8 @@ public class UsuarioService : IUsuarioService
                     Direccion = dto.Direccion,
                     Celular = dto.Celular,
                     EsDoctor = dto.EsDoctor,
+                    TipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion,
+                    NumeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion,
                     CreadoPor = creadoPor,
                     Activo = true
                 };
@@ -215,6 +234,23 @@ public class UsuarioService : IUsuarioService
                     "Usuario no encontrado", ServiceErrorType.NotFound);
             }
 
+            // Validate tipo documento
+            var tiposValidos = new[] { "CC", "CR", "PA" };
+            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate numero documento uniqueness (excluding current user)
+            if (await _repo.ExistsByNumeroDocumentoAsync(clinicaId, dto.NumeroDocumentoIdentificacion, id))
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "Ya existe un usuario con ese número de documento de identificación en esta clínica",
+                    ServiceErrorType.Conflict);
+            }
+
             // Validate uniqueness (exclude current user)
             if (await _repo.ExistsByUsernameAsync(clinicaId, dto.Username, id))
             {
@@ -254,6 +290,8 @@ public class UsuarioService : IUsuarioService
             existing.Direccion = dto.Direccion;
             existing.Celular = dto.Celular;
             existing.EsDoctor = dto.EsDoctor;
+            existing.TipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion;
+            existing.NumeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion;
             existing.ModificadoPor = modificadoPor;
             existing.FechaModificacion = DateTime.UtcNow;
 
@@ -698,6 +736,8 @@ public class UsuarioService : IUsuarioService
             Apellidos = u.Apellidos,
             Email = u.Email,
             Sexo = u.Sexo,
+            TipoDocumentoIdentificacion = u.TipoDocumentoIdentificacion,
+            NumeroDocumentoIdentificacion = u.NumeroDocumentoIdentificacion,
             Celular = u.Celular,
             Direccion = u.Direccion,
             FotoUrl = u.FotoUrl,

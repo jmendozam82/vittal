@@ -122,6 +122,54 @@
 
 
 
+            <!-- Documento de Identificacion -->
+
+            <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+
+                <i class="bi bi-person-vcard me-2"></i>Documento de Identificacion
+
+            </h6>
+
+
+
+            <div class="row g-3 mb-3">
+
+                <div class="col-md-4">
+
+                    <label for="tipoDocumentoIdentificacion" class="form-label fw-semibold">Tipo Documento <span class="text-danger">*</span></label>
+
+                    <select class="form-select" id="tipoDocumentoIdentificacion" name="tipoDocumentoIdentificacion" required>
+
+                        <option value="">-- Seleccione --</option>
+
+                        <option value="CC">CC - Cedula de Ciudadania</option>
+
+                        <option value="CR">CR - Cedula de Residente</option>
+
+                        <option value="PA">PA - Pasaporte</option>
+
+                    </select>
+
+                    <div class="invalid-feedback">El tipo de documento es obligatorio.</div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="numeroDocumentoIdentificacion" class="form-label fw-semibold">Numero Documento <span class="text-danger">*</span></label>
+
+                    <input type="text" class="form-control" id="numeroDocumentoIdentificacion" name="numeroDocumentoIdentificacion"
+
+                           required maxlength="30" minlength="5" placeholder="Ingrese el numero de documento">
+
+                    <div class="invalid-feedback">El numero de documento es obligatorio (minimo 5 caracteres).</div>
+
+                </div>
+
+            </div>
+
+
+
             <!-- Contacto -->
 
             <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
@@ -350,6 +398,16 @@
 
 
 
+        if (p.tipoDocumentoIdentificacion) {
+
+            document.getElementById('tipoDocumentoIdentificacion').value = p.tipoDocumentoIdentificacion;
+
+        }
+
+        document.getElementById('numeroDocumentoIdentificacion').value = p.numeroDocumentoIdentificacion || '';
+
+
+
         if (p.sexo) {
 
             document.getElementById('sexo').value = p.sexo;
@@ -450,7 +508,11 @@
 
             fechaNacimiento: document.getElementById('fechaNacimiento').value || null,
 
-            observaciones: document.getElementById('observaciones').value.trim() || null
+            observaciones: document.getElementById('observaciones').value.trim() || null,
+
+            tipoDocumentoIdentificacion: document.getElementById('tipoDocumentoIdentificacion').value,
+
+            numeroDocumentoIdentificacion: document.getElementById('numeroDocumentoIdentificacion').value.trim()
 
         };
 

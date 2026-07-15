@@ -129,7 +129,9 @@ public class PacientesControllerTests
             DoctorId = Guid.NewGuid(),
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
-            Sexo = "M"
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567"
         };
         var responseDto = new PacienteResponseDto
         {
@@ -139,7 +141,9 @@ public class PacientesControllerTests
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
             Sexo = "M",
-            NombreCompleto = "Carlos López"
+            NombreCompleto = "Carlos López",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567"
         };
         var serviceResult = ServiceResult<PacienteResponseDto>.Success(responseDto, "Paciente creado exitosamente.");
         _serviceMock.Setup(s => s.CreateAsync(request, _clinicaId, _usuarioId)).ReturnsAsync(serviceResult);

@@ -27,6 +27,8 @@ public class Usuario
     public string? Direccion { get; set; }
     public string? Celular { get; set; }
     public string? FotoUrl { get; set; }
+    public string? TipoDocumentoIdentificacion { get; set; }
+    public string? NumeroDocumentoIdentificacion { get; set; }
     public bool EsDoctor { get; set; }
     public bool EsSuperAdmin { get; set; }
 

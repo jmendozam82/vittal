@@ -25,6 +25,8 @@ public class Paciente
     public string? Sexo { get; set; }
     public DateOnly? FechaNacimiento { get; set; }
     public string? FotoUrl { get; set; }
+    public string? TipoDocumentoIdentificacion { get; set; }
+    public string? NumeroDocumentoIdentificacion { get; set; }
     public string? Observaciones { get; set; }
 
     // ── Campos de estado y auditoría ──────────────────────────────

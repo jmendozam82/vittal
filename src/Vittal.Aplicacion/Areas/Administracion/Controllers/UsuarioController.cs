@@ -42,6 +42,10 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         public bool EsDoctor { get; set; }
 
+        public string? TipoDocumentoIdentificacion { get; set; }
+
+        public string? NumeroDocumentoIdentificacion { get; set; }
+
     }
 
 
@@ -250,6 +254,24 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
 
 
+            if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
+
+            {
+
+                return BadRequest(new { success = false, message = "El tipo de documento debe ser CC, CR o PA" });
+
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.NumeroDocumentoIdentificacion) || dto.NumeroDocumentoIdentificacion.Length < 5)
+
+            {
+
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+
+            }
+
+
+
             _logger.LogInformation("JsonCrear called: username={Username}, email={Email}", dto.Username, dto.Email);
 
 
@@ -278,7 +300,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
                     direccion = dto.Direccion,
 
-                    esDoctor = dto.EsDoctor
+                    esDoctor = dto.EsDoctor,
+
+                    tipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion,
+
+                    numeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion
 
                 });
 
@@ -362,6 +388,24 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
 
 
+            if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
+
+            {
+
+                return BadRequest(new { success = false, message = "El tipo de documento debe ser CC, CR o PA" });
+
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.NumeroDocumentoIdentificacion) || dto.NumeroDocumentoIdentificacion.Length < 5)
+
+            {
+
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+
+            }
+
+
+
             _logger.LogInformation("JsonActualizar called: id={Id}, username={Username}", id, dto.Username);
 
 
@@ -414,7 +458,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
                 ["direccion"] = dto.Direccion ?? string.Empty,
 
-                ["esDoctor"] = dto.EsDoctor
+                ["esDoctor"] = dto.EsDoctor,
+
+                ["tipoDocumentoIdentificacion"] = dto.TipoDocumentoIdentificacion ?? string.Empty,
+
+                ["numeroDocumentoIdentificacion"] = dto.NumeroDocumentoIdentificacion ?? string.Empty
 
             };
 

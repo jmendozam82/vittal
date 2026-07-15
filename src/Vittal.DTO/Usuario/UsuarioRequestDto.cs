@@ -39,7 +39,20 @@ public class UsuarioRequestDto
     /// <summary>M: Masculino, F: Femenino</summary>
     public string? Sexo { get; set; }
 
-    public string? Direccion { get; set; }
+    public string? Direccion { get; set; }
+
+    [Required(ErrorMessage = "El tipo de documento es obligatorio")]
+    [StringLength(2, MinimumLength = 2, ErrorMessage = "El tipo de documento debe tener 2 caracteres (CC, CR, PA)")]
+    public string TipoDocumentoIdentificacion { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El número de documento es obligatorio")]
+    [StringLength(30, MinimumLength = 5, ErrorMessage = "El número de documento debe tener entre 5 y 30 caracteres")]
+    public string NumeroDocumentoIdentificacion { get; set; } = string.Empty;
+
+
+
+
+
 
     [StringLength(20, ErrorMessage = "El número de celular no puede exceder 20 caracteres.")]
     public string? Celular { get; set; }

@@ -64,6 +64,12 @@
     var usuarioEsDoctor = usuario != null && usuario.ContainsKey("esDoctor") && Convert.ToBoolean(usuario["esDoctor"]);
 
 
+    var usuarioTipoDocumento = usuario != null && usuario.ContainsKey("tipoDocumentoIdentificacion") ? usuario["tipoDocumentoIdentificacion"]?.ToString() : string.Empty;
+
+
+    var usuarioNumeroDocumento = usuario != null && usuario.ContainsKey("numeroDocumentoIdentificacion") ? usuario["numeroDocumentoIdentificacion"]?.ToString() : string.Empty;
+
+
     var usuarioActivo = usuario == null || !usuario.ContainsKey("activo") || Convert.ToBoolean(usuario["activo"]);
 
 
@@ -161,6 +167,37 @@
 
 
 
+
+
+                        <!-- Tipo Documento -->
+
+                        <div class="col-md-4">
+                            <label for="tipoDocumentoIdentificacion" class="form-label fw-medium">
+                                Tipo Documento <span class="text-danger">*</span>
+                            </label>
+                            <select id="tipoDocumentoIdentificacion" name="tipoDocumentoIdentificacion" class="form-select" required>
+                                <option value="">-- Seleccione --</option>
+                                <option value="CC">CC - Cedula de Ciudadania</option>
+                                <option value="CR">CR - Cedula de Residente</option>
+                                <option value="PA">PA - Pasaporte</option>
+                            </select>
+                            <script>document.getElementById('tipoDocumentoIdentificacion').value = '@usuarioTipoDocumento';</script>
+                            <div class="invalid-feedback">El tipo de documento es obligatorio.</div>
+                        </div>
+
+                        <!-- Numero Documento -->
+
+                        <div class="col-md-4">
+                            <label for="numeroDocumentoIdentificacion" class="form-label fw-medium">
+                                Numero Documento <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="numeroDocumentoIdentificacion" name="numeroDocumentoIdentificacion"
+                                   class="form-control" maxlength="30" minlength="5"
+                                   value="@usuarioNumeroDocumento"
+                                   placeholder="Ej: 12345678"
+                                   required />
+                            <div class="invalid-feedback">El numero de documento es obligatorio (minimo 5 caracteres).</div>
+                        </div>
 
 
                         <!-- Email -->
@@ -849,6 +886,10 @@
 
         const esDoctor = document.getElementById('esDoctor').checked;
 
+        const tipoDocumentoIdentificacion = document.getElementById('tipoDocumentoIdentificacion').value;
+
+        const numeroDocumentoIdentificacion = document.getElementById('numeroDocumentoIdentificacion').value.trim();
+
 
 
 
@@ -889,6 +930,18 @@
         if (!perfilId) errores.push('Debe seleccionar un perfil.');
 
 
+        if (!tipoDocumentoIdentificacion) errores.push('El tipo de documento es obligatorio.');
+
+
+        else if (!['CC', 'CR', 'PA'].includes(tipoDocumentoIdentificacion)) errores.push('El tipo de documento debe ser CC, CR o PA.');
+
+
+        if (!numeroDocumentoIdentificacion) errores.push('El numero de documento es obligatorio.');
+
+
+        else if (numeroDocumentoIdentificacion.length < 5) errores.push('El numero de documento debe tener al menos 5 caracteres.');
+
+
 
 
 
@@ -922,7 +975,8 @@
             username, nombres, apellidos, email,
 
 
-            perfilId, sexo, celular, direccion, esDoctor
+            perfilId, sexo, celular, direccion, esDoctor,
+            tipoDocumentoIdentificacion, numeroDocumentoIdentificacion
 
 
         };

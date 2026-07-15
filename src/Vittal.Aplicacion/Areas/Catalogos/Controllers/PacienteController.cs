@@ -45,6 +45,10 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         public string? Observaciones { get; set; }
 
+        public string? TipoDocumentoIdentificacion { get; set; }
+
+        public string? NumeroDocumentoIdentificacion { get; set; }
+
     }
 
 
@@ -299,6 +303,22 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
+            if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
+
+            {
+
+                return BadRequest(new { success = false, message = "El tipo de documento debe ser CC, CR o PA" });
+
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.NumeroDocumentoIdentificacion) || dto.NumeroDocumentoIdentificacion.Length < 5)
+
+            {
+
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+
+            }
+
 
             _logger.LogInformation("JsonCrear called: nombre={Nombre} {Apellido}",
 
@@ -331,7 +351,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 fotoUrl = dto.FotoUrl,
 
-                observaciones = dto.Observaciones
+                observaciones = dto.Observaciones,
+
+                tipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion,
+
+                numeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion
 
             };
 
@@ -381,6 +405,22 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
+            if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
+
+            {
+
+                return BadRequest(new { success = false, message = "El tipo de documento debe ser CC, CR o PA" });
+
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.NumeroDocumentoIdentificacion) || dto.NumeroDocumentoIdentificacion.Length < 5)
+
+            {
+
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+
+            }
+
 
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre} {Apellido}",
 
@@ -413,7 +453,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 fotoUrl = dto.FotoUrl,
 
-                observaciones = dto.Observaciones
+                observaciones = dto.Observaciones,
+
+                tipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion,
+
+                numeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion
 
             };
 

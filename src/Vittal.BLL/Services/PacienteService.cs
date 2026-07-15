@@ -91,6 +91,23 @@ public class PacienteService : IPacienteService
             _logger.LogInformation("Creando paciente {PrimerNombre} {PrimerApellido} en clínica {ClinicaId}",
                 dto.PrimerNombre, dto.PrimerApellido, clinicaId);
 
+            // Validate tipo documento
+            var tiposValidos = new[] { "CC", "CR", "PA" };
+            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            {
+                return ServiceResult<PacienteResponseDto>.Failure(
+                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate numero documento uniqueness
+            if (await _repo.ExistsByNumeroDocumentoAsync(clinicaId, dto.NumeroDocumentoIdentificacion, null))
+            {
+                return ServiceResult<PacienteResponseDto>.Failure(
+                    "Ya existe un paciente con ese número de documento de identificación en esta clínica",
+                    ServiceErrorType.Conflict);
+            }
+
             // Validate uniqueness
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
@@ -127,6 +144,8 @@ public class PacienteService : IPacienteService
                 FechaNacimiento = dto.FechaNacimiento,
                 FotoUrl = dto.FotoUrl,
                 Observaciones = dto.Observaciones,
+                TipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion,
+                NumeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion,
                 CreadoPor = creadoPor,
                 Activo = true
             };
@@ -170,6 +189,23 @@ public class PacienteService : IPacienteService
                     "Paciente no encontrado", ServiceErrorType.NotFound);
             }
 
+            // Validate tipo documento
+            var tiposValidos = new[] { "CC", "CR", "PA" };
+            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            {
+                return ServiceResult<PacienteResponseDto>.Failure(
+                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
+                    ServiceErrorType.Validation);
+            }
+
+            // Validate numero documento uniqueness (excluding current patient)
+            if (await _repo.ExistsByNumeroDocumentoAsync(clinicaId, dto.NumeroDocumentoIdentificacion, id))
+            {
+                return ServiceResult<PacienteResponseDto>.Failure(
+                    "Ya existe un paciente con ese número de documento de identificación en esta clínica",
+                    ServiceErrorType.Conflict);
+            }
+
             // Validate uniqueness (exclude current)
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
@@ -204,6 +240,8 @@ public class PacienteService : IPacienteService
             existing.FechaNacimiento = dto.FechaNacimiento;
             existing.FotoUrl = dto.FotoUrl;
             existing.Observaciones = dto.Observaciones;
+            existing.TipoDocumentoIdentificacion = dto.TipoDocumentoIdentificacion;
+            existing.NumeroDocumentoIdentificacion = dto.NumeroDocumentoIdentificacion;
             existing.ModificadoPor = modificadoPor;
             existing.FechaModificacion = DateTime.UtcNow;
 
@@ -336,8 +374,9 @@ public class PacienteService : IPacienteService
                 var fullName = entity.NombreCompleto.ToLowerInvariant();
                 var hasEmail = entity.Email?.ToLowerInvariant().Contains(lowerTerm) ?? false;
                 var hasCelular = entity.Celular?.Contains(term) ?? false;
+                var hasDocumento = !string.IsNullOrEmpty(entity.NumeroDocumentoIdentificacion) && entity.NumeroDocumentoIdentificacion.Contains(term, StringComparison.OrdinalIgnoreCase);
 
-                if (fullName.Contains(lowerTerm) || hasEmail || hasCelular)
+                if (fullName.Contains(lowerTerm) || hasEmail || hasCelular || hasDocumento)
                 {
                     filtered.Add(MapPacienteToDto(entity));
                 }
@@ -371,6 +410,8 @@ public class PacienteService : IPacienteService
             Celular = p.Celular,
             Direccion = p.Direccion,
             Sexo = p.Sexo,
+            TipoDocumentoIdentificacion = p.TipoDocumentoIdentificacion,
+            NumeroDocumentoIdentificacion = p.NumeroDocumentoIdentificacion,
             FechaNacimiento = p.FechaNacimiento,
             FotoUrl = p.FotoUrl,
             Observaciones = p.Observaciones,

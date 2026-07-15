@@ -133,7 +133,9 @@ public class PacienteServiceTests
             DoctorId = _doctorId,
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
-            Sexo = "M"
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567"
         };
         var newId = Guid.NewGuid();
         var createdPaciente = new Paciente
@@ -144,12 +146,15 @@ public class PacienteServiceTests
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
             Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567",
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
 
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByCelularAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.CreateAsync(It.IsAny<Paciente>())).ReturnsAsync(newId);
         _repoMock.Setup(r => r.GetByIdAsync(newId, _clinicaId)).ReturnsAsync(createdPaciente);
 
@@ -172,8 +177,11 @@ public class PacienteServiceTests
             DoctorId = _doctorId,
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
-            Email = "carlos@example.com"
+            Email = "carlos@example.com",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
         };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, request.Email!, null)).ReturnsAsync(true);
 
         // Act
@@ -194,8 +202,11 @@ public class PacienteServiceTests
             DoctorId = _doctorId,
             PrimerNombre = "Carlos",
             PrimerApellido = "López",
-            Celular = "555-1234"
+            Celular = "555-1234",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
         };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, It.IsAny<string>(), null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByCelularAsync(_clinicaId, request.Celular!, null)).ReturnsAsync(true);
 
@@ -206,6 +217,52 @@ public class PacienteServiceTests
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ServiceErrorType.Conflict);
         result.Message.Should().Contain("celular");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnValidation_WhenInvalidTipoDocumento()
+    {
+        // Arrange
+        var request = new PacienteRequestDto
+        {
+            DoctorId = _doctorId,
+            PrimerNombre = "Carlos",
+            PrimerApellido = "López",
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "XX"
+        };
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ServiceErrorType.Validation);
+        result.Message.Should().Contain("tipo de documento");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnConflict_WhenNumeroDocumentoExists()
+    {
+        // Arrange
+        var request = new PacienteRequestDto
+        {
+            DoctorId = _doctorId,
+            PrimerNombre = "Carlos",
+            PrimerApellido = "López",
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567"
+        };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, "001234567", null)).ReturnsAsync(true);
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ServiceErrorType.Conflict);
+        result.Message.Should().Contain("número de documento");
     }
 
     [Fact]
@@ -228,12 +285,15 @@ public class PacienteServiceTests
             DoctorId = _doctorId,
             PrimerNombre = "Carlos Updated",
             PrimerApellido = "López Updated",
-            Sexo = "M"
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "001234567"
         };
 
         _repoMock.Setup(r => r.GetByIdAsync(pacienteId, _clinicaId)).ReturnsAsync(existingPaciente);
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, It.IsAny<string>(), pacienteId)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByCelularAsync(_clinicaId, It.IsAny<string>(), pacienteId)).ReturnsAsync(false);
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, It.IsAny<string>(), pacienteId)).ReturnsAsync(false);
         _repoMock.Setup(r => r.UpdateAsync(It.IsAny<Paciente>())).ReturnsAsync(true);
         _repoMock.Setup(r => r.GetByIdAsync(pacienteId, _clinicaId)).ReturnsAsync(existingPaciente);
 

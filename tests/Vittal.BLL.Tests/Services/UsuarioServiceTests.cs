@@ -176,8 +176,11 @@ public class UsuarioServiceTests
             Nombres = "Juan",
             Apellidos = "Pérez",
             Email = "juan@test.com",
-            PerfilId = _perfilId
+            PerfilId = _perfilId,
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
         };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, request.NumeroDocumentoIdentificacion, null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByUsernameAsync(_clinicaId, request.Username, null)).ReturnsAsync(true);
 
         // Act
@@ -199,8 +202,11 @@ public class UsuarioServiceTests
             Nombres = "Juan",
             Apellidos = "Pérez",
             Email = "juan@test.com",
-            PerfilId = _perfilId
+            PerfilId = _perfilId,
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
         };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, request.NumeroDocumentoIdentificacion, null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByUsernameAsync(_clinicaId, request.Username, null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, request.Email, null)).ReturnsAsync(true);
 
@@ -224,20 +230,72 @@ public class UsuarioServiceTests
             Apellidos = "Pérez",
             Email = "juan@test.com",
             Password = "Password123!",
-            PerfilId = _perfilId
+            PerfilId = _perfilId,
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
         };
 
         // Override config to point to invalid URL that will throw
         _configMock.Setup(c => c["Supabase:Url"]).Returns("https://invalid-url-that-will-fail.supabase.co");
 
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, request.NumeroDocumentoIdentificacion, null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByUsernameAsync(_clinicaId, request.Username, null)).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExistsByEmailAsync(_clinicaId, request.Email, null)).ReturnsAsync(false);
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, request.NumeroDocumentoIdentificacion, null)).ReturnsAsync(false);
 
         // Act
         var result = await _service.CreateAsync(request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnValidation_WhenInvalidTipoDocumento()
+    {
+        // Arrange
+        var request = new UsuarioRequestDto
+        {
+            Username = "jperez",
+            Nombres = "Juan",
+            Apellidos = "Pérez",
+            Email = "juan@test.com",
+            PerfilId = _perfilId,
+            TipoDocumentoIdentificacion = "XX"
+        };
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ServiceErrorType.Validation);
+        result.Message.Should().Contain("tipo de documento");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnConflict_WhenNumeroDocumentoExists()
+    {
+        // Arrange
+        var request = new UsuarioRequestDto
+        {
+            Username = "jperez",
+            Nombres = "Juan",
+            Apellidos = "Pérez",
+            Email = "juan@test.com",
+            PerfilId = _perfilId,
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678"
+        };
+        _repoMock.Setup(r => r.ExistsByNumeroDocumentoAsync(_clinicaId, "12345678", null)).ReturnsAsync(true);
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ServiceErrorType.Conflict);
+        result.Message.Should().Contain("número de documento");
     }
 
     [Fact]

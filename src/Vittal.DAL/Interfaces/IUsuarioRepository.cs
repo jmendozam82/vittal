@@ -48,4 +48,7 @@ public interface IUsuarioRepository
 
     /// <summary>Lista solo usuarios con es_doctor = true (para dropdowns en otros módulos).</summary>
     Task<IEnumerable<Usuario>> GetDoctoresAsync(Guid clinicaId);
+
+    /// <summary>Verifica si ya existe un número de documento en la clínica. excludeId para ignorar el mismo usuario en update.</summary>
+    Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId);
 }
