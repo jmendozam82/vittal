@@ -1,11 +1,10 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
 using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
-
 
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
@@ -27,7 +26,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     }
 
-
     [Area("Catalogos")]
 
     [Authorize]
@@ -40,7 +38,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         private readonly ILogger<RecomendacionController> _logger;
 
-
         public RecomendacionController(ApiClientHelper apiClient, ILogger<RecomendacionController> logger)
 
         {
@@ -51,9 +48,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== VISTAS (Server-side rendering) =====================
-
 
         [HttpGet]
 
@@ -65,7 +60,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public IActionResult Create()
@@ -76,7 +70,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -84,7 +77,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Recomendaciones/{id}");
-
 
             if (!success)
 
@@ -96,19 +88,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             if (data == null)
 
             {
 
-                TempData["Error"] = "RecomendaciÃ³n no encontrada.";
+                TempData["Error"] = "Recomendación no encontrada.";
 
                 return RedirectToAction("Index");
 
             }
-
 
             ViewBag.Recomendacion = data;
 
@@ -116,11 +106,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-        /// <summary>Lista todas las recomendaciones â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todas las recomendaciones — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -132,7 +120,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
             if (!success)
 
             {
@@ -143,15 +130,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-        /// <summary>Busca recomendaciones por tÃ©rmino â€” para fetch() desde la vista Index</summary>
+        /// <summary>Busca recomendaciones por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -167,11 +152,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(
 
                 $"api/Recomendaciones/buscar?q={Uri.EscapeDataString(q)}");
-
 
             if (!success)
 
@@ -183,15 +166,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-        /// <summary>Crea una nueva recomendaciÃ³n â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea una nueva recomendación — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -203,13 +184,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la recomendaciÃ³n es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la recomendación es obligatorio." });
 
             }
 
-
             _logger.LogInformation("JsonCrear called: nombre={Nombre}", dto.Nombre);
-
 
             var payload = new
 
@@ -221,9 +200,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Recomendaciones", payload);
-
 
             if (!success)
 
@@ -231,19 +208,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear recomendaciÃ³n" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear recomendación" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "RecomendaciÃ³n creada exitosamente" });
+            return Ok(new { success = true, data = data, message = "Recomendación creada exitosamente" });
 
         }
 
-
-        /// <summary>Actualiza una recomendaciÃ³n â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza una recomendación — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -255,13 +230,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la recomendaciÃ³n es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la recomendación es obligatorio." });
 
             }
 
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
 
             var payload = new
 
@@ -273,9 +246,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Recomendaciones/{id}", payload);
-
 
             if (!success)
 
@@ -283,19 +254,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar recomendaciÃ³n" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar recomendación" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "RecomendaciÃ³n actualizada exitosamente" });
+            return Ok(new { success = true, data = data, message = "Recomendación actualizada exitosamente" });
 
         }
 
-
-        /// <summary>Desactiva una recomendaciÃ³n â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva una recomendación — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -305,9 +274,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Recomendaciones/{id}/desactivar", null);
-
 
             if (!success)
 
@@ -315,17 +282,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar recomendaciÃ³n" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar recomendación" });
 
             }
 
-
-            return Ok(new { success = true, message = "RecomendaciÃ³n desactivada exitosamente" });
+            return Ok(new { success = true, message = "Recomendación desactivada exitosamente" });
 
         }
 
-
-        /// <summary>Reactiva una recomendaciÃ³n â€” para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva una recomendación — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -335,30 +300,25 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Recomendaciones/{id}/reactivar", null);
 
-
             if (!success)
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar recomendaciÃ³n" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar recomendación" });
 
             }
 
-
-            return Ok(new { success = true, message = "RecomendaciÃ³n reactivada exitosamente" });
+            return Ok(new { success = true, message = "Recomendación reactivada exitosamente" });
 
         }
 
-
         // ========== Helpers para extraer data de JsonElement ==========
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
 
             try
 
@@ -384,18 +344,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             catch { }
 
-
             return new List<object>();
 
         }
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
 
             try
 
@@ -417,7 +374,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -435,7 +391,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return list;
 
         }
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -460,7 +415,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return dict;
 
         }
-
 
         private static object? JsonElementToValue(JsonElement element)
 

@@ -1,7 +1,9 @@
 using Dapper;
+using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -13,10 +15,14 @@ namespace Vittal.DAL.Repositories;
 public class HojaCitaRepository : IHojaCitaRepository
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
+    private readonly ILogger<HojaCitaRepository> _logger;
 
-    public HojaCitaRepository(DbConnectionFactory dbConnectionFactory)
+    public HojaCitaRepository(
+        DbConnectionFactory dbConnectionFactory,
+        ILogger<HojaCitaRepository> logger)
     {
         _dbConnectionFactory = dbConnectionFactory;
+        _logger = logger;
     }
 
     // ── Columnas base para SELECT con JOIN ──────────────────────────────
@@ -84,7 +90,7 @@ public class HojaCitaRepository : IHojaCitaRepository
               AND h.activo = true
             ORDER BY h.fecha_consulta DESC";
 
-        return await connection.QueryAsync<HojaCita>(sql, 
+        return await connection.QueryAsync<HojaCita>(sql,
             new { ClinicaId = clinicaId, ExpedienteId = expedienteId });
     }
 
@@ -141,5 +147,72 @@ public class HojaCitaRepository : IHojaCitaRepository
 
         var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, ClinicaId = clinicaId });
         return rowsAffected > 0;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 7. GetAllPaginatedAsync — Página de hojas de cita con búsqueda ILIKE
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<HojaCita>> GetAllPaginatedAsync(
+        Guid clinicaId, PaginationFilterDto filter)
+    {
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize > 100 ? 100 : filter.PageSize;
+        var offset = (page - 1) * pageSize;
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm)
+            ? null
+            : $"%{filter.SearchTerm.Trim()}%";
+
+        const string baseWhere = @"
+            WHERE h.clinica_id = @ClinicaId
+              AND h.activo = true
+              AND (@SearchTerm IS NULL
+                   OR p.primer_nombre ILIKE @SearchTerm
+                   OR p.primer_apellido ILIKE @SearchTerm
+                   OR p.segundo_nombre ILIKE @SearchTerm
+                   OR p.segundo_apellido ILIKE @SearchTerm
+                   OR CONCAT(p.primer_nombre, ' ', p.primer_apellido) ILIKE @SearchTerm
+                   OR h.motivo_consulta ILIKE @SearchTerm)";
+
+        var sql = $@"
+            WITH filtered AS (
+                SELECT 1 {FromJoin}
+                {baseWhere}
+            )
+            SELECT COUNT(1) FROM filtered;
+
+            SELECT {SelectColumns}
+            {FromJoin}
+            {baseWhere}
+            ORDER BY h.fecha_consulta DESC
+            LIMIT @PageSize OFFSET @Offset;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            using var multi = await connection.QueryMultipleAsync(sql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = pageSize,
+                Offset = offset
+            });
+
+            var totalCount = await multi.ReadSingleAsync<int>();
+            var items = await multi.ReadAsync<HojaCita>();
+
+            return new PaginatedResultDto<HojaCita>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener hojas de cita paginadas de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
     }
 }

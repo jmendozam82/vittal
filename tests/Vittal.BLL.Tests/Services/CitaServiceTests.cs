@@ -7,7 +7,7 @@ using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cita;
 using Vittal.DTO.Clinica;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Tests.Services;

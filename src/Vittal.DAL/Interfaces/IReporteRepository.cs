@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -9,7 +9,7 @@ namespace Vittal.DAL.Interfaces;
 /// Repositorio para reportes generados por clínica.
 /// Historia de Usuario: HU22 — Reportes
 /// </summary>
-public interface IReporteRepository
+public interface IReporteRepository : IPaginatedRepository<Reporte>
 {
     /// <summary>Obtiene todos los reportes activos de una clínica.</summary>
     Task<IEnumerable<Reporte>> GetAllByClinicaIdAsync(Guid clinicaId);

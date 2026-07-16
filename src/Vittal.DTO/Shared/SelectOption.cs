@@ -1,4 +1,4 @@
-namespace Vittal.DTO;
+namespace Vittal.DTO.Shared;
 
 /// <summary>
 /// Modelo auxiliar para opciones de selección en filtros y combos.

@@ -20,6 +20,13 @@ public class BackgroundAlertCheckerService : BackgroundService
     /// <summary>Intervalo base de verificación (30 segundos).</summary>
     private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
 
+    // ── Monitoring counters ──────────────────────────────────────
+    private int _totalExecutions;
+    private int _alertasCreadas;
+    private int _errores;
+    private DateTime? _lastExecutionTime;
+    private TimeSpan? _lastExecutionDuration;
+
     public BackgroundAlertCheckerService(
         IServiceProvider serviceProvider,
         IHubContext<AlertasHub> hubContext,
@@ -39,9 +46,32 @@ public class BackgroundAlertCheckerService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            _totalExecutions++;
+
             try
             {
-                await VerificarTodasLasClinicasAsync(stoppingToken);
+                _logger.LogInformation(
+                    "Ejecutando verificación de alertas #{Execution}", _totalExecutions);
+
+                var alertasEnCiclo = await VerificarTodasLasClinicasAsync(stoppingToken);
+                _alertasCreadas += alertasEnCiclo;
+
+                sw.Stop();
+                _lastExecutionTime = DateTime.UtcNow;
+                _lastExecutionDuration = sw.Elapsed;
+
+                _logger.LogInformation(
+                    "Verificación #{Execution} completada en {Duration}ms. Alertas creadas: {AlertCount}",
+                    _totalExecutions, sw.ElapsedMilliseconds, alertasEnCiclo);
+
+                // Log summary metrics every 10 executions
+                if (_totalExecutions % 10 == 0)
+                {
+                    _logger.LogInformation(
+                        "Métricas BackgroundAlertChecker: Total={Total}, Alertas={Alerts}, Errores={Errors}",
+                        _totalExecutions, _alertasCreadas, _errores);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -50,7 +80,11 @@ public class BackgroundAlertCheckerService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error en el ciclo de verificación de alertas");
+                sw.Stop();
+                _errores++;
+                _logger.LogError(ex,
+                    "Error en verificación de alertas #{Execution} después de {Duration}ms",
+                    _totalExecutions, sw.ElapsedMilliseconds);
             }
 
             await Task.Delay(CheckInterval, stoppingToken);
@@ -59,22 +93,24 @@ public class BackgroundAlertCheckerService : BackgroundService
         _logger.LogInformation("BackgroundAlertCheckerService detenido.");
     }
 
-    private async Task VerificarTodasLasClinicasAsync(CancellationToken ct)
+    private async Task<int> VerificarTodasLasClinicasAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
         var clinicaService = scope.ServiceProvider.GetRequiredService<IClinicaService>();
         var alertaService = scope.ServiceProvider.GetRequiredService<IAlertaEsperaService>();
+
+        var totalAlertas = 0;
 
         // Obtener todas las clínicas activas
         var clinicasResult = await clinicaService.GetAllAsync(incluirInactivos: false);
         if (!clinicasResult.IsSuccess || clinicasResult.Data == null)
         {
             _logger.LogWarning("No se pudieron obtener las clínicas para verificación de alertas.");
-            return;
+            return 0;
         }
 
         var clinicas = clinicasResult.Data.ToList();
-        if (clinicas.Count == 0) return;
+        if (clinicas.Count == 0) return 0;
 
         _logger.LogDebug("Verificando tiempos de espera para {Count} clínicas.", clinicas.Count);
 
@@ -97,6 +133,7 @@ public class BackgroundAlertCheckerService : BackgroundService
                                 .Group($"clinica_{clinica.Id}")
                                 .SendAsync("NuevaAlerta", alerta, ct);
                         }
+                        totalAlertas += result.Data;
                         _logger.LogInformation(
                             "Background: {Count} alerta(s) generada(s) y despachada(s) para clínica {ClinicaNombre} ({ClinicaId})",
                             result.Data, clinica.Nombre, clinica.Id);
@@ -112,5 +149,7 @@ public class BackgroundAlertCheckerService : BackgroundService
                 _logger.LogWarning(ex, "Error verificando alertas para clínica {ClinicaId}", clinica.Id);
             }
         }
+
+        return totalAlertas;
     }
 }

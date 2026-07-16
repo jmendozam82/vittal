@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Cirugía registrada en una hoja de cita médica.

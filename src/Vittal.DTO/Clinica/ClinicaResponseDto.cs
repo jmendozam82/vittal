@@ -1,4 +1,4 @@
-﻿namespace Vittal.DTO.Clinica;
+namespace Vittal.DTO.Clinica;
 
 public class ClinicaResponseDto
 {

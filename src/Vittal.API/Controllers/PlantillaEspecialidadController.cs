@@ -42,7 +42,7 @@ public class PlantillaEspecialidadController : ControllerBase
     public async Task<IActionResult> Create([FromBody] PlantillaEspecialidadDTOs.Request request)
     {
         var result = await _service.CreateAsync(request);
-        
+
         if (result.IsSuccess)
         {
             var response = new ApiResponse<Guid>
@@ -53,7 +53,7 @@ public class PlantillaEspecialidadController : ControllerBase
             };
             return CreatedAtAction(nameof(GetById), new { id = result.Data }, response);
         }
-        
+
         return result.ToActionResult();
     }
 

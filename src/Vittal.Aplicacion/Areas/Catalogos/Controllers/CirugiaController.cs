@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,14 +6,13 @@ using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
 
-
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
 {
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de cirugÃ­as desde el cliente.
+    /// DTO interno para recibir datos del formulario de cirugías desde el cliente.
 
     /// </summary>
 
@@ -29,7 +28,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     }
 
-
     [Area("Catalogos")]
 
     [Authorize]
@@ -42,7 +40,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         private readonly ILogger<CirugiaController> _logger;
 
-
         public CirugiaController(ApiClientHelper apiClient, ILogger<CirugiaController> logger)
 
         {
@@ -53,9 +50,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== VISTAS (Server-side rendering) =====================
-
 
         [HttpGet]
 
@@ -67,7 +62,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public IActionResult Create()
@@ -78,7 +72,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -86,7 +79,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Cirugias/{id}");
-
 
             if (!success)
 
@@ -98,19 +90,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             if (data == null)
 
             {
 
-                TempData["Error"] = "CirugÃ­a no encontrada.";
+                TempData["Error"] = "Cirugía no encontrada.";
 
                 return RedirectToAction("Index");
 
             }
-
 
             ViewBag.Cirugia = data;
 
@@ -118,11 +108,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-        /// <summary>Lista todas las cirugÃ­as â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todas las cirugías — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -134,17 +122,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
             if (!success)
 
             {
 
                 _logger.LogWarning("JsonListar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar cirugÃ­as" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar cirugías" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -152,8 +138,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Busca cirugÃ­as por tÃ©rmino â€” para fetch() desde la vista Index</summary>
+        /// <summary>Busca cirugías por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -169,9 +154,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/Cirugias/buscar?q={Uri.EscapeDataString(q)}");
-
 
             if (!success)
 
@@ -179,10 +162,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar cirugÃ­as" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar cirugías" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -190,8 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Obtiene tipos de cirugÃ­a para el dropdown â€” para fetch() desde Create/Edit</summary>
+        /// <summary>Obtiene tipos de cirugía para el dropdown — para fetch() desde Create/Edit</summary>
 
         [HttpGet]
 
@@ -200,7 +181,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/TiposCirugia");
-
 
             if (!success)
 
@@ -212,15 +192,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-        /// <summary>Crea una nueva cirugÃ­a â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea una nueva cirugía — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -232,7 +210,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la cirugÃ­a es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la cirugía es obligatorio." });
 
             }
 
@@ -240,15 +218,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugÃ­a." });
+                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugía." });
 
             }
-
 
             _logger.LogInformation("JsonCrear called: nombre={Nombre}, tipoCirugiaId={TipoCirugiaId}",
 
                 dto.Nombre, dto.TipoCirugiaId);
-
 
             var payload = new
 
@@ -262,9 +238,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Cirugias", payload);
-
 
             if (!success)
 
@@ -272,19 +246,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear cirugÃ­a" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear cirugía" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "CirugÃ­a creada exitosamente" });
+            return Ok(new { success = true, data = data, message = "Cirugía creada exitosamente" });
 
         }
 
-
-        /// <summary>Actualiza una cirugÃ­a â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza una cirugía — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -296,7 +268,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la cirugÃ­a es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la cirugía es obligatorio." });
 
             }
 
@@ -304,13 +276,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugÃ­a." });
+                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugía." });
 
             }
 
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
 
             var payload = new
 
@@ -324,9 +294,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Cirugias/{id}", payload);
-
 
             if (!success)
 
@@ -334,19 +302,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar cirugÃ­a" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar cirugía" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "CirugÃ­a actualizada exitosamente" });
+            return Ok(new { success = true, data = data, message = "Cirugía actualizada exitosamente" });
 
         }
 
-
-        /// <summary>Desactiva una cirugÃ­a â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva una cirugía — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -356,9 +322,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Cirugias/{id}/desactivar", null);
-
 
             if (!success)
 
@@ -366,17 +330,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar cirugÃ­a" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar cirugía" });
 
             }
 
-
-            return Ok(new { success = true, message = "CirugÃ­a desactivada exitosamente" });
+            return Ok(new { success = true, message = "Cirugía desactivada exitosamente" });
 
         }
 
-
-        /// <summary>Reactiva una cirugÃ­a â€” para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva una cirugía — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -386,30 +348,25 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Cirugias/{id}/reactivar", null);
 
-
             if (!success)
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar cirugÃ­a" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar cirugía" });
 
             }
 
-
-            return Ok(new { success = true, message = "CirugÃ­a reactivada exitosamente" });
+            return Ok(new { success = true, message = "Cirugía reactivada exitosamente" });
 
         }
 
-
         // ========== Helpers para extraer data de JsonElement ==========
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
 
             try
 
@@ -435,18 +392,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             catch { }
 
-
             return new List<object>();
 
         }
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
 
             try
 
@@ -468,7 +422,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -486,7 +439,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return list;
 
         }
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -511,7 +463,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return dict;
 
         }
-
 
         private static object? JsonElementToValue(JsonElement element)
 

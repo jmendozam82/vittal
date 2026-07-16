@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo de tratamientos médicos disponibles por clínica para prescripción en expedientes.

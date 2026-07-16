@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Vittal.DTO;
+using Vittal.DTO.Shared;
 
 namespace Vittal.DTO.Reporte;
 

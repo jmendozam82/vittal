@@ -1,11 +1,11 @@
-ï»¿using System;
+using System;
 
 namespace Vittal.DTO.Diagnostico;
 
 /// <summary>
-/// Response DTO para datos del diagnÃ³stico del catÃ¡logo.
-/// Incluye nombre del tipo de diagnÃ³stico mediante JOIN con tipos_diagnostico.
-/// Historia de Usuario: HU14 â€” GestiÃ³n de DiagnÃ³sticos
+/// Response DTO para datos del diagnóstico del catálogo.
+/// Incluye nombre del tipo de diagnóstico mediante JOIN con tipos_diagnostico.
+/// Historia de Usuario: HU14 — Gestión de Diagnósticos
 /// </summary>
 public class DiagnosticoResponseDto
 {

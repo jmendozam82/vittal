@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -34,4 +34,7 @@ public interface ICirugiaRepository
 
     /// <summary>Verifica si ya existe una cirugía con el mismo nombre en la clínica.</summary>
     Task<bool> ExistsByNombreAsync(Guid clinicaId, string nombre, Guid? excludeId = null);
+
+    /// <summary>Busca cirugías por término (nombre, descripción, tipo de cirugía). SQL ILIKE.</summary>
+    Task<IEnumerable<Cirugia>> SearchAsync(Guid clinicaId, string term, int limit = 20);
 }

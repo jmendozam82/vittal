@@ -1,7 +1,5 @@
-﻿using System;
-
+using System;
 namespace Vittal.DTO.Perfil;
-
 /// <summary>
 /// Response DTO para lectura de perfiles.
 /// Incluye conteos asociados pero no expone datos sensibles de otros tenants.

@@ -1,13 +1,14 @@
 using Xunit;
 using Moq;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Vittal.BLL.Interfaces;
 using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Usuario;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Tests.Services;
@@ -18,6 +19,7 @@ public class UsuarioServiceTests
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<ILogger<UsuarioService>> _loggerMock;
     private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<IValidator<UsuarioRequestDto>> _validatorMock;
     private readonly UsuarioService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
@@ -29,6 +31,7 @@ public class UsuarioServiceTests
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _loggerMock = new Mock<ILogger<UsuarioService>>();
         _configMock = new Mock<IConfiguration>();
+        _validatorMock = new Mock<IValidator<UsuarioRequestDto>>();
 
         // Setup configuration for Supabase
         _configMock.Setup(c => c["Supabase:Url"]).Returns("https://test.supabase.co");
@@ -38,11 +41,16 @@ public class UsuarioServiceTests
         var httpClient = new HttpClient();
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
+        // Setup validator to always pass by default
+        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<UsuarioRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
         _service = new UsuarioService(
             _repoMock.Object,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
-            _configMock.Object
+            _configMock.Object,
+            _validatorMock.Object
         );
     }
 
@@ -264,13 +272,23 @@ public class UsuarioServiceTests
             TipoDocumentoIdentificacion = "XX"
         };
 
+        // Setup validator to fail for this specific request
+        var validationFailures = new List<FluentValidation.Results.ValidationFailure>
+        {
+            new("TipoDocumentoIdentificacion", "Debe ser CC, CR o PA.")
+        };
+        _validatorMock.Setup(v => v.ValidateAsync(
+                It.Is<UsuarioRequestDto>(r => r.TipoDocumentoIdentificacion == "XX"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(validationFailures));
+
         // Act
         var result = await _service.CreateAsync(request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ServiceErrorType.Validation);
-        result.Message.Should().Contain("tipo de documento");
+        result.Message.Should().Contain("CC, CR o PA");
     }
 
     [Fact]

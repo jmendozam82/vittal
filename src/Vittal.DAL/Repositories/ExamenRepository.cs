@@ -5,7 +5,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -233,6 +233,37 @@ public class ExamenRepository : IExamenRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de nombre de examen en clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 7. SearchAsync — Búsqueda de exámenes por término (ILIKE SQL)
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Examen>> SearchAsync(Guid clinicaId, string term, int limit = 20)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromTable}
+            WHERE e.clinica_id = @ClinicaId AND e.activo = true
+              AND (e.nombre ILIKE '%' || @Term || '%'
+                   OR e.descripcion ILIKE '%' || @Term || '%')
+            ORDER BY e.nombre
+            LIMIT @Limit;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Examen>(sql, new
+            {
+                ClinicaId = clinicaId,
+                Term = term,
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar exámenes con término '{Term}' en clínica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

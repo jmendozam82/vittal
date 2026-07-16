@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -6,7 +6,7 @@ namespace Vittal.DAL.Interfaces;
 /// Repositorio para notificaciones del sistema.
 /// Historia de Usuario: HU23 — Alertas Configurables
 /// </summary>
-public interface INotificacionRepository
+public interface INotificacionRepository : IPaginatedRepository<Notificacion>
 {
     /// <summary>Obtiene notificaciones de una clínica, opcionalmente filtradas por estado de lectura.</summary>
     Task<IEnumerable<Notificacion>> GetByClinicaIdAsync(Guid clinicaId, bool? leida = null, int? limit = null);

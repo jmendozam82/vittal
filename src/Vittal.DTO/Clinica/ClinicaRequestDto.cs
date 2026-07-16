@@ -1,10 +1,10 @@
-Ôªøusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Vittal.DTO.Clinica;
 
 public class ClinicaRequestDto
 {
-    [Required(ErrorMessage = "El nombre de la cl√≠nica es obligatorio.")]
+    [Required(ErrorMessage = "El nombre de la clÌnica es obligatorio.")]
     [StringLength(255, MinimumLength = 3, ErrorMessage = "El nombre debe tener entre 3 y 255 caracteres.")]
     public string Nombre { get; set; } = string.Empty;
 
@@ -13,7 +13,7 @@ public class ClinicaRequestDto
     [StringLength(20, ErrorMessage = "El telefono no puede exceder 20 caracteres.")]
     public string? Telefono { get; set; }
 
-    [EmailAddress(ErrorMessage = "El formato del correo no es v√°lido.")]
+    [EmailAddress(ErrorMessage = "El formato del correo no es v·lido.")]
     [StringLength(255, ErrorMessage = "El correo no puede exceder 255 caracteres.")]
     public string? Email { get; set; }
 
@@ -33,7 +33,7 @@ public class ClinicaRequestDto
     [StringLength(5, ErrorMessage = "El formato de hora debe ser HH:mm.")]
     public string? HorarioCierre { get; set; }
 
-    /// <summary>D√≠as de atenci√≥n separados por coma. Ej: "L,M,MI,J,V"</summary>
-    [StringLength(100, ErrorMessage = "Los d√≠as de atenci√≥n no pueden exceder 100 caracteres.")]
+    /// <summary>DÌas de atenciÛn separados por coma. Ej: "L,M,MI,J,V"</summary>
+    [StringLength(100, ErrorMessage = "Los dÌas de atenciÛn no pueden exceder 100 caracteres.")]
     public string? DiasAtencion { get; set; }
 }

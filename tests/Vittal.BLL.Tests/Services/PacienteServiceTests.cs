@@ -1,12 +1,13 @@
 using Xunit;
 using Moq;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Paciente;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Tests.Services;
@@ -15,6 +16,7 @@ public class PacienteServiceTests
 {
     private readonly Mock<IPacienteRepository> _repoMock;
     private readonly Mock<ILogger<PacienteService>> _loggerMock;
+    private readonly Mock<IValidator<PacienteRequestDto>> _validatorMock;
     private readonly PacienteService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
     private readonly Guid _doctorId = Guid.NewGuid();
@@ -24,7 +26,10 @@ public class PacienteServiceTests
     {
         _repoMock = new Mock<IPacienteRepository>();
         _loggerMock = new Mock<ILogger<PacienteService>>();
-        _service = new PacienteService(_repoMock.Object, _loggerMock.Object);
+        _validatorMock = new Mock<IValidator<PacienteRequestDto>>();
+        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<PacienteRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+        _service = new PacienteService(_repoMock.Object, _loggerMock.Object, _validatorMock.Object);
     }
 
     [Fact]
@@ -232,13 +237,23 @@ public class PacienteServiceTests
             TipoDocumentoIdentificacion = "XX"
         };
 
+        // Setup validator to fail for this specific request
+        var validationFailures = new List<FluentValidation.Results.ValidationFailure>
+        {
+            new("TipoDocumentoIdentificacion", "Debe ser CC, CR o PA.")
+        };
+        _validatorMock.Setup(v => v.ValidateAsync(
+                It.Is<PacienteRequestDto>(r => r.TipoDocumentoIdentificacion == "XX"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(validationFailures));
+
         // Act
         var result = await _service.CreateAsync(request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ServiceErrorType.Validation);
-        result.Message.Should().Contain("tipo de documento");
+        result.Message.Should().Contain("CC, CR o PA");
     }
 
     [Fact]
@@ -416,13 +431,12 @@ public class PacienteServiceTests
     [Fact]
     public async Task SearchAsync_ShouldReturnResults_WhenMatchFound()
     {
-        // Arrange
+        // Arrange — SearchAsync now delegates to repo SQL search (ILIKE)
         var pacientes = new List<Paciente>
         {
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, DoctorId = _doctorId, PrimerNombre = "Juan", PrimerApellido = "Pérez", Activo = true, FechaCreacion = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, DoctorId = _doctorId, PrimerNombre = "María", PrimerApellido = "García", Activo = true, FechaCreacion = DateTime.UtcNow }
+            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, DoctorId = _doctorId, PrimerNombre = "Juan", PrimerApellido = "Pérez", Activo = true, FechaCreacion = DateTime.UtcNow }
         };
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(pacientes);
+        _repoMock.Setup(r => r.SearchAsync(_clinicaId, "Juan", 20)).ReturnsAsync(pacientes);
 
         // Act
         var result = await _service.SearchAsync(_clinicaId, "Juan");
@@ -436,12 +450,8 @@ public class PacienteServiceTests
     [Fact]
     public async Task SearchAsync_ShouldReturnEmpty_WhenNoMatch()
     {
-        // Arrange
-        var pacientes = new List<Paciente>
-        {
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, DoctorId = _doctorId, PrimerNombre = "Juan", PrimerApellido = "Pérez", Activo = true, FechaCreacion = DateTime.UtcNow }
-        };
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(pacientes);
+        // Arrange — SQL search returns empty when no ILIKE match
+        _repoMock.Setup(r => r.SearchAsync(_clinicaId, "XYZ", 20)).ReturnsAsync(new List<Paciente>());
 
         // Act
         var result = await _service.SearchAsync(_clinicaId, "XYZ");

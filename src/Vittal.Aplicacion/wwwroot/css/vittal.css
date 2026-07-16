@@ -327,6 +327,27 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* ── Skeleton loading (shared across all catalog views) ────────── */
+.skeleton-container {
+  padding: 0.5rem 0;
+}
+.skeleton-row {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-header {
+  background: linear-gradient(90deg, #e8e8e8 25%, #d8d8d8 50%, #e8e8e8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ── Formularios ────────────────────────────────────────────────── */
 .form-control:focus, .form-select:focus {
   border-color: var(--vittal-primary);

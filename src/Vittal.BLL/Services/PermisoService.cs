@@ -46,7 +46,7 @@ public class PermisoService : IPermisoService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al verificar permiso {Tipo} para módulo {Modulo}", 
+            _logger.LogError(ex, "Error al verificar permiso {Tipo} para módulo {Modulo}",
                 tipoPermiso, moduloClave);
             return ServiceResult<bool>.Failure("Error al verificar permisos.", ServiceErrorType.InternalError);
         }

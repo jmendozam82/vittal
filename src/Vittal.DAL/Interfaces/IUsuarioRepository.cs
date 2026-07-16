@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
 /// <summary>
 /// Interface para repositorio de usuarios. Tabla: public.usuarios
 /// </summary>
-public interface IUsuarioRepository
+public interface IUsuarioRepository : IPaginatedRepository<Usuario>
 {
     /// <summary>Obtiene usuario por su ID de Supabase Auth.</summary>
     Task<Usuario?> GetByAuthUserIdAsync(Guid authUserId);

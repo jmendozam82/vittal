@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo de tipos de diagnóstico (ej: Refractivo, Glaucoma, Retina) por clínica.

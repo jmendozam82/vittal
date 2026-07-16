@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo global de especialidades médicas del sistema.
@@ -12,12 +12,12 @@ public class PlantillaEspecialidad
     public string Nombre { get; set; } = string.Empty;
     public string? Descripcion { get; set; }
     public string? Icono { get; set; }
-    
+
     // Auditoría base
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime? FechaModificacion { get; set; }
-    
+
     // Relaciones
     public ICollection<PlantillaItem> Items { get; set; } = new List<PlantillaItem>();
 }

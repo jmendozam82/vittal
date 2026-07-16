@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -9,7 +9,7 @@ namespace Vittal.DAL.Interfaces;
 /// Interface para repositorio de pacientes. Tabla: public.pacientes
 /// Historia de Usuario: HU07 — Gestión de Pacientes
 /// </summary>
-public interface IPacienteRepository
+public interface IPacienteRepository : IPaginatedRepository<Paciente>
 {
     /// <summary>Lista todos los pacientes activos de una clínica (con nombre del doctor).</summary>
     Task<IEnumerable<Paciente>> GetAllAsync(Guid clinicaId);
@@ -40,4 +40,7 @@ public interface IPacienteRepository
 
     /// <summary>Verifica si ya existe un número de documento de identificación en la clínica. excludeId para ignorar el mismo paciente en update.</summary>
     Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId);
+
+    /// <summary>Busca pacientes por término (nombre, documento, email, celular) con ILIKE. Límite 20 resultados.</summary>
+    Task<IEnumerable<Paciente>> SearchAsync(Guid clinicaId, string term, int limit = 20);
 }

@@ -3,7 +3,8 @@ using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -181,6 +182,71 @@ public class NotificacionRepository : INotificacionRepository
             _logger.LogError(ex,
                 "Error al contar notificaciones no leídas de clínica {ClinicaId}",
                 clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 6. GetAllPaginatedAsync — Página de notificaciones con búsqueda ILIKE
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<Notificacion>> GetAllPaginatedAsync(
+        Guid clinicaId, PaginationFilterDto filter)
+    {
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize > 100 ? 100 : filter.PageSize;
+        var offset = (page - 1) * pageSize;
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm)
+            ? null
+            : $"%{filter.SearchTerm.Trim()}%";
+
+        const string baseWhere = @"
+            WHERE n.clinica_id = @ClinicaId
+              AND n.activo = true
+              AND (@SearchTerm IS NULL
+                   OR n.titulo ILIKE @SearchTerm
+                   OR n.mensaje ILIKE @SearchTerm
+                   OR n.tipo ILIKE @SearchTerm)";
+
+        var sql = $@"
+            WITH filtered AS (
+                SELECT 1
+                FROM public.notificaciones n
+                {baseWhere}
+            )
+            SELECT COUNT(1) FROM filtered;
+
+            SELECT {SelectColumns}
+            FROM public.notificaciones n
+            {baseWhere}
+            ORDER BY n.fecha_creacion DESC
+            LIMIT @PageSize OFFSET @Offset;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            using var multi = await connection.QueryMultipleAsync(sql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = pageSize,
+                Offset = offset
+            });
+
+            var totalCount = await multi.ReadSingleAsync<int>();
+            var items = await multi.ReadAsync<Notificacion>();
+
+            return new PaginatedResultDto<Notificacion>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener notificaciones paginadas de clínica {ClinicaId}", clinicaId);
             throw;
         }
     }

@@ -3,7 +3,7 @@ using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.BLL.Services;
 

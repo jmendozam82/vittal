@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Expediente médico de un paciente. Contiene el historial completo de hojas de cita,

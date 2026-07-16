@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -6,7 +6,7 @@ namespace Vittal.DAL.Interfaces;
 /// Repositorio para operaciones CRUD de expedientes médicos.
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
-public interface IExpedienteRepository
+public interface IExpedienteRepository : IPaginatedRepository<Expediente>
 {
     /// <summary>Obtiene todos los expedientes activos de una clínica.</summary>
     Task<IEnumerable<Expediente>> GetAllAsync(Guid clinicaId);

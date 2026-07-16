@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo de diagnósticos por clínica, clasificados por tipo de diagnóstico.

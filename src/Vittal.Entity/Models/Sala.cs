@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Salas o áreas físicas de atención médica por clínica.

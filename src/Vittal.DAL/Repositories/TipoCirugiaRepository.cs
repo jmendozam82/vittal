@@ -5,7 +5,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -233,6 +233,37 @@ public class TipoCirugiaRepository : ITipoCirugiaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de nombre de tipo de cirugía en clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 7. SearchAsync — Búsqueda de tipos de cirugía por término (ILIKE SQL)
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<TipoCirugia>> SearchAsync(Guid clinicaId, string term, int limit = 20)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromTable}
+            WHERE tc.clinica_id = @ClinicaId AND tc.activo = true
+              AND (tc.nombre ILIKE '%' || @Term || '%'
+                   OR tc.descripcion ILIKE '%' || @Term || '%')
+            ORDER BY tc.nombre
+            LIMIT @Limit;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<TipoCirugia>(sql, new
+            {
+                ClinicaId = clinicaId,
+                Term = term,
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar tipos de cirugía con término '{Term}' en clínica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

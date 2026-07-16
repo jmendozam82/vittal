@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vittal.API.Hubs;
@@ -33,23 +32,13 @@ builder.Services.AddHttpClient("SupabaseAuth");
 // Register IOC Dependencies
 builder.Services.AddVittalServices(builder.Configuration);
 
+// Register JWKS cache and async loader
+builder.Services.AddSingleton<JwksCacheService>();
+builder.Services.AddHostedService<JwksLoaderService>();
+
 // Configure JWT Authentication
 var supabaseUrl = builder.Configuration["Supabase:Url"];
 var jwtIssuer = $"{supabaseUrl}/auth/v1";
-var jwksUrl = $"{supabaseUrl}/auth/v1/.well-known/jwks.json";
-
-// Fetch JWKS synchronously at startup so keys are available for validation
-var jwksKeys = FetchJwksKeys(jwksUrl);
-
-if (jwksKeys.Count == 0)
-{
-    Console.WriteLine($"WARNING: Could not fetch JWKS from {jwksUrl}");
-    Console.WriteLine("JWT validation will fail for ES256 tokens.");
-}
-else
-{
-    Console.WriteLine($"JWKS loaded successfully: {jwksKeys.Count} key(s) found");
-}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -66,7 +55,6 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
-        IssuerSigningKeys = jwksKeys,
         TryAllIssuerSigningKeys = true,
         ClockSkew = TimeSpan.FromMinutes(5)
     };
@@ -118,7 +106,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Vittal API", Version = "v1" });
-    
+
     // Resolve conflict for nested DTOs with same names (e.g. Request, Response)
     c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
 
@@ -161,6 +149,16 @@ builder.Services.AddHostedService<BackgroundAlertCheckerService>();
 
 var app = builder.Build();
 
+// Wire up JWKS key resolution now that DI is available.
+// JwksLoaderService populates JwksCacheService asynchronously at startup;
+// the resolver reads from it at request time when keys are loaded.
+{
+    var jwksCache = app.Services.GetRequiredService<JwksCacheService>();
+    var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
+    var jwtParams = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
+    jwtParams.IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) => jwksCache.Keys;
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -180,33 +178,6 @@ app.MapHub<LineaTiempoHub>("/hubs/linea-tiempo");
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
-
-// =============================================================================
-// Helper: Fetch JWKS public keys at startup (synchronous)
-// =============================================================================
-static List<SecurityKey> FetchJwksKeys(string jwksUrl)
-{
-    var keys = new List<SecurityKey>();
-    try
-    {
-        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        var response = client.GetStringAsync(jwksUrl).Result;
-        var doc = JsonDocument.Parse(response);
-        var jsonKeys = doc.RootElement.GetProperty("keys");
-
-        foreach (var key in jsonKeys.EnumerateArray())
-        {
-            var rawText = key.GetRawText();
-            var jsonWebKey = new JsonWebKey(rawText);
-            keys.Add(jsonWebKey);
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error fetching JWKS from {jwksUrl}: {ex.Message}");
-    }
-    return keys;
-}
 
 // =============================================================================
 // JSON Converters para DateOnly / TimeOnly
@@ -251,5 +222,3 @@ public class TimeOnlyJsonConverter : JsonConverter<TimeOnly>
         writer.WriteStringValue(value.ToString("HH:mm", CultureInfo.InvariantCulture));
     }
 }
-
-

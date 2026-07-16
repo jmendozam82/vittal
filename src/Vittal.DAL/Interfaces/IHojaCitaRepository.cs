@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -6,7 +6,7 @@ namespace Vittal.DAL.Interfaces;
 /// Repositorio para operaciones CRUD de hojas de cita médica.
 /// Historia de Usuario: HU20 — Expedientes
 /// </summary>
-public interface IHojaCitaRepository
+public interface IHojaCitaRepository : IPaginatedRepository<HojaCita>
 {
     /// <summary>Obtiene todas las hojas de cita activas de una clínica.</summary>
     Task<IEnumerable<HojaCita>> GetAllAsync(Guid clinicaId);

@@ -6,7 +6,7 @@ using Vittal.BLL.Interfaces;
 using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Expediente;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Tests.Services;

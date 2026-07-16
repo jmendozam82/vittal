@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -19,4 +19,7 @@ public interface IExamenRepository
     Task<bool> DeactivateAsync(Guid id, Guid clinicaId);
     Task<bool> ReactivateAsync(Guid id, Guid clinicaId);
     Task<bool> ExistsByNombreAsync(Guid clinicaId, string nombre, Guid? excludeId = null);
+
+    /// <summary>Busca exámenes por término (nombre, descripción). SQL ILIKE.</summary>
+    Task<IEnumerable<Examen>> SearchAsync(Guid clinicaId, string term, int limit = 20);
 }

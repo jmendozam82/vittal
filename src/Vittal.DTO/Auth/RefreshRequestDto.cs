@@ -1,4 +1,4 @@
-﻿namespace Vittal.DTO.Auth;
+namespace Vittal.DTO.Auth;
 
 public class RefreshRequestDto
 {

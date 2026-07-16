@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -151,7 +152,72 @@ public class ReporteRepository : IReporteRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 5. ExecuteReportQueryAsync — Consulta dinámica según tipo de reporte
+    // 5. GetAllPaginatedAsync — Página de reportes con búsqueda ILIKE
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<Reporte>> GetAllPaginatedAsync(
+        Guid clinicaId, PaginationFilterDto filter)
+    {
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize > 100 ? 100 : filter.PageSize;
+        var offset = (page - 1) * pageSize;
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm)
+            ? null
+            : $"%{filter.SearchTerm.Trim()}%";
+
+        const string baseWhere = @"
+            WHERE r.clinica_id = @ClinicaId
+              AND r.activo = true
+              AND (@SearchTerm IS NULL
+                   OR r.nombre ILIKE @SearchTerm
+                   OR r.tipo ILIKE @SearchTerm
+                   OR r.descripcion ILIKE @SearchTerm)";
+
+        var sql = $@"
+            WITH filtered AS (
+                SELECT 1
+                FROM public.reportes r
+                {baseWhere}
+            )
+            SELECT COUNT(1) FROM filtered;
+
+            SELECT {SelectColumns}
+            FROM public.reportes r
+            {baseWhere}
+            ORDER BY r.fecha_creacion DESC
+            LIMIT @PageSize OFFSET @Offset;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            using var multi = await connection.QueryMultipleAsync(sql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = pageSize,
+                Offset = offset
+            });
+
+            var totalCount = await multi.ReadSingleAsync<int>();
+            var items = await multi.ReadAsync<Reporte>();
+
+            return new PaginatedResultDto<Reporte>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener reportes paginados de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 6. ExecuteReportQueryAsync — Consulta dinámica según tipo de reporte
     // ────────────────────────────────────────────────────────────────────
     public async Task<string> ExecuteReportQueryAsync(
         string tipo,

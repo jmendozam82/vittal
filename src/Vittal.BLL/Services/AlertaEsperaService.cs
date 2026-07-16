@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Alerta;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -127,10 +127,8 @@ public class AlertaEsperaService : IAlertaEsperaService
                 return ServiceResult<int>.Success(0, "Alertas deshabilitadas para esta clínica.");
             }
 
-            // Obtener todas las citas activas de la clínica
-            var todasLasCitas = await _citaRepository.GetAllAsync(clinicaId);
-            var citasEnEspera = todasLasCitas.Where(c =>
-                c.Estado == "en_espera" && c.Activo);
+            // Obtener solo citas en estado 'en_espera' (consulta filtrada en BD, no en memoria)
+            var citasEnEspera = await _citaRepository.GetCitasEnEsperaAsync(clinicaId);
 
             var alertasGeneradas = 0;
             var horaActual = TimeOnly.FromDateTime(DateTime.UtcNow);
@@ -142,9 +140,8 @@ public class AlertaEsperaService : IAlertaEsperaService
 
                 if (minutosEspera >= config.TiempoEsperaMaximoMinutos)
                 {
-                    // Verificar si ya existe una alerta no resuelta para esta cita
-                    var alertasExistentes = await _repository.GetAllByClinicaIdAsync(clinicaId, false);
-                    var yaAlertada = alertasExistentes.Any(a => a.CitaId == cita.Id);
+                    // Verificar si ya existe una alerta no resuelta para esta cita (consulta puntual, sin N+1)
+                    var yaAlertada = await _repository.ExisteAlertaNoResueltaParaCitaAsync(clinicaId, cita.Id);
 
                     if (!yaAlertada)
                     {

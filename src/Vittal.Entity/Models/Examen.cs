@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo de exámenes médicos que pueden ser solicitados en una consulta.

@@ -1,19 +1,22 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.Utility.Results;
 using Vittal.DTO;
 using Vittal.DTO.Catalogos;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.BLL.Services;
 
 public class TipoSignoVitalService : ITipoSignoVitalService
 {
     private readonly ITipoSignoVitalRepository _repository;
+    private readonly ILogger<TipoSignoVitalService> _logger;
 
-    public TipoSignoVitalService(ITipoSignoVitalRepository repository)
+    public TipoSignoVitalService(ITipoSignoVitalRepository repository, ILogger<TipoSignoVitalService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId)
@@ -35,7 +38,7 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>.Failure("Error al obtener tipos de signos vitales.");
         }
@@ -65,7 +68,7 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<TipoSignoVitalDTOs.Response>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<TipoSignoVitalDTOs.Response>.Failure("Error al obtener el tipo de signo vital.");
         }
@@ -94,7 +97,7 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<Guid>.Success(id, "Tipo de signo vital creado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<Guid>.Failure("Error al crear el tipo de signo vital.");
         }
@@ -120,11 +123,11 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             var result = await _repository.UpdateAsync(entity);
 
-            return result 
-                ? ServiceResult<bool>.Success(result, "Actualizado exitosamente.") 
+            return result
+                ? ServiceResult<bool>.Success(result, "Actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al actualizar.");
         }
@@ -135,11 +138,11 @@ public class TipoSignoVitalService : ITipoSignoVitalService
         try
         {
             var result = await _repository.DeactivateAsync(clinicaId, id);
-            return result 
-                ? ServiceResult<bool>.Success(result, "Desactivado exitosamente.") 
-                : ServiceResult<bool>.Failure("No se encontró el registro.");
+            return result
+                ? ServiceResult<bool>.Success(result, "Desactivado exitosamente.")
+                : ServiceResult<bool>.Failure("No se encontrÃ³ el registro.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al desactivar.");
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Vittal.DTO.Auth;
 
@@ -7,7 +7,7 @@ public class LoginResponseDto
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public int ExpiresIn { get; set; }
-    
+
     // User info
     public Guid UsuarioId { get; set; }
     public Guid ClinicaId { get; set; }

@@ -7,7 +7,7 @@ using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Dashboard;
 using Vittal.DTO.Notificacion;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;

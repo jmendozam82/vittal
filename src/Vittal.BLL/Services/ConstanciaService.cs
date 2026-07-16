@@ -1,24 +1,27 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Constancia;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
 
 /// <summary>
-/// Servicio de lógica de negocio para constancias médicas.
-/// Las constancias son documentos legales: NO se pueden editar después de emitidas.
+/// Servicio de lÃ³gica de negocio para constancias mÃ©dicas.
+/// Las constancias son documentos legales: NO se pueden editar despuÃ©s de emitidas.
 /// Solo se pueden crear y anular (no eliminar).
-/// Historia de Usuario: HU-E07 — Constancias Médicas
+/// Historia de Usuario: HU-E07 â€” Constancias MÃ©dicas
 /// </summary>
 public class ConstanciaService : IConstanciaService
 {
     private readonly IConstanciaRepository _repository;
+    private readonly ILogger<ConstanciaService> _logger;
 
-    public ConstanciaService(IConstanciaRepository repository)
+    public ConstanciaService(IConstanciaRepository repository, ILogger<ConstanciaService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<ConstanciaResponseDto>>> GetAllAsync(Guid clinicaId, Guid? expedienteId = null)
@@ -29,7 +32,7 @@ public class ConstanciaService : IConstanciaService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<ConstanciaResponseDto>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<IEnumerable<ConstanciaResponseDto>>.Failure("Error al obtener las constancias.");
         }
@@ -48,7 +51,7 @@ public class ConstanciaService : IConstanciaService
             var dto = MapToDto(entity);
             return ServiceResult<ConstanciaResponseDto>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<ConstanciaResponseDto>.Failure("Error al obtener la constancia.");
         }
@@ -86,7 +89,7 @@ public class ConstanciaService : IConstanciaService
             var responseDto = MapToDto(created);
             return ServiceResult<ConstanciaResponseDto>.Success(responseDto, "Constancia emitida exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<ConstanciaResponseDto>.Failure("Error al emitir la constancia.");
         }
@@ -99,15 +102,15 @@ public class ConstanciaService : IConstanciaService
             var result = await _repository.DeactivateAsync(clinicaId, id);
             return result
                 ? ServiceResult<bool>.Success(result, "Constancia anulada exitosamente.")
-                : ServiceResult<bool>.Failure("No se encontró la constancia.", ServiceErrorType.NotFound);
+                : ServiceResult<bool>.Failure("No se encontrÃ³ la constancia.", ServiceErrorType.NotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al anular la constancia.");
         }
     }
 
-    // ── Mapeo manual Entity → DTO ──────────────────────────────────────
+    // â”€â”€ Mapeo manual Entity â†’ DTO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static ConstanciaResponseDto MapToDto(Constancia entity)
     {

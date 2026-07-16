@@ -1,11 +1,10 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
 using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
-
 
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
@@ -27,7 +26,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     }
 
-
     [Area("Catalogos")]
 
     [Authorize]
@@ -40,7 +38,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         private readonly ILogger<TratamientoController> _logger;
 
-
         public TratamientoController(ApiClientHelper apiClient, ILogger<TratamientoController> logger)
 
         {
@@ -51,9 +48,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== VISTAS (Server-side rendering) =====================
-
 
         [HttpGet]
 
@@ -65,7 +60,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public IActionResult Create()
@@ -76,7 +70,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -84,7 +77,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Tratamientos/{id}");
-
 
             if (!success)
 
@@ -95,7 +87,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
                 return RedirectToAction("Index");
 
             }
-
 
             var data = ExtractDataObject(response);
 
@@ -109,18 +100,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             ViewBag.Tratamiento = data;
 
             return View();
 
         }
 
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-        /// <summary>Lista todos los tratamientos â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los tratamientos — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -132,7 +120,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
             if (!success)
 
             {
@@ -143,15 +130,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-        /// <summary>Busca tratamientos por tÃ©rmino â€” para fetch() desde la vista Index</summary>
+        /// <summary>Busca tratamientos por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -167,11 +152,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(
 
                 $"api/Tratamientos/buscar?q={Uri.EscapeDataString(q)}");
-
 
             if (!success)
 
@@ -183,15 +166,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-        /// <summary>Crea un nuevo tratamiento â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo tratamiento — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -207,9 +188,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             _logger.LogInformation("JsonCrear called: nombre={Nombre}", dto.Nombre);
-
 
             var payload = new
 
@@ -221,9 +200,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Tratamientos", payload);
-
 
             if (!success)
 
@@ -235,15 +212,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Tratamiento creado exitosamente" });
 
         }
 
-
-        /// <summary>Actualiza un tratamiento â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un tratamiento — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -259,9 +234,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
 
             var payload = new
 
@@ -273,9 +246,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Tratamientos/{id}", payload);
-
 
             if (!success)
 
@@ -287,15 +258,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Tratamiento actualizado exitosamente" });
 
         }
 
-
-        /// <summary>Desactiva un tratamiento â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un tratamiento — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -305,9 +274,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Tratamientos/{id}/desactivar", null);
-
 
             if (!success)
 
@@ -319,13 +286,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             return Ok(new { success = true, message = "Tratamiento desactivado exitosamente" });
 
         }
 
-
-        /// <summary>Reactiva un tratamiento â€” para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un tratamiento — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -335,7 +300,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Tratamientos/{id}/reactivar", null);
 
-
             if (!success)
 
             {
@@ -344,21 +308,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             return Ok(new { success = true, message = "Tratamiento reactivado exitosamente" });
 
         }
 
-
         // ========== Helpers para extraer data de JsonElement ==========
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
 
             try
 
@@ -384,18 +344,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             catch { }
 
-
             return new List<object>();
 
         }
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
 
             try
 
@@ -417,7 +374,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -435,7 +391,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return list;
 
         }
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -460,7 +415,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return dict;
 
         }
-
 
         private static object? JsonElementToValue(JsonElement element)
 

@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Contactos recibidos desde el formulario de la landing page.

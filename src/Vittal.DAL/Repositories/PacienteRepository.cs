@@ -5,7 +5,8 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -73,6 +74,79 @@ public class PacienteRepository : IPacienteRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener pacientes activos de la clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 1c. GetAllPaginatedAsync — Pacientes activos con paginación y búsqueda
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<Paciente>> GetAllPaginatedAsync(Guid clinicaId, PaginationFilterDto filter)
+    {
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm) ? null : filter.SearchTerm;
+
+        const string countSql = $@"
+            SELECT COUNT(*)
+            FROM public.pacientes p
+            INNER JOIN public.usuarios u ON p.doctor_id = u.id
+            WHERE p.clinica_id = @ClinicaId AND p.activo = true
+              AND (
+                @SearchTerm IS NULL
+                OR p.primer_nombre ILIKE '%' || @SearchTerm || '%'
+                OR p.segundo_nombre ILIKE '%' || @SearchTerm || '%'
+                OR p.primer_apellido ILIKE '%' || @SearchTerm || '%'
+                OR p.segundo_apellido ILIKE '%' || @SearchTerm || '%'
+                OR p.numero_documento_identificacion ILIKE '%' || @SearchTerm || '%'
+                OR p.email ILIKE '%' || @SearchTerm || '%'
+                OR p.celular ILIKE '%' || @SearchTerm || '%'
+              );";
+
+        const string dataSql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE p.clinica_id = @ClinicaId AND p.activo = true
+              AND (
+                @SearchTerm IS NULL
+                OR p.primer_nombre ILIKE '%' || @SearchTerm || '%'
+                OR p.segundo_nombre ILIKE '%' || @SearchTerm || '%'
+                OR p.primer_apellido ILIKE '%' || @SearchTerm || '%'
+                OR p.segundo_apellido ILIKE '%' || @SearchTerm || '%'
+                OR p.numero_documento_identificacion ILIKE '%' || @SearchTerm || '%'
+                OR p.email ILIKE '%' || @SearchTerm || '%'
+                OR p.celular ILIKE '%' || @SearchTerm || '%'
+              )
+            ORDER BY p.primer_apellido, p.primer_nombre
+            LIMIT @PageSize OFFSET (@Page - 1) * @PageSize;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            var totalCount = await connection.ExecuteScalarAsync<int>(countSql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm
+            });
+
+            var items = await connection.QueryAsync<Paciente>(dataSql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = filter.PageSize,
+                Page = filter.Page
+            });
+
+            return new PaginatedResultDto<Paciente>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = filter.Page,
+                PageSize = filter.PageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener pacientes paginados de la clínica {ClinicaId}", clinicaId);
             throw;
         }
     }
@@ -327,6 +401,45 @@ public class PacienteRepository : IPacienteRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking numero documento existence for clinica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 9. SearchAsync — Búsqueda de pacientes por término con ILIKE en SQL
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Paciente>> SearchAsync(Guid clinicaId, string term, int limit = 20)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE p.clinica_id = @ClinicaId AND p.activo = true
+              AND (
+                p.primer_nombre ILIKE '%' || @Term || '%'
+                OR p.segundo_nombre ILIKE '%' || @Term || '%'
+                OR p.primer_apellido ILIKE '%' || @Term || '%'
+                OR p.segundo_apellido ILIKE '%' || @Term || '%'
+                OR p.numero_documento_identificacion ILIKE '%' || @Term || '%'
+                OR p.email ILIKE '%' || @Term || '%'
+                OR p.celular ILIKE '%' || @Term || '%'
+              )
+            ORDER BY
+              CASE
+                WHEN p.primer_nombre ILIKE @Term || '%' THEN 1
+                WHEN p.primer_apellido ILIKE @Term || '%' THEN 2
+                ELSE 3
+              END,
+              p.primer_apellido, p.primer_nombre
+            LIMIT @Limit;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Paciente>(sql, new { ClinicaId = clinicaId, Term = term, Limit = limit });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching patients with term '{Term}' in clinica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

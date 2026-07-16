@@ -1,18 +1,21 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.Utility.Results;
 using Vittal.DTO.Plantillas;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.BLL.Services;
 
 public class PlantillaItemService : IPlantillaItemService
 {
     private readonly IPlantillaItemRepository _repository;
+    private readonly ILogger<PlantillaItemService> _logger;
 
-    public PlantillaItemService(IPlantillaItemRepository repository)
+    public PlantillaItemService(IPlantillaItemRepository repository, ILogger<PlantillaItemService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<PlantillaItemDTOs.Response>>> GetByPlantillaIdAsync(Guid plantillaId)
@@ -23,7 +26,7 @@ public class PlantillaItemService : IPlantillaItemService
             var dtos = entities.Select(MapToResponse);
             return ServiceResult<IEnumerable<PlantillaItemDTOs.Response>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<IEnumerable<PlantillaItemDTOs.Response>>.Failure("Error al obtener los items de la plantilla.");
         }
@@ -40,7 +43,7 @@ public class PlantillaItemService : IPlantillaItemService
             }
             return ServiceResult<PlantillaItemDTOs.Response>.Success(MapToResponse(entity));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<PlantillaItemDTOs.Response>.Failure("Error al obtener el item.");
         }
@@ -69,7 +72,7 @@ public class PlantillaItemService : IPlantillaItemService
             var id = await _repository.CreateAsync(entity);
             return ServiceResult<Guid>.Success(id, "Item creado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<Guid>.Failure("Error al crear el item.");
         }
@@ -100,7 +103,7 @@ public class PlantillaItemService : IPlantillaItemService
                 ? ServiceResult<bool>.Success(result, "Item actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar el item.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al actualizar el item.");
         }
@@ -113,9 +116,9 @@ public class PlantillaItemService : IPlantillaItemService
             var result = await _repository.DeactivateAsync(id);
             return result
                 ? ServiceResult<bool>.Success(result, "Item desactivado exitosamente.")
-                : ServiceResult<bool>.Failure("No se encontró el item.");
+                : ServiceResult<bool>.Failure("No se encontrÃ³ el item.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el item.");
         }
@@ -128,9 +131,9 @@ public class PlantillaItemService : IPlantillaItemService
             var result = await _repository.ReactivateAsync(id);
             return result
                 ? ServiceResult<bool>.Success(result, "Item reactivado exitosamente.")
-                : ServiceResult<bool>.Failure("No se encontró el item.");
+                : ServiceResult<bool>.Failure("No se encontrÃ³ el item.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al reactivar el item.");
         }

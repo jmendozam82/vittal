@@ -6,7 +6,7 @@ using Vittal.BLL.Interfaces;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.UsuarioSala;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;

@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -98,6 +99,78 @@ public class UsuarioRepository : IUsuarioRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener usuarios activos de la clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 2c. GetAllPaginatedAsync — Usuarios activos con paginación y búsqueda
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<Usuario>> GetAllPaginatedAsync(Guid clinicaId, PaginationFilterDto filter)
+    {
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm) ? null : filter.SearchTerm;
+
+        const string countSql = $@"
+            SELECT COUNT(*)
+            FROM public.usuarios u
+            INNER JOIN public.perfiles p ON u.perfil_id = p.id
+            INNER JOIN public.clinicas c ON u.clinica_id = c.id
+            WHERE u.clinica_id = @ClinicaId AND u.activo = true
+              AND (
+                @SearchTerm IS NULL
+                OR u.nombres ILIKE '%' || @SearchTerm || '%'
+                OR u.apellidos ILIKE '%' || @SearchTerm || '%'
+                OR u.usuario ILIKE '%' || @SearchTerm || '%'
+                OR u.email ILIKE '%' || @SearchTerm || '%'
+                OR u.numero_documento_identificacion ILIKE '%' || @SearchTerm || '%'
+                OR u.celular ILIKE '%' || @SearchTerm || '%'
+              );";
+
+        const string dataSql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE u.clinica_id = @ClinicaId AND u.activo = true
+              AND (
+                @SearchTerm IS NULL
+                OR u.nombres ILIKE '%' || @SearchTerm || '%'
+                OR u.apellidos ILIKE '%' || @SearchTerm || '%'
+                OR u.usuario ILIKE '%' || @SearchTerm || '%'
+                OR u.email ILIKE '%' || @SearchTerm || '%'
+                OR u.numero_documento_identificacion ILIKE '%' || @SearchTerm || '%'
+                OR u.celular ILIKE '%' || @SearchTerm || '%'
+              )
+            ORDER BY u.nombres, u.apellidos
+            LIMIT @PageSize OFFSET (@Page - 1) * @PageSize;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            var totalCount = await connection.ExecuteScalarAsync<int>(countSql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm
+            });
+
+            var items = await connection.QueryAsync<Usuario>(dataSql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = filter.PageSize,
+                Page = filter.Page
+            });
+
+            return new PaginatedResultDto<Usuario>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = filter.Page,
+                PageSize = filter.PageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener usuarios paginados de la clínica {ClinicaId}", clinicaId);
             throw;
         }
     }

@@ -1,12 +1,10 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
 using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
-
-
 
 namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
@@ -30,8 +28,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
     }
 
-
-
     [Area("Administracion")]
 
     [Authorize]
@@ -44,8 +40,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         private readonly ILogger<PerfilController> _logger;
 
-
-
         public PerfilController(ApiClientHelper apiClient, ILogger<PerfilController> logger)
 
         {
@@ -56,11 +50,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         // ===================== VISTAS (Server-side rendering) =====================
-
-
 
         [HttpGet]
 
@@ -72,8 +62,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         [HttpGet]
 
         public IActionResult Create()
@@ -84,8 +72,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -93,8 +79,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Perfiles/{id}");
-
-
 
             if (!success)
 
@@ -105,8 +89,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return RedirectToAction("Index");
 
             }
-
-
 
             var data = ExtractDataObject(response);
 
@@ -120,21 +102,15 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             ViewBag.Perfil = data;
 
             return View();
 
         }
 
-
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-
-        /// <summary>Lista todos los perfiles â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los perfiles — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -146,8 +122,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
-
             if (!success)
 
             {
@@ -158,8 +132,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             // Extraer el array "data" del JsonElement
 
             var data = ExtractDataArray(response);
@@ -168,9 +140,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
-        /// <summary>Crea un nuevo perfil â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo perfil — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -186,17 +156,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             _logger.LogInformation("JsonCrear called: nombre={Nombre}, esAdmin={EsAdmin}", dto.Nombre, dto.EsAdmin);
-
-
 
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Perfiles",
 
                 new { nombre = dto.Nombre, descripcion = dto.Descripcion, esAdmin = dto.EsAdmin });
-
-
 
             if (!success)
 
@@ -208,17 +172,13 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Perfil creado exitosamente" });
 
         }
 
-
-
-        /// <summary>Actualiza un perfil â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un perfil — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -234,17 +194,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
-
 
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Perfiles/{id}",
 
                 new { nombre = dto.Nombre, descripcion = dto.Descripcion, esAdmin = dto.EsAdmin });
-
-
 
             if (!success)
 
@@ -256,17 +210,13 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Perfil actualizado exitosamente" });
 
         }
 
-
-
-        /// <summary>Desactiva un perfil â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un perfil — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -276,11 +226,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Perfiles/{id}/desactivar", null);
-
-
 
             if (!success)
 
@@ -292,13 +238,9 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             return Ok(new { success = true, message = "Perfil desactivado exitosamente" });
 
         }
-
-
 
         /// <summary>Reactiva un perfil -- para fetch() desde la vista Index</summary>
 
@@ -310,8 +252,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Perfiles/{id}/reactivar", null);
 
-
-
             if (!success)
 
             {
@@ -320,25 +260,17 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             return Ok(new { success = true, message = "Perfil reactivado exitosamente" });
 
         }
 
-
-
         // ========== Helpers para extraer data de JsonElement ==========
-
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
-
 
             try
 
@@ -366,21 +298,15 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             catch { /* return empty */ }
 
-
-
             return new List<object>();
 
         }
-
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
-
 
             try
 
@@ -402,8 +328,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -421,8 +345,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             return list;
 
         }
-
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -447,8 +369,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             return dict;
 
         }
-
-
 
         private static object? JsonElementToValue(JsonElement element)
 

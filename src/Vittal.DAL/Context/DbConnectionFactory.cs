@@ -254,7 +254,6 @@ public class DbConnectionFactory
     }
 
     private readonly IConfiguration _configuration;
-    private Guid? _currentClinicaId;
 
     public DbConnectionFactory(IConfiguration configuration)
     {
@@ -262,29 +261,23 @@ public class DbConnectionFactory
     }
 
     /// <summary>
-    /// Establece el tenant activo para el resto del request actual.
-    /// Llamado desde TenantMiddleware. El valor se usa en cada conexión
-    /// creada durante el request para activar las políticas RLS.
-    /// </summary>
-    public void SetTenantContext(Guid clinicaId)
-    {
-        _currentClinicaId = clinicaId;
-    }
-
-    /// <summary>
-    /// Crea una conexión a PostgreSQL. Si hay un tenant activo,
+    /// Crea una conexión a PostgreSQL. Si se provee clinicaId,
     /// establece app.current_clinica_id en la sesión para activar RLS.
     /// </summary>
-    public IDbConnection CreateConnection()
+    public IDbConnection CreateConnection(Guid? clinicaId = null)
     {
         var connectionString = _configuration.GetConnectionString("Supabase");
         var connection = new NpgsqlConnection(connectionString);
 
-        if (_currentClinicaId.HasValue)
+        if (clinicaId.HasValue)
         {
             connection.Open();
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT set_config('app.current_clinica_id', '{_currentClinicaId.Value}', true);";
+            cmd.CommandText = "SELECT set_config('app.current_clinica_id', @clinicaId, true);";
+            var param = cmd.CreateParameter();
+            param.ParameterName = "@clinicaId";
+            param.Value = clinicaId.Value.ToString();
+            cmd.Parameters.Add(param);
             cmd.ExecuteNonQuery();
         }
 

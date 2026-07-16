@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Catálogo de tipos de cirugías (ej: Catarata, LASIK, Pterigión) por clínica.

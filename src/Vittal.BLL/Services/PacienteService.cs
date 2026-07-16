@@ -2,10 +2,11 @@ using Vittal.BLL.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Paciente;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -18,11 +19,16 @@ public class PacienteService : IPacienteService
 {
     private readonly IPacienteRepository _repo;
     private readonly ILogger<PacienteService> _logger;
+    private readonly IValidator<PacienteRequestDto> _validator;
 
-    public PacienteService(IPacienteRepository repo, ILogger<PacienteService> logger)
+    public PacienteService(
+        IPacienteRepository repo,
+        ILogger<PacienteService> logger,
+        IValidator<PacienteRequestDto> validator)
     {
         _repo = repo;
         _logger = logger;
+        _validator = validator;
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -91,13 +97,13 @@ public class PacienteService : IPacienteService
             _logger.LogInformation("Creando paciente {PrimerNombre} {PrimerApellido} en clínica {ClinicaId}",
                 dto.PrimerNombre, dto.PrimerApellido, clinicaId);
 
-            // Validate tipo documento
-            var tiposValidos = new[] { "CC", "CR", "PA" };
-            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            // Validación FluentValidation — reemplaza la validación inline eliminada
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
                 return ServiceResult<PacienteResponseDto>.Failure(
-                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
-                    ServiceErrorType.Validation);
+                    string.Join("; ", errors), ServiceErrorType.Validation, errors);
             }
 
             // Validate numero documento uniqueness
@@ -189,13 +195,13 @@ public class PacienteService : IPacienteService
                     "Paciente no encontrado", ServiceErrorType.NotFound);
             }
 
-            // Validate tipo documento
-            var tiposValidos = new[] { "CC", "CR", "PA" };
-            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            // Validación FluentValidation — reemplaza la validación inline eliminada
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
                 return ServiceResult<PacienteResponseDto>.Failure(
-                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
-                    ServiceErrorType.Validation);
+                    string.Join("; ", errors), ServiceErrorType.Validation, errors);
             }
 
             // Validate numero documento uniqueness (excluding current patient)
@@ -363,26 +369,9 @@ public class PacienteService : IPacienteService
                     new List<PacienteResponseDto>(), "Ingrese al menos 2 caracteres para buscar.");
             }
 
-            // Get all active patients and filter in-memory for simplicity
-            // (or add a dedicated search query in the repository if performance is an issue)
-            var entities = await _repo.GetAllAsync(clinicaId);
-            var lowerTerm = term.ToLowerInvariant();
-
-            var filtered = new List<PacienteResponseDto>();
-            foreach (var entity in entities)
-            {
-                var fullName = entity.NombreCompleto.ToLowerInvariant();
-                var hasEmail = entity.Email?.ToLowerInvariant().Contains(lowerTerm) ?? false;
-                var hasCelular = entity.Celular?.Contains(term) ?? false;
-                var hasDocumento = !string.IsNullOrEmpty(entity.NumeroDocumentoIdentificacion) && entity.NumeroDocumentoIdentificacion.Contains(term, StringComparison.OrdinalIgnoreCase);
-
-                if (fullName.Contains(lowerTerm) || hasEmail || hasCelular || hasDocumento)
-                {
-                    filtered.Add(MapPacienteToDto(entity));
-                }
-            }
-
-            return ServiceResult<IEnumerable<PacienteResponseDto>>.Success(filtered);
+            var entities = await _repo.SearchAsync(clinicaId, term.Trim());
+            return ServiceResult<IEnumerable<PacienteResponseDto>>.Success(
+                entities.Select(e => MapPacienteToDto(e)).ToList());
         }
         catch (Exception ex)
         {

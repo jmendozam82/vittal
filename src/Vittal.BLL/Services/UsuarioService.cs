@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -12,7 +14,7 @@ using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Usuario;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -23,17 +25,20 @@ public class UsuarioService : IUsuarioService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<UsuarioService> _logger;
     private readonly IConfiguration _config;
+    private readonly IValidator<UsuarioRequestDto> _validator;
 
     public UsuarioService(
         IUsuarioRepository repo,
         IHttpClientFactory httpClientFactory,
         ILogger<UsuarioService> logger,
-        IConfiguration config)
+        IConfiguration config,
+        IValidator<UsuarioRequestDto> validator)
     {
         _repo = repo;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _config = config;
+        _validator = validator;
     }
 
     public async Task<ServiceResult<UsuarioResponseDto>> GetByAuthUserIdAsync(Guid authUserId)
@@ -112,13 +117,13 @@ public class UsuarioService : IUsuarioService
         {
             _logger.LogInformation("Creando usuario con username: {Username} en clinica {ClinicaId}", dto.Username, clinicaId);
 
-            // Validate tipo documento
-            var tiposValidos = new[] { "CC", "CR", "PA" };
-            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            // Validación FluentValidation — reemplaza validación inline de tipo documento
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
                 return ServiceResult<UsuarioResponseDto>.Failure(
-                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
-                    ServiceErrorType.Validation);
+                    string.Join("; ", errors), ServiceErrorType.Validation, errors);
             }
 
             // Validate numero documento uniqueness
@@ -234,13 +239,13 @@ public class UsuarioService : IUsuarioService
                     "Usuario no encontrado", ServiceErrorType.NotFound);
             }
 
-            // Validate tipo documento
-            var tiposValidos = new[] { "CC", "CR", "PA" };
-            if (!tiposValidos.Contains(dto.TipoDocumentoIdentificacion))
+            // Validación FluentValidation — reemplaza validación inline de tipo documento
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
                 return ServiceResult<UsuarioResponseDto>.Failure(
-                    "El tipo de documento debe ser CC (Cédula Ciudadanía), CR (Cédula Residente) o PA (Pasaporte)",
-                    ServiceErrorType.Validation);
+                    string.Join("; ", errors), ServiceErrorType.Validation, errors);
             }
 
             // Validate numero documento uniqueness (excluding current user)

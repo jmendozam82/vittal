@@ -1,7 +1,8 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.SignosVitalesHoja;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -15,10 +16,14 @@ namespace Vittal.BLL.Services;
 public class SignosVitalesHojaService : ISignosVitalesHojaService
 {
     private readonly ISignosVitalesHojaRepository _repository;
+    private readonly ILogger<SignosVitalesHojaService> _logger;
 
-    public SignosVitalesHojaService(ISignosVitalesHojaRepository repository)
+    public SignosVitalesHojaService(
+        ISignosVitalesHojaRepository repository,
+        ILogger<SignosVitalesHojaService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<SignosVitalesHojaResponseDto>>> GetAllAsync(Guid clinicaId, Guid hojaCitaId)
@@ -29,7 +34,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<SignosVitalesHojaResponseDto>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<IEnumerable<SignosVitalesHojaResponseDto>>.Failure("Error al obtener signos vitales.");
         }
@@ -48,7 +53,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var dto = MapToDto(entity);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al obtener el signo vital.");
         }
@@ -84,7 +89,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var responseDto = MapToDto(created);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(responseDto, "Signo vital registrado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al registrar el signo vital.");
         }
@@ -118,7 +123,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var responseDto = MapToDto(updated ?? entity);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(responseDto, "Signo vital actualizado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al actualizar el signo vital.");
         }
@@ -133,7 +138,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
                 ? ServiceResult<bool>.Success(result, "Signo vital desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el signo vital.", ServiceErrorType.NotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el signo vital.");
         }

@@ -5,12 +5,11 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Npgsql;
 
 namespace Vittal.DAL.Repositories;
 
 /// <summary>
-/// Repositorio para verificar y gestionar permisos de un perfil sobre módulos del sistema.
+/// Repositorio para verificar y gestionar permisos de un perfil sobre modulos del sistema.
 /// Tablas involucradas: public.permisos, public.modulos_sistema
 /// </summary>
 public class PermisoRepository : IPermisoRepository
@@ -25,8 +24,8 @@ public class PermisoRepository : IPermisoRepository
     }
 
     /// <summary>
-    /// Verifica si un perfil tiene permisos de lectura, creación y/o actualización
-    /// para un módulo específico en una clínica.
+    /// Verifica si un perfil tiene permisos de lectura, creacion y/o actualizacion
+    /// para un modulo especifico en una clinica.
     /// </summary>
     public async Task<(bool puedeLeer, bool puedeCrear, bool puedeActualizar)> GetPermisosAsync(
         Guid clinicaId, Guid perfilId, string moduloClave)
@@ -47,15 +46,15 @@ public class PermisoRepository : IPermisoRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al verificar permiso para perfil {PerfilId} módulo {ModuloClave}",
+            _logger.LogError(ex, "Error al verificar permiso para perfil {PerfilId} modulo {ModuloClave}",
                 perfilId, moduloClave);
             throw;
         }
     }
 
     /// <summary>
-    /// Obtiene todos los permisos de un perfil para todos los módulos del sistema.
-    /// LEFT JOIN para mostrar incluso módulos sin permiso explícito (valores false).
+    /// Obtiene todos los permisos de un perfil para todos los modulos del sistema.
+    /// LEFT JOIN para mostrar incluso modulos sin permiso explicito (valores false).
     /// </summary>
     public async Task<IEnumerable<(Guid permisoid, Guid moduloid, string clave, string nombre, string? descripcion, bool puedeLeer, bool puedeCrear, bool puedeActualizar)>> GetPermisosByPerfilAsync(
         Guid clinicaId, Guid perfilId)
@@ -92,7 +91,7 @@ public class PermisoRepository : IPermisoRepository
     }
 
     /// <summary>
-    /// Inserta o actualiza (upsert) un permiso individual para un perfil sobre un módulo.
+    /// Inserta o actualiza (upsert) un permiso individual para un perfil sobre un modulo.
     /// Usa INSERT ... ON CONFLICT (clinica_id, perfil_id, modulo_id) DO UPDATE.
     /// </summary>
     public async Task<bool> UpsertPermisoAsync(Guid clinicaId, Guid perfilId, Guid moduloId,
@@ -126,61 +125,8 @@ public class PermisoRepository : IPermisoRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al upsert permiso para perfil {PerfilId} módulo {ModuloId}",
+            _logger.LogError(ex, "Error al upsert permiso para perfil {PerfilId} modulo {ModuloId}",
                 perfilId, moduloId);
-            throw;
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // 4. SeedAllPermissionsAsync — Seed de permisos totales para un perfil
-    // ────────────────────────────────────────────────────────────────────────
-    /// <summary>
-    /// Otorga READ + CREATE + UPDATE para TODOS los módulos activos del sistema
-    /// a un perfil específico de una clínica. Usado en provisionamiento de nuevas
-    /// clínicas para el perfil administrador.
-    /// </summary>
-    /// <returns>Número de permisos insertados/actualizados.</returns>
-    public async Task<int> SeedAllPermissionsAsync(Guid clinicaId, Guid perfilId, Guid modificadoPor)
-    {
-        const string sql = @"
-            INSERT INTO public.permisos (clinica_id, perfil_id, modulo_id, puede_leer, puede_crear, puede_actualizar, fecha_modificacion, modificado_por)
-            SELECT
-                @ClinicaId,
-                @PerfilId,
-                m.id,
-                true,  -- puede_leer
-                true,  -- puede_crear
-                true,  -- puede_actualizar
-                NOW(),
-                @ModificadoPor
-            FROM public.modulos_sistema m
-            WHERE m.activo = true
-            ON CONFLICT (clinica_id, perfil_id, modulo_id)
-            DO UPDATE SET
-                puede_leer = true,
-                puede_crear = true,
-                puede_actualizar = true,
-                fecha_modificacion = NOW(),
-                modificado_por = EXCLUDED.modificado_por;";
-
-        try
-        {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var rows = await connection.ExecuteAsync(sql, new
-            {
-                ClinicaId = clinicaId,
-                PerfilId = perfilId,
-                ModificadoPor = modificadoPor
-            });
-            _logger.LogInformation("Seed de permisos completado para clínica {ClinicaId} perfil {PerfilId}: {Count} módulos",
-                clinicaId, perfilId, rows);
-            return rows;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al seedear permisos para clínica {ClinicaId} perfil {PerfilId}",
-                clinicaId, perfilId);
             throw;
         }
     }

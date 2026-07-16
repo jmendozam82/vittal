@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.BLL.Interfaces;
 

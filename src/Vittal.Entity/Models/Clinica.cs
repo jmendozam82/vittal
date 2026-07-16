@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Clínicas registradas en el sistema. Cada clínica es un tenant del SaaS Vittal.

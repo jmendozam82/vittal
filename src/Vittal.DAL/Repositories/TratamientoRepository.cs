@@ -5,7 +5,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -233,6 +233,37 @@ public class TratamientoRepository : ITratamientoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de nombre de tratamiento en clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 7. SearchAsync — Búsqueda de tratamientos por término (ILIKE SQL)
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<Tratamiento>> SearchAsync(Guid clinicaId, string term, int limit = 20)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromTable}
+            WHERE t.clinica_id = @ClinicaId AND t.activo = true
+              AND (t.nombre ILIKE '%' || @Term || '%'
+                   OR t.descripcion ILIKE '%' || @Term || '%')
+            ORDER BY t.nombre
+            LIMIT @Limit;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<Tratamiento>(sql, new
+            {
+                ClinicaId = clinicaId,
+                Term = term,
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar tratamientos con término '{Term}' en clínica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

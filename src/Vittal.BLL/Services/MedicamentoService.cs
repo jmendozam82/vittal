@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Medicamento;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -283,23 +283,10 @@ public class MedicamentoService : IMedicamentoService
                     new List<MedicamentoResponseDto>(), "Ingrese al menos 2 caracteres para buscar.");
             }
 
-            // Get all active medications and filter in-memory
-            var entities = await _repo.GetAllAsync(clinicaId);
-            var lowerTerm = term.ToLowerInvariant();
-
-            var filtered = new List<MedicamentoResponseDto>();
-            foreach (var entity in entities)
-            {
-                var nombreCompleto = entity.NombreCompleto.ToLowerInvariant();
-                var hasDescripcion = entity.Descripcion?.ToLowerInvariant().Contains(lowerTerm) ?? false;
-
-                if (nombreCompleto.Contains(lowerTerm) || hasDescripcion)
-                {
-                    filtered.Add(MapToDto(entity));
-                }
-            }
-
-            return ServiceResult<IEnumerable<MedicamentoResponseDto>>.Success(filtered);
+            // Search via SQL ILIKE (no in-memory filter)
+            var entities = await _repo.SearchAsync(clinicaId, term.Trim());
+            return ServiceResult<IEnumerable<MedicamentoResponseDto>>.Success(
+                entities.Select(e => MapToDto(e)).ToList());
         }
         catch (Exception ex)
         {

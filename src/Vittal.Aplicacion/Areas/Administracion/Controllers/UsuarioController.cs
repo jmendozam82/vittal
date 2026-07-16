@@ -1,12 +1,10 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
 using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
-
-
 
 namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
@@ -48,8 +46,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
     }
 
-
-
     [Area("Administracion")]
 
     [Authorize]
@@ -62,8 +58,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         private readonly ILogger<UsuarioController> _logger;
 
-
-
         public UsuarioController(ApiClientHelper apiClient, ILogger<UsuarioController> logger)
 
         {
@@ -74,11 +68,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         // ===================== VISTAS (Server-side rendering) =====================
-
-
 
         [HttpGet]
 
@@ -90,8 +80,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         [HttpGet]
 
         public IActionResult Create()
@@ -102,8 +90,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -111,8 +97,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Usuarios/{id}");
-
-
 
             if (!success)
 
@@ -123,8 +107,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return RedirectToAction("Index");
 
             }
-
-
 
             var data = ExtractDataObject(response);
 
@@ -138,19 +120,13 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             ViewBag.Usuario = data;
 
             return View();
 
         }
 
-
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
-
-
 
         /// <summary>Lista todos los usuarios (activos por defecto) -- para fetch() desde la vista Index</summary>
 
@@ -164,8 +140,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
-
             if (!success)
 
             {
@@ -176,15 +150,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
-
-
 
         /// <summary>Crea un nuevo usuario -- para fetch() desde la vista Create</summary>
 
@@ -202,8 +172,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (string.IsNullOrWhiteSpace(dto.Nombres))
 
             {
@@ -211,8 +179,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return BadRequest(new { success = false, message = "Los nombres son obligatorios." });
 
             }
-
-
 
             if (string.IsNullOrWhiteSpace(dto.Apellidos))
 
@@ -222,8 +188,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (string.IsNullOrWhiteSpace(dto.Email))
 
             {
@@ -232,17 +196,13 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (string.IsNullOrWhiteSpace(dto.Password))
 
             {
 
-                return BadRequest(new { success = false, message = "La contraseÃ±a es obligatoria." });
+                return BadRequest(new { success = false, message = "La contraseña es obligatoria." });
 
             }
-
-
 
             if (dto.PerfilId == Guid.Empty)
 
@@ -251,8 +211,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return BadRequest(new { success = false, message = "Debe seleccionar un perfil." });
 
             }
-
-
 
             if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
 
@@ -266,15 +224,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nÃºmero de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
-
-
             _logger.LogInformation("JsonCrear called: username={Username}, email={Email}", dto.Username, dto.Email);
-
-
 
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Usuarios",
 
@@ -308,8 +262,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
                 });
 
-
-
             if (!success)
 
             {
@@ -320,15 +272,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Usuario creado exitosamente" });
 
         }
-
-
 
         /// <summary>Actualiza un usuario -- para fetch() desde la vista Edit</summary>
 
@@ -346,8 +294,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (string.IsNullOrWhiteSpace(dto.Nombres))
 
             {
@@ -355,8 +301,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return BadRequest(new { success = false, message = "Los nombres son obligatorios." });
 
             }
-
-
 
             if (string.IsNullOrWhiteSpace(dto.Apellidos))
 
@@ -366,8 +310,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (string.IsNullOrWhiteSpace(dto.Email))
 
             {
@@ -376,8 +318,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             if (dto.PerfilId == Guid.Empty)
 
             {
@@ -385,8 +325,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 return BadRequest(new { success = false, message = "Debe seleccionar un perfil." });
 
             }
-
-
 
             if (string.IsNullOrWhiteSpace(dto.TipoDocumentoIdentificacion) || !new[] { "CC", "CR", "PA" }.Contains(dto.TipoDocumentoIdentificacion))
 
@@ -400,15 +338,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nÃºmero de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
-
-
             _logger.LogInformation("JsonActualizar called: id={Id}, username={Username}", id, dto.Username);
-
-
 
             var payload = new
 
@@ -433,8 +367,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
                 esDoctor = dto.EsDoctor
 
             };
-
-
 
             // Only include password if provided
 
@@ -466,8 +398,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             };
 
-
-
             if (!string.IsNullOrWhiteSpace(dto.Password))
 
             {
@@ -476,11 +406,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Usuarios/{id}", payloadDict);
-
-
 
             if (!success)
 
@@ -492,15 +418,11 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Usuario actualizado exitosamente" });
 
         }
-
-
 
         /// <summary>Desactiva un usuario -- para fetch() desde la vista Index</summary>
 
@@ -512,11 +434,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Usuarios/{id}/desactivar", null);
-
-
 
             if (!success)
 
@@ -528,13 +446,9 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             return Ok(new { success = true, message = "Usuario desactivado exitosamente" });
 
         }
-
-
 
         /// <summary>Reactiva un usuario -- para fetch() desde la vista Index</summary>
 
@@ -546,11 +460,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             _logger.LogInformation("JsonReactivar called: id={Id}", id);
 
-
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Usuarios/{id}/reactivar", null);
-
-
 
             if (!success)
 
@@ -562,13 +472,9 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             return Ok(new { success = true, message = "Usuario reactivado exitosamente" });
 
         }
-
-
 
         /// <summary>Lista doctores -- para dropdowns en otras vistas</summary>
 
@@ -580,8 +486,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Usuarios/doctores");
 
-
-
             if (!success)
 
             {
@@ -592,27 +496,19 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             }
 
-
-
             var data = ExtractDataArray(response);
 
             return Json(new { success = true, data = data });
 
         }
 
-
-
         // ========== Helpers para extraer data de JsonElement ==========
-
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
-
 
             try
 
@@ -638,21 +534,15 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             catch { /* return empty */ }
 
-
-
             return new List<object>();
 
         }
-
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
-
 
             try
 
@@ -674,8 +564,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -693,8 +581,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             return list;
 
         }
-
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -719,8 +605,6 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
             return dict;
 
         }
-
-
 
         private static object? JsonElementToValue(JsonElement element)
 

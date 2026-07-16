@@ -7,7 +7,7 @@ using Vittal.DAL.Context;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.UsuarioSala;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 

@@ -28,11 +28,4 @@ public interface IPermisoRepository
     Task<bool> UpsertPermisoAsync(Guid clinicaId, Guid perfilId, Guid moduloId,
         bool puedeLeer, bool puedeCrear, bool puedeActualizar, Guid modificadoPor);
 
-    /// <summary>
-    /// Seed automático: otorga READ + CREATE + UPDATE sobre TODOS los módulos
-    /// activos del sistema para un perfil específico de una clínica.
-    /// Usado durante el provisionamiento de una nueva clínica para el perfil admin.
-    /// </summary>
-    /// <returns>Cantidad de permisos insertados/actualizados.</returns>
-    Task<int> SeedAllPermissionsAsync(Guid clinicaId, Guid perfilId, Guid modificadoPor);
 }

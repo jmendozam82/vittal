@@ -1,7 +1,7 @@
 using Dapper;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -36,7 +36,7 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
             SELECT {SelectColumns} FROM tipos_signo_vital 
             WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
             ORDER BY orden, nombre";
-            
+
         return await connection.QueryAsync<TipoSignoVital>(sql, new { ClinicaId = clinicaId, SalaId = salaId });
     }
 
@@ -61,7 +61,7 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
             INSERT INTO tipos_signo_vital (clinica_id, sala_id, nombre, unidad, valor_min, valor_max, orden, es_obligatorio, activo, fecha_creacion, creado_por)
             VALUES (@ClinicaId, @SalaId, @Nombre, @Unidad, @ValorMin, @ValorMax, @Orden, @EsObligatorio, @Activo, @FechaCreacion, @CreadoPor)
             RETURNING id";
-            
+
         return await connection.ExecuteScalarAsync<Guid>(sql, entity);
     }
 
@@ -78,7 +78,7 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
                 es_obligatorio = @EsObligatorio,
                 fecha_modificacion = @FechaModificacion
             WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
-            
+
         var result = await connection.ExecuteAsync(sql, entity);
         return result > 0;
     }

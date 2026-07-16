@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cirugia;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -281,23 +281,9 @@ public class CirugiaService : ICirugiaService
                     new List<CirugiaResponseDto>(), "Ingrese al menos 2 caracteres para buscar.");
             }
 
-            var entities = await _repo.GetAllAsync(clinicaId);
-            var lowerTerm = term.ToLowerInvariant();
-
-            var filtered = new List<CirugiaResponseDto>();
-            foreach (var entity in entities)
-            {
-                var nombreCompleto = entity.NombreCompleto.ToLowerInvariant();
-                var hasDescripcion = entity.Descripcion?.ToLowerInvariant().Contains(lowerTerm) ?? false;
-                var hasTipo = entity.TipoCirugiaNombre.ToLowerInvariant().Contains(lowerTerm);
-
-                if (nombreCompleto.Contains(lowerTerm) || hasDescripcion || hasTipo)
-                {
-                    filtered.Add(MapToDto(entity));
-                }
-            }
-
-            return ServiceResult<IEnumerable<CirugiaResponseDto>>.Success(filtered);
+            var entities = await _repo.SearchAsync(clinicaId, term.Trim());
+            return ServiceResult<IEnumerable<CirugiaResponseDto>>.Success(
+                entities.Select(e => MapToDto(e)).ToList());
         }
         catch (Exception ex)
         {

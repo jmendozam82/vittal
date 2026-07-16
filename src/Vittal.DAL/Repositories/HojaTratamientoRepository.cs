@@ -1,7 +1,7 @@
 using Dapper;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -53,7 +53,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
             {FromJoin}
             WHERE ht.id = @Id AND ht.clinica_id = @ClinicaId AND ht.activo = true";
 
-        return await connection.QuerySingleOrDefaultAsync<HojaTratamiento>(sql, 
+        return await connection.QuerySingleOrDefaultAsync<HojaTratamiento>(sql,
             new { Id = id, ClinicaId = clinicaId });
     }
 
@@ -71,7 +71,7 @@ public class HojaTratamientoRepository : IHojaTratamientoRepository
               AND ht.activo = true
             ORDER BY ht.fecha_creacion";
 
-        return await connection.QueryAsync<HojaTratamiento>(sql, 
+        return await connection.QueryAsync<HojaTratamiento>(sql,
             new { ClinicaId = clinicaId, HojaCitaId = hojaCitaId });
     }
 

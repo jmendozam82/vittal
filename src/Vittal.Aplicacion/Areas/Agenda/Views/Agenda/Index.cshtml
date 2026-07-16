@@ -75,11 +75,47 @@
 @{/* ── Contenedor del calendario ──────────────────────────────── */}
 <div class="agenda-container">
     <div class="agenda-week-view" id="agendaCalendar">
-        <div class="agenda-empty-state">
-            <i class="bi bi-calendar3"></i>
-            <p>Cargando agenda...</p>
-            <div class="spinner-border text-primary mt-2" role="status">
-                <span class="visually-hidden">Cargando...</span>
+        <!-- Skeleton loading — se reemplaza cuando el JS carga la agenda -->
+        <div class="skeleton-container" style="padding:1rem;">
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:0;">
+                <!-- Skeleton hour labels -->
+                <div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;margin-bottom:14px;"></div>
+                    <div class="skeleton-row" style="height:36px;"></div>
+                </div>
+                <!-- Skeleton day columns -->
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-left:12px;">
+                    <div>
+                        <div class="skeleton-header" style="height:28px;margin-bottom:12px;border-radius:6px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;"></div>
+                    </div>
+                    <div>
+                        <div class="skeleton-header" style="height:28px;margin-bottom:12px;border-radius:6px;"></div>
+                        <div class="skeleton-row" style="height:35px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;"></div>
+                    </div>
+                    <div>
+                        <div class="skeleton-header" style="height:28px;margin-bottom:12px;border-radius:6px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:50px;margin-bottom:8px;"></div>
+                        <div class="skeleton-row" style="height:35px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Hoja de cita médica que vincula una cita (Cita) con los datos clínicos

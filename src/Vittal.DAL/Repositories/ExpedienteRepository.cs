@@ -1,7 +1,9 @@
 using Dapper;
+using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.DTO.Shared;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -13,10 +15,14 @@ namespace Vittal.DAL.Repositories;
 public class ExpedienteRepository : IExpedienteRepository
 {
     private readonly DbConnectionFactory _dbConnectionFactory;
+    private readonly ILogger<ExpedienteRepository> _logger;
 
-    public ExpedienteRepository(DbConnectionFactory dbConnectionFactory)
+    public ExpedienteRepository(
+        DbConnectionFactory dbConnectionFactory,
+        ILogger<ExpedienteRepository> logger)
     {
         _dbConnectionFactory = dbConnectionFactory;
+        _logger = logger;
     }
 
     // ── Columnas base para SELECT con JOIN ──────────────────────────────
@@ -79,7 +85,7 @@ public class ExpedienteRepository : IExpedienteRepository
               AND e.paciente_id = @PacienteId 
               AND e.activo = true";
 
-        return await connection.QuerySingleOrDefaultAsync<Expediente>(sql, 
+        return await connection.QuerySingleOrDefaultAsync<Expediente>(sql,
             new { ClinicaId = clinicaId, PacienteId = pacienteId });
     }
 
@@ -135,5 +141,71 @@ public class ExpedienteRepository : IExpedienteRepository
 
         var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, ClinicaId = clinicaId });
         return rowsAffected > 0;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 7. GetAllPaginatedAsync — Página de expedientes con búsqueda ILIKE
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<PaginatedResultDto<Expediente>> GetAllPaginatedAsync(
+        Guid clinicaId, PaginationFilterDto filter)
+    {
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize > 100 ? 100 : filter.PageSize;
+        var offset = (page - 1) * pageSize;
+        var searchTerm = string.IsNullOrWhiteSpace(filter.SearchTerm)
+            ? null
+            : $"%{filter.SearchTerm.Trim()}%";
+
+        const string baseWhere = @"
+            WHERE e.clinica_id = @ClinicaId
+              AND e.activo = true
+              AND (@SearchTerm IS NULL
+                   OR p.primer_nombre ILIKE @SearchTerm
+                   OR p.primer_apellido ILIKE @SearchTerm
+                   OR p.segundo_nombre ILIKE @SearchTerm
+                   OR p.segundo_apellido ILIKE @SearchTerm
+                   OR CONCAT(p.primer_nombre, ' ', p.primer_apellido) ILIKE @SearchTerm)";
+
+        var sql = $@"
+            WITH filtered AS (
+                SELECT 1 {FromJoin}
+                {baseWhere}
+            )
+            SELECT COUNT(1) FROM filtered;
+
+            SELECT {SelectColumns}
+            {FromJoin}
+            {baseWhere}
+            ORDER BY e.fecha_creacion DESC
+            LIMIT @PageSize OFFSET @Offset;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            using var multi = await connection.QueryMultipleAsync(sql, new
+            {
+                ClinicaId = clinicaId,
+                SearchTerm = searchTerm,
+                PageSize = pageSize,
+                Offset = offset
+            });
+
+            var totalCount = await multi.ReadSingleAsync<int>();
+            var items = await multi.ReadAsync<Expediente>();
+
+            return new PaginatedResultDto<Expediente>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener expedientes paginados de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
     }
 }

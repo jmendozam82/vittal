@@ -13,7 +13,7 @@ using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Clinica;
 using Vittal.DTO.Usuario;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -98,9 +98,14 @@ public class AdminService : IAdminService
                     var clinicaId = await connection.ExecuteScalarAsync<Guid>(
                         sqlClinica, new
                         {
-                            dto.Nombre, dto.Direccion, dto.Telefono, dto.Email,
-                            dto.LogoUrl, dto.TiempoEsperaMinutos,
-                            dto.BdExterna1, dto.BdExterna2
+                            dto.Nombre,
+                            dto.Direccion,
+                            dto.Telefono,
+                            dto.Email,
+                            dto.LogoUrl,
+                            dto.TiempoEsperaMinutos,
+                            dto.BdExterna1,
+                            dto.BdExterna2
                         }, transaction);
 
                     _logger.LogInformation("Clínica creada: {ClinicaId}", clinicaId);

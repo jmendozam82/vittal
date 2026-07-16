@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Notificaciones del sistema para usuarios de la clínica (alertas, avisos, etc.).

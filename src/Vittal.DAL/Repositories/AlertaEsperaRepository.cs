@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Exceptions;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -170,6 +170,31 @@ public class AlertaEsperaRepository : IAlertaEsperaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al marcar alerta {Id} como resuelta", id);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 5. ExisteAlertaNoResueltaParaCitaAsync — Verifica alerta duplicada
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<bool> ExisteAlertaNoResueltaParaCitaAsync(Guid clinicaId, Guid citaId)
+    {
+        const string sql = @"
+            SELECT EXISTS(
+                SELECT 1 FROM public.alertas_espera
+                WHERE cita_id = @CitaId
+                  AND clinica_id = @ClinicaId
+                  AND resuelta = false
+            );";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.ExecuteScalarAsync<bool>(sql, new { ClinicaId = clinicaId, CitaId = citaId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar alerta no resuelta para cita {CitaId}", citaId);
             throw;
         }
     }

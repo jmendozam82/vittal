@@ -5,7 +5,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -233,6 +233,37 @@ public class TipoDiagnosticoRepository : ITipoDiagnosticoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar existencia de nombre de tipo de diagnóstico en clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 7. SearchAsync — Búsqueda de tipos de diagnóstico por término (ILIKE SQL)
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<TipoDiagnostico>> SearchAsync(Guid clinicaId, string term, int limit = 20)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromTable}
+            WHERE td.clinica_id = @ClinicaId AND td.activo = true
+              AND (td.nombre ILIKE '%' || @Term || '%'
+                   OR td.descripcion ILIKE '%' || @Term || '%')
+            ORDER BY td.nombre
+            LIMIT @Limit;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<TipoDiagnostico>(sql, new
+            {
+                ClinicaId = clinicaId,
+                Term = term,
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar tipos de diagnóstico con término '{Term}' en clínica {ClinicaId}", term, clinicaId);
             throw;
         }
     }

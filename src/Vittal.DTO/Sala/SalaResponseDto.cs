@@ -1,10 +1,8 @@
-﻿using System;
-
+using System;
 namespace Vittal.DTO.Sala;
-
 /// <summary>
-/// Response DTO para lectura de salas/áreas.
-/// Incluye todos los campos de la entidad para visualización en listados y formularios.
+/// Response DTO para lectura de salas/�reas.
+/// Incluye todos los campos de la entidad para visualizaci�n en listados y formularios.
 /// </summary>
 public class SalaResponseDto
 {

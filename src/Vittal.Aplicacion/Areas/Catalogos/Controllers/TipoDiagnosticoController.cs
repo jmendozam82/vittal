@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,14 +6,13 @@ using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
 
-
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
 {
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de tipos de diagnÃ³stico desde el cliente.
+    /// DTO interno para recibir datos del formulario de tipos de diagnóstico desde el cliente.
 
     /// </summary>
 
@@ -27,7 +26,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     }
 
-
     [Area("Catalogos")]
 
     [Authorize]
@@ -40,7 +38,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         private readonly ILogger<TipoDiagnosticoController> _logger;
 
-
         public TipoDiagnosticoController(ApiClientHelper apiClient, ILogger<TipoDiagnosticoController> logger)
 
         {
@@ -51,9 +48,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== VISTAS (Server-side rendering) =====================
-
 
         [HttpGet]
 
@@ -65,7 +60,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public IActionResult Create()
@@ -76,7 +70,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -84,7 +77,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/TiposDiagnostico/{id}");
-
 
             if (!success)
 
@@ -96,19 +88,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             if (data == null)
 
             {
 
-                TempData["Error"] = "Tipo de diagnÃ³stico no encontrado.";
+                TempData["Error"] = "Tipo de diagnóstico no encontrado.";
 
                 return RedirectToAction("Index");
 
             }
-
 
             ViewBag.TipoDiagnostico = data;
 
@@ -116,11 +106,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-        /// <summary>Lista todos los tipos de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los tipos de diagnóstico — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -132,17 +120,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
             if (!success)
 
             {
 
                 _logger.LogWarning("JsonListar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de diagnÃ³stico" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de diagnóstico" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -150,8 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Busca tipos de diagnÃ³stico por tÃ©rmino â€” para fetch() desde la vista Index</summary>
+        /// <summary>Busca tipos de diagnóstico por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -167,11 +152,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(
 
                 $"api/TiposDiagnostico/buscar?q={Uri.EscapeDataString(q)}");
-
 
             if (!success)
 
@@ -179,10 +162,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de diagnÃ³stico" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de diagnóstico" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -190,8 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Crea un nuevo tipo de diagnÃ³stico â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo tipo de diagnóstico — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -203,13 +184,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de diagnÃ³stico es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de diagnóstico es obligatorio." });
 
             }
 
-
             _logger.LogInformation("JsonCrear called: nombre={Nombre}", dto.Nombre);
-
 
             var payload = new
 
@@ -221,9 +200,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/TiposDiagnostico", payload);
-
 
             if (!success)
 
@@ -231,19 +208,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de diagnÃ³stico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de diagnóstico" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de diagnÃ³stico creado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de diagnóstico creado exitosamente" });
 
         }
 
-
-        /// <summary>Actualiza un tipo de diagnÃ³stico â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un tipo de diagnóstico — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -255,13 +230,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de diagnÃ³stico es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de diagnóstico es obligatorio." });
 
             }
 
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
 
             var payload = new
 
@@ -273,9 +246,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/TiposDiagnostico/{id}", payload);
-
 
             if (!success)
 
@@ -283,19 +254,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de diagnÃ³stico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de diagnóstico" });
 
             }
 
-
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de diagnÃ³stico actualizado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de diagnóstico actualizado exitosamente" });
 
         }
 
-
-        /// <summary>Desactiva un tipo de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un tipo de diagnóstico — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -305,9 +274,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/TiposDiagnostico/{id}/desactivar", null);
-
 
             if (!success)
 
@@ -315,17 +282,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de diagnÃ³stico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de diagnóstico" });
 
             }
 
-
-            return Ok(new { success = true, message = "Tipo de diagnÃ³stico desactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de diagnóstico desactivado exitosamente" });
 
         }
 
-
-        /// <summary>Reactiva un tipo de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un tipo de diagnóstico — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -335,30 +300,25 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/TiposDiagnostico/{id}/reactivar", null);
 
-
             if (!success)
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de diagnÃ³stico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de diagnóstico" });
 
             }
 
-
-            return Ok(new { success = true, message = "Tipo de diagnÃ³stico reactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de diagnóstico reactivado exitosamente" });
 
         }
 
-
         // ========== Helpers para extraer data de JsonElement ==========
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
 
             try
 
@@ -384,18 +344,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             catch { }
 
-
             return new List<object>();
 
         }
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
 
             try
 
@@ -417,7 +374,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -435,7 +391,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return list;
 
         }
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -460,7 +415,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return dict;
 
         }
-
 
         private static object? JsonElementToValue(JsonElement element)
 

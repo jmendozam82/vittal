@@ -16,7 +16,7 @@ public static class DependencyInjection
     {
         // DAL Setup
         services.AddScoped<DbConnectionFactory>();
-        
+
         // Repositories
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<IUsuarioSalaRepository, UsuarioSalaRepository>();
@@ -33,10 +33,9 @@ public static class DependencyInjection
         services.AddScoped<IExamenRepository, ExamenRepository>();
         services.AddScoped<IRecomendacionRepository, RecomendacionRepository>();
         services.AddScoped<ITratamientoRepository, TratamientoRepository>();
-        
+
         services.AddScoped<IPlantillaEspecialidadRepository, PlantillaEspecialidadRepository>();
         services.AddScoped<IPlantillaItemRepository, PlantillaItemRepository>();
-        services.AddScoped<IModuloSistemaRepository, ModuloSistemaRepository>();
         services.AddScoped<ITipoAntecedenteRepository, TipoAntecedenteRepository>();
         services.AddScoped<ITipoSignoVitalRepository, TipoSignoVitalRepository>();
         services.AddScoped<ICitaRepository, CitaRepository>();
@@ -61,7 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IExamenService, ExamenService>();
         services.AddScoped<IRecomendacionService, RecomendacionService>();
         services.AddScoped<ITratamientoService, TratamientoService>();
-        
+
         services.AddScoped<IPlantillaEspecialidadService, PlantillaEspecialidadService>();
         services.AddScoped<IPlantillaItemService, PlantillaItemService>();
         services.AddScoped<ITipoAntecedenteService, TipoAntecedenteService>();

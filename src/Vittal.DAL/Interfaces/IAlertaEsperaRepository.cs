@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -19,4 +19,7 @@ public interface IAlertaEsperaRepository
 
     /// <summary>Marca una alerta de espera como resuelta.</summary>
     Task<bool> MarcarResueltaAsync(Guid clinicaId, Guid id);
+
+    /// <summary>Verifica si existe una alerta no resuelta para una cita específica.</summary>
+    Task<bool> ExisteAlertaNoResueltaParaCitaAsync(Guid clinicaId, Guid citaId);
 }

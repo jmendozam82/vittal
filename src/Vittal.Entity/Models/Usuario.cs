@@ -1,6 +1,4 @@
-using System;
-
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 /// <summary>
 /// Usuarios del sistema, vinculados a Supabase Auth via auth_user_id.

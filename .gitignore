@@ -57,3 +57,12 @@ desktop.ini
 *.log
 logs/
 logs-*.txt
+
+# ── Documentación / Skills / Config IA ────────────────────────
+/docs/
+/skills/
+.opencode/
+AGENTS.md
+CLAUDE.md
+ORCHESTRATOR.md
+INSPECCION_GENERAL.md

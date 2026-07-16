@@ -1,8 +1,7 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Vittal.Entity.Models;
+namespace Vittal.Entity;
 
 [Table("permisos")]
 public class Permiso

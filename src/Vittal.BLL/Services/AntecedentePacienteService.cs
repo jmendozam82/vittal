@@ -1,7 +1,8 @@
+using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.AntecedentesPaciente;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 using Vittal.Utility.Results;
 
 namespace Vittal.BLL.Services;
@@ -13,10 +14,14 @@ namespace Vittal.BLL.Services;
 public class AntecedentePacienteService : IAntecedentePacienteService
 {
     private readonly IAntecedentePacienteRepository _repository;
+    private readonly ILogger<AntecedentePacienteService> _logger;
 
-    public AntecedentePacienteService(IAntecedentePacienteRepository repository)
+    public AntecedentePacienteService(
+        IAntecedentePacienteRepository repository,
+        ILogger<AntecedentePacienteService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<IEnumerable<AntecedentePacienteDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid expedienteId, Guid salaId)
@@ -27,7 +32,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<AntecedentePacienteDTOs.Response>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<IEnumerable<AntecedentePacienteDTOs.Response>>.Failure("Error al obtener antecedentes del paciente.");
         }
@@ -46,7 +51,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var dto = MapToDto(entity);
             return ServiceResult<AntecedentePacienteDTOs.Response>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<AntecedentePacienteDTOs.Response>.Failure("Error al obtener el antecedente.");
         }
@@ -82,7 +87,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var responseDto = MapToDto(created);
             return ServiceResult<AntecedentePacienteDTOs.Response>.Success(responseDto, "Antecedente guardado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<AntecedentePacienteDTOs.Response>.Failure("Error al guardar el antecedente.");
         }
@@ -97,7 +102,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
                 ? ServiceResult<bool>.Success(result, "Antecedente desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el antecedente.", ServiceErrorType.NotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el antecedente.");
         }

@@ -1,4 +1,4 @@
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Interfaces;
 
@@ -6,7 +6,7 @@ namespace Vittal.DAL.Interfaces;
 /// Repositorio para operaciones CRUD de citas médicas.
 /// Historia de Usuario: HU21 — Agenda (HU-E01 — hora_fin)
 /// </summary>
-public interface ICitaRepository
+public interface ICitaRepository : IPaginatedRepository<Cita>
 {
     /// <summary>Obtiene todas las citas activas de una clínica.</summary>
     Task<IEnumerable<Cita>> GetAllAsync(Guid clinicaId);
@@ -23,14 +23,7 @@ public interface ICitaRepository
     /// <summary>Desactiva una cita (activo = false). No elimina.</summary>
     Task<bool> DeactivateAsync(Guid clinicaId, Guid id);
 
-    // ── Sprint 7: Reportes y Dashboard ─────────────────────────────
+    /// <summary>Obtiene citas en estado 'en_espera' y activas para una clínica.</summary>
+    Task<IEnumerable<Cita>> GetCitasEnEsperaAsync(Guid clinicaId);
 
-    /// <summary>Obtiene citas en un rango de fechas, opcionalmente filtradas por doctor y sala.</summary>
-    Task<IEnumerable<Cita>> GetByDateRangeAsync(Guid clinicaId, DateTime fechaInicio, DateTime fechaFin, Guid? doctorId = null, Guid? salaId = null);
-
-    /// <summary>Obtiene estadísticas de citas agrupadas por estado en un rango de fechas.</summary>
-    Task<IEnumerable<Cita>> GetEstadisticasPorEstadoAsync(Guid clinicaId, DateTime fechaInicio, DateTime fechaFin);
-
-    /// <summary>Obtiene los doctores más activos por cantidad de citas en un rango de fechas.</summary>
-    Task<IEnumerable<Cita>> GetDoctoresMasActivosAsync(Guid clinicaId, DateTime fechaInicio, DateTime fechaFin, int limit = 10);
 }

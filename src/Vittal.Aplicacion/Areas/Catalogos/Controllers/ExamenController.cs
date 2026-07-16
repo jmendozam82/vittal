@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,14 +6,13 @@ using System.Text.Json;
 
 using Vittal.Aplicacion.Helpers;
 
-
 namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
 {
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de exÃ¡menes desde el cliente.
+    /// DTO interno para recibir datos del formulario de exámenes desde el cliente.
 
     /// </summary>
 
@@ -27,7 +26,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     }
 
-
     [Area("Catalogos")]
 
     [Authorize]
@@ -40,7 +38,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         private readonly ILogger<ExamenController> _logger;
 
-
         public ExamenController(ApiClientHelper apiClient, ILogger<ExamenController> logger)
 
         {
@@ -51,9 +48,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         // ===================== VISTAS (Server-side rendering) =====================
-
 
         [HttpGet]
 
@@ -65,7 +60,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public IActionResult Create()
@@ -76,7 +70,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> Edit(Guid id)
@@ -84,7 +77,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
         {
 
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Examenes/{id}");
-
 
             if (!success)
 
@@ -95,7 +87,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
                 return RedirectToAction("Index");
 
             }
-
 
             var data = ExtractDataObject(response);
 
@@ -109,18 +100,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             ViewBag.Examen = data;
 
             return View();
 
         }
 
-
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-
-        /// <summary>Lista todos los exÃ¡menes â€” para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los exámenes — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -132,17 +120,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(url);
 
-
             if (!success)
 
             {
 
                 _logger.LogWarning("JsonExamenes API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar exÃ¡menes" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar exámenes" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -150,8 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Busca exÃ¡menes por tÃ©rmino â€” para fetch() desde la vista Index</summary>
+        /// <summary>Busca exámenes por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -167,11 +152,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>(
 
                 $"api/Examenes/buscar?q={Uri.EscapeDataString(q)}");
-
 
             if (!success)
 
@@ -179,10 +162,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar exÃ¡menes" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar exámenes" });
 
             }
-
 
             var data = ExtractDataArray(response);
 
@@ -190,8 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
-        /// <summary>Crea un nuevo examen â€” para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo examen — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -207,9 +188,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             _logger.LogInformation("JsonCrear called: nombre={Nombre}", dto.Nombre);
-
 
             var payload = new
 
@@ -221,9 +200,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Examenes", payload);
-
 
             if (!success)
 
@@ -235,15 +212,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Examen creado exitosamente" });
 
         }
 
-
-        /// <summary>Actualiza un examen â€” para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un examen — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -259,9 +234,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             _logger.LogInformation("JsonActualizar called: id={Id}, nombre={Nombre}", id, dto.Nombre);
-
 
             var payload = new
 
@@ -273,9 +246,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             };
 
-
             var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Examenes/{id}", payload);
-
 
             if (!success)
 
@@ -287,15 +258,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             var data = ExtractDataObject(response);
 
             return Ok(new { success = true, data = data, message = "Examen actualizado exitosamente" });
 
         }
 
-
-        /// <summary>Desactiva un examen â€” para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un examen — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -305,9 +274,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             _logger.LogInformation("JsonDesactivar called: id={Id}", id);
 
-
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Examenes/{id}/desactivar", null);
-
 
             if (!success)
 
@@ -319,13 +286,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             return Ok(new { success = true, message = "Examen desactivado exitosamente" });
 
         }
 
-
-        /// <summary>Reactiva un examen â€” para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un examen — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -335,7 +300,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             var (success, _, errorMessage) = await _apiClient.PatchAsync<JsonElement>($"api/Examenes/{id}/reactivar", null);
 
-
             if (!success)
 
             {
@@ -344,21 +308,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-
             return Ok(new { success = true, message = "Examen reactivado exitosamente" });
 
         }
 
-
         // ========== Helpers para extraer data de JsonElement ==========
-
 
         private static IEnumerable<object> ExtractDataArray(JsonElement? response)
 
         {
 
             if (!response.HasValue) return new List<object>();
-
 
             try
 
@@ -384,18 +344,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             catch { }
 
-
             return new List<object>();
 
         }
-
 
         private static object? ExtractDataObject(JsonElement? response)
 
         {
 
             if (!response.HasValue) return null;
-
 
             try
 
@@ -417,7 +374,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-
         private static IEnumerable<object> EnumerateJsonArray(JsonElement array)
 
         {
@@ -435,7 +391,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return list;
 
         }
-
 
         private static Dictionary<string, object?> JsonElementToDictionary(JsonElement element)
 
@@ -460,7 +415,6 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
             return dict;
 
         }
-
 
         private static object? JsonElementToValue(JsonElement element)
 

@@ -7,8 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Vittal.API.Extensions;
 using Vittal.BLL.Services;
 using Vittal.BLL.Interfaces;
-using Vittal.DAL.Context;
-
 namespace Vittal.API.Middleware;
 
 public class TenantMiddleware
@@ -25,14 +23,14 @@ public class TenantMiddleware
         if (context.User.Identity?.IsAuthenticated == true)
         {
             var authUserId = context.User.GetAuthUserId();
-            
+
             if (authUserId != Guid.Empty)
             {
                 using var scope = context.RequestServices.CreateScope();
                 var usuarioService = scope.ServiceProvider.GetRequiredService<IUsuarioService>();
-                
+
                 var result = await usuarioService.GetByAuthUserIdAsync(authUserId);
-                
+
                 if (result.IsSuccess && result.Data != null)
                 {
                     var appIdentity = new ClaimsIdentity(new[]
@@ -62,9 +60,6 @@ public class TenantMiddleware
                         }));
                     }
 
-                    // Establecer contexto de tenant en PostgreSQL para activar RLS
-                    var dbFactory = scope.ServiceProvider.GetRequiredService<DbConnectionFactory>();
-                    dbFactory.SetTenantContext(effectiveClinicaId);
                 }
                 else
                 {

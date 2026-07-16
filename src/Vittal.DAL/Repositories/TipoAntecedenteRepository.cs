@@ -1,7 +1,7 @@
 using Dapper;
 using Vittal.DAL.Context;
 using Vittal.DAL.Interfaces;
-using Vittal.Entity.Models;
+using Vittal.Entity;
 
 namespace Vittal.DAL.Repositories;
 
@@ -34,7 +34,7 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
             SELECT {SelectColumns} FROM tipos_antecedente 
             WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
             ORDER BY orden, nombre";
-            
+
         return await connection.QueryAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, SalaId = salaId });
     }
 
@@ -59,7 +59,7 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
             INSERT INTO tipos_antecedente (clinica_id, sala_id, nombre, categoria, tipo_dato, orden, activo, fecha_creacion, creado_por)
             VALUES (@ClinicaId, @SalaId, @Nombre, @Categoria, @TipoDato, @Orden, @Activo, @FechaCreacion, @CreadoPor)
             RETURNING id";
-            
+
         return await connection.ExecuteScalarAsync<Guid>(sql, entity);
     }
 
@@ -74,7 +74,7 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
                 orden = @Orden,
                 fecha_modificacion = @FechaModificacion
             WHERE clinica_id = @ClinicaId AND id = @Id AND activo = true";
-            
+
         var result = await connection.ExecuteAsync(sql, entity);
         return result > 0;
     }
