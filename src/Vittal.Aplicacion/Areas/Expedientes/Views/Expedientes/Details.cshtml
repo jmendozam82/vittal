@@ -691,6 +691,15 @@
                             <a href="/Expedientes/Expedientes/ImprimirReceta?hojaCitaId=${h.id}" target="_blank" class="btn btn-outline-dark btn-sm" title="Imprimir receta médica">
                                 <i class="bi bi-printer me-1"></i> Receta
                             </a>
+                            <a href="/Expedientes/Expedientes/ImprimirEpicrisis?hojaCitaId=${h.id}" target="_blank" class="btn btn-outline-primary btn-sm" title="Imprimir epicrisis">
+                                <i class="bi bi-file-medical me-1"></i> Epicrisis
+                            </a>
+                            <a href="/Expedientes/Constancias/ImprimirConstancia?id=${h.constanciaId}" target="_blank" class="btn btn-outline-success btn-sm d-none" id="btnConstancia_${h.id}" title="Imprimir constancia">
+                                <i class="bi bi-clipboard2-pulse me-1"></i> Constancia
+                            </a>
+                            <a href="/Expedientes/Constancias/Create?hojaCitaId=${h.id}&expedienteId=${h.expedienteId}" target="_blank" class="btn btn-outline-success btn-sm" title="Crear constancia para esta consulta">
+                                <i class="bi bi-clipboard2-plus me-1"></i> + Constancia
+                            </a>
                         </div>
                         <hr class="my-2">
                         <!-- Sub-contenedores de detalles -->

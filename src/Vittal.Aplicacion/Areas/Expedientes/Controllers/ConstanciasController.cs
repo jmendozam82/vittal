@@ -20,6 +20,21 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? EspecialistaReferido { get; set; }
     }
 
+    /// <summary>
+    /// ViewModel para la vista de impresión de constancia médica.
+    /// </summary>
+    public class ConstanciaPrintViewModel
+    {
+        public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string DoctorNombre { get; set; } = string.Empty;
+        public string PacienteNombre { get; set; } = string.Empty;
+        public string TipoConstancia { get; set; } = string.Empty;
+        public string Contenido { get; set; } = string.Empty;
+        public string FechaEmision { get; set; } = string.Empty;
+        public int? DiasReposo { get; set; }
+        public string? EspecialistaReferido { get; set; }
+    }
+
     [Area("Expedientes")]
     [Authorize]
     public class ConstanciasController : Controller
@@ -67,6 +82,64 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
 
             ViewBag.Constancia = data;
             return View();
+        }
+
+        // ===================== IMPRIMIR CONSTANCIA =====================
+
+        /// <summary>
+        /// Muestra la vista de impresión de constancia médica.
+        /// Renderiza una página optimizada con @media print para imprimir.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ImprimirConstancia(Guid id)
+        {
+            // 1. Obtener la constancia
+            var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Constancias/{id}");
+            if (!success)
+            {
+                TempData["Error"] = "No se encontró la constancia.";
+                return RedirectToAction("Index");
+            }
+
+            var data = ExtractDataObject(response) as Dictionary<string, object?>;
+            if (data == null)
+            {
+                TempData["Error"] = "No se encontró la constancia.";
+                return RedirectToAction("Index");
+            }
+
+            var model = new ConstanciaPrintViewModel
+            {
+                DoctorNombre = data.GetValueOrDefault("doctorNombre") as string ?? "",
+                PacienteNombre = data.GetValueOrDefault("pacienteNombre") as string ?? "",
+                TipoConstancia = data.GetValueOrDefault("tipoConstancia") as string ?? "",
+                Contenido = data.GetValueOrDefault("contenido") as string ?? "",
+                DiasReposo = data.GetValueOrDefault("diasReposo") is double dr ? (int?)dr : null,
+                EspecialistaReferido = data.GetValueOrDefault("especialistaReferido") as string
+            };
+
+            // Formatear fecha de emision
+            var fechaRaw = data.GetValueOrDefault("fechaEmision") as string;
+            if (!string.IsNullOrWhiteSpace(fechaRaw) && DateTime.TryParse(fechaRaw, out var fechaDt))
+                model.FechaEmision = fechaDt.ToString("dd/MM/yyyy");
+            else
+                model.FechaEmision = fechaRaw ?? DateTime.UtcNow.ToString("dd/MM/yyyy");
+
+            // 2. Obtener nombre de la clinica
+            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
+            if (cliSuccess)
+            {
+                var clinicas = ExtractDataArray(cliResponse);
+                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
+                if (primera != null)
+                {
+                    var nombre = primera.GetValueOrDefault("nombre") as string;
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.ClinicaNombre = nombre;
+                }
+            }
+
+            return View(model);
         }
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================

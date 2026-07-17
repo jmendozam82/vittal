@@ -116,6 +116,34 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? Instrucciones { get; set; }
     }
 
+    // ── ViewModels para Epicrisis ──────────────────────────────────
+
+    public class EpicrisisViewModel
+    {
+        public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string DoctorNombre { get; set; } = string.Empty;
+        public string PacienteNombre { get; set; } = string.Empty;
+        public string? PacienteDocumento { get; set; }
+        public string? PacienteEdad { get; set; }
+        public string? PacienteSexo { get; set; }
+        public string FechaConsulta { get; set; } = string.Empty;
+        public string? MotivoConsulta { get; set; }
+        public string? NotasConsulta { get; set; }
+        public List<DiagnosticoEpicrisis> Diagnosticos { get; set; } = new();
+        public List<string> Tratamientos { get; set; } = new();
+        public List<string> Cirugias { get; set; } = new();
+        public List<string> Examenes { get; set; } = new();
+        public List<string> Recomendaciones { get; set; } = new();
+    }
+
+    public class DiagnosticoEpicrisis
+    {
+        public string TipoNombre { get; set; } = string.Empty;
+        public string? DiagnosticoNombre { get; set; }
+        public string? Observaciones { get; set; }
+        public bool EsPrincipal { get; set; }
+    }
+
     [Area("Expedientes")]
     [Authorize]
     public class ExpedientesController : Controller
@@ -896,6 +924,165 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             // 5. Intentar obtener el nombre de la clínica
+            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
+            if (cliSuccess)
+            {
+                var clinicas = ExtractDataArray(cliResponse);
+                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
+                if (primera != null)
+                {
+                    var nombre = primera.GetValueOrDefault("nombre") as string;
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.ClinicaNombre = nombre;
+                }
+            }
+
+            return View(model);
+        }
+
+        // ===================== IMPRIMIR EPICRISIS =====================
+
+        /// <summary>
+        /// Muestra la vista de impresión de epicrisis (resumen de alta) para una hoja de cita.
+        /// Ensambla datos de: hoja de cita, diagnósticos, tratamientos, cirugías, exámenes y recomendaciones.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ImprimirEpicrisis(Guid hojaCitaId)
+        {
+            var model = new EpicrisisViewModel();
+
+            // 1. Obtener hoja de cita
+            var (hcSuccess, hcResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/HojasCita/{hojaCitaId}");
+            if (!hcSuccess)
+            {
+                TempData["Error"] = "No se encontró la hoja de cita.";
+                return RedirectToAction("Index");
+            }
+
+            var hc = ExtractDataObject(hcResponse) as Dictionary<string, object?>;
+            if (hc == null)
+            {
+                TempData["Error"] = "No se encontró la hoja de cita.";
+                return RedirectToAction("Index");
+            }
+
+            model.DoctorNombre = hc.GetValueOrDefault("doctorNombre") as string ?? "";
+            model.PacienteNombre = hc.GetValueOrDefault("pacienteNombre") as string ?? "";
+            model.FechaConsulta = hc.GetValueOrDefault("fechaConsulta") as string ?? "";
+            model.MotivoConsulta = hc.GetValueOrDefault("motivoConsulta") as string;
+            model.NotasConsulta = hc.GetValueOrDefault("notasConsulta") as string;
+
+            var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
+
+            // 2. Obtener expediente → pacienteId
+            if (!string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var expId))
+            {
+                (bool expSuccess, JsonElement? expResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}");
+                if (expSuccess)
+                {
+                    var exp = ExtractDataObject(expResponse) as Dictionary<string, object?>;
+                    var pacienteId = exp?.GetValueOrDefault("pacienteId")?.ToString();
+
+                    // 3. Obtener datos del paciente
+                    if (!string.IsNullOrWhiteSpace(pacienteId) && Guid.TryParse(pacienteId, out var pacId))
+                    {
+                        (bool pacSuccess, JsonElement? pacResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/{pacId}");
+                        if (pacSuccess)
+                        {
+                            var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
+                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumento") as string;
+                            model.PacienteSexo = pac?.GetValueOrDefault("sexo") as string;
+
+                            // Calcular edad
+                            var fechaNacRaw = pac?.GetValueOrDefault("fechaNacimiento") as string;
+                            if (!string.IsNullOrWhiteSpace(fechaNacRaw) && DateTime.TryParse(fechaNacRaw, out var fechaNac))
+                            {
+                                var edad = DateTime.Today.Year - fechaNac.Year;
+                                if (DateTime.Today < fechaNac.AddYears(edad)) edad--;
+                                model.PacienteEdad = $"{edad} años";
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Obtener diagnósticos
+            var (dxSuccess, dxResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-diagnostico/hoja-cita/{hojaCitaId}");
+            if (dxSuccess)
+            {
+                foreach (var item in ExtractDataArray(dxResponse))
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    model.Diagnosticos.Add(new DiagnosticoEpicrisis
+                    {
+                        TipoNombre = dict.GetValueOrDefault("tipoDiagnosticoNombre") as string ?? "",
+                        DiagnosticoNombre = dict.GetValueOrDefault("diagnosticoNombre") as string,
+                        Observaciones = dict.GetValueOrDefault("observaciones") as string,
+                        EsPrincipal = dict.GetValueOrDefault("esPrincipal") is bool b && b
+                    });
+                }
+            }
+
+            // 5. Obtener tratamientos
+            var (trSuccess, trResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-tratamiento/hoja-cita/{hojaCitaId}");
+            if (trSuccess)
+            {
+                foreach (var item in ExtractDataArray(trResponse))
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    var nombre = dict.GetValueOrDefault("tratamientoNombre") as string ?? dict.GetValueOrDefault("medicamentoNombre") as string ?? "";
+                    var instrucciones = dict.GetValueOrDefault("instrucciones") as string;
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.Tratamientos.Add(string.IsNullOrWhiteSpace(instrucciones) ? nombre : $"{nombre} — {instrucciones}");
+                }
+            }
+
+            // 6. Obtener cirugías
+            var (ciSuccess, ciResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-cirugia/hoja-cita/{hojaCitaId}");
+            if (ciSuccess)
+            {
+                foreach (var item in ExtractDataArray(ciResponse))
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    var nombre = dict.GetValueOrDefault("cirugiaNombre") as string ?? "";
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.Cirugias.Add(nombre);
+                }
+            }
+
+            // 7. Obtener exámenes
+            var (exSuccess, exResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-examen/hoja-cita/{hojaCitaId}");
+            if (exSuccess)
+            {
+                foreach (var item in ExtractDataArray(exResponse))
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    var nombre = dict.GetValueOrDefault("examenNombre") as string ?? "";
+                    var resultado = dict.GetValueOrDefault("resultado") as string;
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.Examenes.Add(string.IsNullOrWhiteSpace(resultado) ? nombre : $"{nombre}: {resultado}");
+                }
+            }
+
+            // 8. Obtener recomendaciones
+            var (rcSuccess, rcResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/hojas-recomendacion/hoja-cita/{hojaCitaId}");
+            if (rcSuccess)
+            {
+                foreach (var item in ExtractDataArray(rcResponse))
+                {
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    var nombre = dict.GetValueOrDefault("recomendacionNombre") as string ?? "";
+                    if (!string.IsNullOrWhiteSpace(nombre))
+                        model.Recomendaciones.Add(nombre);
+                }
+            }
+
+            // 9. Obtener nombre de la clínica
             var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
             if (cliSuccess)
             {

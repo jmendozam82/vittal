@@ -1,0 +1,152 @@
+@model Vittal.Aplicacion.Areas.Expedientes.Controllers.ConstanciaPrintViewModel
+@{
+    Layout = null;
+    var tipoLabel = Model.TipoConstancia?.ToUpperInvariant() switch
+    {
+        "ASISTENCIA" => "Constancia de Asistencia Médica",
+        "INCAPACIDAD" => "Constancia de Incapacidad",
+        "REFERENCIA" => "Constancia de Referencia",
+        "JUSTIFICANTE" => "Constancia Justificante",
+        _ => "Constancia Médica"
+    };
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@tipoLabel - @Model.PacienteNombre</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; color: #222; padding: 30px; line-height: 1.7; }
+        .documento { max-width: 800px; margin: 0 auto; border: 2px solid #1a365d; padding: 35px; min-height: 900px; position: relative; }
+
+        .header { text-align: center; border-bottom: 3px double #1a365d; padding-bottom: 15px; margin-bottom: 25px; }
+        .header .clinica { font-size: 20px; font-weight: bold; color: #1a365d; letter-spacing: 2px; }
+        .header h1 { font-size: 22px; font-weight: bold; text-transform: uppercase; margin-top: 8px; color: #1a365d; }
+        .header .subtitle { font-size: 11px; color: #666; margin-top: 3px; }
+        .header .numero { font-size: 10px; color: #999; margin-top: 5px; }
+
+        .datos { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ccc; }
+        .datos-item { flex: 1; }
+        .datos-item label { font-weight: bold; font-size: 11px; text-transform: uppercase; color: #666; }
+        .datos-item .valor { font-size: 15px; margin-top: 2px; }
+
+        .tipo-badge { text-align: center; margin: 20px 0; padding: 10px; background: #ebf5ff; border: 1px solid #1a365d; border-radius: 6px; }
+        .tipo-badge h2 { font-size: 16px; color: #1a365d; text-transform: uppercase; letter-spacing: 2px; }
+
+        .reposo-info { text-align: center; margin: 15px 0; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; }
+        .reposo-info strong { font-size: 18px; color: #856404; }
+
+        .referencia-info { margin: 15px 0; padding: 12px; background: #d4edda; border: 1px solid #28a745; border-radius: 6px; }
+        .referencia-info strong { color: #155724; }
+
+        .contenido { margin: 25px 0; }
+        .contenido h3 { font-size: 13px; font-weight: bold; text-transform: uppercase; color: #666; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .contenido .texto { font-size: 14px; line-height: 1.8; white-space: pre-wrap; text-align: justify; }
+
+        .firma { margin-top: 60px; padding-top: 20px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; align-items: end; }
+        .firma .doctor-info { text-align: center; }
+        .firma .linea-firma { width: 250px; border-top: 1px solid #000; margin: 5px auto; padding-top: 3px; }
+        .firma .sello { font-size: 11px; color: #666; text-align: right; }
+
+        .footer { position: absolute; bottom: 20px; left: 35px; right: 35px; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+
+        .no-print { text-align: center; margin: 20px 0; }
+        .no-print button { padding: 12px 40px; font-size: 16px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px; }
+        .no-print button:hover { background: #0f2440; }
+
+        @@media print {
+            body { padding: 0; font-size: 13px; }
+            .documento { border: none; padding: 20px; max-width: 100%; min-height: auto; }
+            .no-print { display: none; }
+            .header .clinica { font-size: 18px; }
+            .header h1 { font-size: 18px; }
+            .tipo-badge { background: #ebf5ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .reposo-info { background: #fff3cd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .referencia-info { background: #d4edda !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .footer { position: fixed; bottom: 10px; left: 20px; right: 20px; }
+            @@page { margin: 15mm 10mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Imprimir Constancia</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+    <div class="documento">
+
+        <!-- ENCABEZADO -->
+        <div class="header">
+            <div class="clinica">@Model.ClinicaNombre</div>
+            <h1>@tipoLabel</h1>
+            <div class="subtitle">Sistema Médico Vittal</div>
+            <div class="numero">No. @Guid.NewGuid().ToString("N").Substring(0,10).ToUpperInvariant()</div>
+        </div>
+
+        <!-- DATOS -->
+        <div class="datos">
+            <div class="datos-item">
+                <label>Paciente</label>
+                <div class="valor">@Model.PacienteNombre</div>
+            </div>
+            <div class="datos-item" style="text-align:right;">
+                <label>Fecha de Emisión</label>
+                <div class="valor">@Model.FechaEmision</div>
+                <label style="margin-top:8px;display:block;">Médico</label>
+                <div class="valor">@Model.DoctorNombre</div>
+            </div>
+        </div>
+
+        <!-- INCAPACIDAD: Dias de reposo -->
+        @if (Model.TipoConstancia?.ToUpperInvariant() == "INCAPACIDAD" && Model.DiasReposo.HasValue)
+        {
+            <div class="reposo-info">
+                <strong>Días de Reposo: @Model.DiasReposo días</strong>
+            </div>
+        }
+
+        <!-- REFERENCIA: Especialista referido -->
+        @if (Model.TipoConstancia?.ToUpperInvariant() == "REFERENCIA" && !string.IsNullOrWhiteSpace(Model.EspecialistaReferido))
+        {
+            <div class="referencia-info">
+                <strong>Referido a:</strong> @Model.EspecialistaReferido
+            </div>
+        }
+
+        <!-- CONTENIDO -->
+        <div class="contenido">
+            <h3>Detalle de la Constancia</h3>
+            <div class="texto">@Model.Contenido</div>
+        </div>
+
+        <!-- FIRMA -->
+        <div class="firma">
+            <div class="sello">
+                Documento válido como<br/>constancia médica oficial
+            </div>
+            <div class="doctor-info">
+                <div style="margin-bottom:5px;font-size:12px;">Firma del Médico</div>
+                <div class="linea-firma"></div>
+                <div style="font-size:13px;font-weight:bold;">@Model.DoctorNombre</div>
+            </div>
+        </div>
+
+        <!-- PIE -->
+        <div class="footer">
+            <div>@Model.ClinicaNombre — Sistema Médico Vittal</div>
+        </div>
+
+    </div>
+
+    <div class="no-print" style="margin-top:10px;">
+        <button onclick="window.print()">🖨️ Imprimir Constancia</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+</body>
+</html>

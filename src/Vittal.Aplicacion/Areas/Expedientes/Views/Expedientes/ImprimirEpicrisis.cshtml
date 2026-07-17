@@ -1,0 +1,238 @@
+@model Vittal.Aplicacion.Areas.Expedientes.Controllers.EpicrisisViewModel
+@{
+    Layout = null;
+    var fechaFormateada = DateTime.TryParse(Model.FechaConsulta, out var dt)
+        ? dt.ToString("dd/MM/yyyy")
+        : Model.FechaConsulta;
+    var dxPrincipal = Model.Diagnosticos.FirstOrDefault(d => d.EsPrincipal);
+    var dxSecundarios = Model.Diagnosticos.Where(d => !d.EsPrincipal).ToList();
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Epicrisis - @Model.PacienteNombre</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; color: #222; padding: 30px; line-height: 1.6; }
+        .documento { max-width: 800px; margin: 0 auto; border: 2px solid #1a365d; padding: 30px; min-height: 1000px; position: relative; }
+
+        .header { text-align: center; border-bottom: 3px double #1a365d; padding-bottom: 12px; margin-bottom: 20px; }
+        .header .clinica { font-size: 20px; font-weight: bold; color: #1a365d; letter-spacing: 2px; }
+        .header h1 { font-size: 22px; font-weight: bold; text-transform: uppercase; margin-top: 6px; color: #1a365d; }
+        .header .subtitle { font-size: 11px; color: #666; margin-top: 3px; }
+        .header .numero { font-size: 10px; color: #999; margin-top: 4px; }
+
+        .datos-paciente { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 18px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
+        .campo { display: flex; gap: 6px; }
+        .campo label { font-weight: bold; font-size: 11px; text-transform: uppercase; color: #666; white-space: nowrap; }
+        .campo .valor { font-size: 13px; }
+
+        .seccion { margin-bottom: 18px; }
+        .seccion h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 4px; margin-bottom: 10px; letter-spacing: 1px; }
+        .seccion .texto { font-size: 13px; text-align: justify; line-height: 1.7; }
+        .seccion ul { list-style: none; padding-left: 0; }
+        .seccion ul li { padding: 3px 0; padding-left: 18px; position: relative; }
+        .seccion ul li::before { content: "•"; position: absolute; left: 4px; color: #1a365d; font-weight: bold; }
+
+        .dx-principal { padding: 10px; background: #ebf5ff; border-left: 4px solid #1a365d; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
+        .dx-principal strong { color: #1a365d; }
+
+        .dx-secundario { padding: 6px 10px; background: #f8f9fa; border-left: 3px solid #6c757d; margin-bottom: 6px; border-radius: 0 4px 4px 0; font-size: 12px; }
+
+        .firma { margin-top: 50px; padding-top: 15px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; align-items: end; }
+        .firma .doctor-info { text-align: center; }
+        .firma .linea-firma { width: 250px; border-top: 1px solid #000; margin: 5px auto; padding-top: 3px; }
+        .firma .sello { font-size: 11px; color: #666; text-align: right; }
+
+        .footer { position: absolute; bottom: 15px; left: 30px; right: 30px; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #ccc; padding-top: 6px; }
+
+        .sin-items { text-align: center; padding: 10px; color: #999; font-style: italic; font-size: 12px; }
+
+        .no-print { text-align: center; margin: 15px 0; }
+        .no-print button { padding: 12px 40px; font-size: 16px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px; }
+        .no-print button:hover { background: #0f2440; }
+
+        @@media print {
+            body { padding: 0; font-size: 12px; }
+            .documento { border: none; padding: 15px; max-width: 100%; min-height: auto; }
+            .no-print { display: none; }
+            .header .clinica { font-size: 16px; }
+            .header h1 { font-size: 18px; }
+            .datos-paciente { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .dx-principal { background: #ebf5ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .footer { position: fixed; bottom: 8px; left: 15px; right: 15px; }
+            @@page { margin: 12mm 10mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Imprimir Epicrisis</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+    <div class="documento">
+
+        <!-- ENCABEZADO -->
+        <div class="header">
+            <div class="clinica">@Model.ClinicaNombre</div>
+            <h1>Epicrisis</h1>
+            <div class="subtitle">Resumen de Atención Médica</div>
+            <div class="numero">No. @Guid.NewGuid().ToString("N").Substring(0,10).ToUpperInvariant()</div>
+        </div>
+
+        <!-- DATOS DEL PACIENTE -->
+        <div class="datos-paciente">
+            <div class="campo"><label>Paciente:</label><div class="valor">@Model.PacienteNombre</div></div>
+            <div class="campo"><label>Fecha:</label><div class="valor">@fechaFormateada</div></div>
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteDocumento))
+            {
+                <div class="campo"><label>Documento:</label><div class="valor">@Model.PacienteDocumento</div></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteEdad))
+            {
+                <div class="campo"><label>Edad:</label><div class="valor">@Model.PacienteEdad</div></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteSexo))
+            {
+                <div class="campo"><label>Sexo:</label><div class="valor">@Model.PacienteSexo</div></div>
+            }
+            <div class="campo"><label>Médico:</label><div class="valor">@Model.DoctorNombre</div></div>
+        </div>
+
+        <!-- MOTIVO DE CONSULTA -->
+        @if (!string.IsNullOrWhiteSpace(Model.MotivoConsulta))
+        {
+            <div class="seccion">
+                <h2>Motivo de Consulta</h2>
+                <div class="texto">@Model.MotivoConsulta</div>
+            </div>
+        }
+
+        <!-- DIAGNÓSTICOS -->
+        <div class="seccion">
+            <h2>Diagnósticos</h2>
+            @if (dxPrincipal != null)
+            {
+                <div class="dx-principal">
+                    <strong>Principal:</strong> @dxPrincipal.TipoNombre
+                    @if (!string.IsNullOrWhiteSpace(dxPrincipal.DiagnosticoNombre)) { <span> — @dxPrincipal.DiagnosticoNombre</span> }
+                    @if (!string.IsNullOrWhiteSpace(dxPrincipal.Observaciones)) { <div style="font-size:12px;color:#555;margin-top:4px;">@dxPrincipal.Observaciones</div> }
+                </div>
+            }
+            @if (dxSecundarios.Count > 0)
+            {
+                foreach (var dx in dxSecundarios)
+                {
+                    <div class="dx-secundario">
+                        <strong>Secundario:</strong> @dx.TipoNombre
+                        @if (!string.IsNullOrWhiteSpace(dx.DiagnosticoNombre)) { <span> — @dx.DiagnosticoNombre</span> }
+                        @if (!string.IsNullOrWhiteSpace(dx.Observaciones)) { <div style="font-size:11px;color:#666;">@dx.Observaciones</div> }
+                    </div>
+                }
+            }
+            @if (Model.Diagnosticos.Count == 0)
+            {
+                <div class="sin-items">No se registraron diagnósticos.</div>
+            }
+        </div>
+
+        <!-- TRATAMIENTOS -->
+        <div class="seccion">
+            <h2>Tratamientos</h2>
+            @if (Model.Tratamientos.Count > 0)
+            {
+                <ul>
+                    @foreach (var t in Model.Tratamientos)
+                    {
+                        <li>@t</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="sin-items">No se registraron tratamientos.</div>
+            }
+        </div>
+
+        <!-- CIRUGÍAS -->
+        @if (Model.Cirugias.Count > 0)
+        {
+            <div class="seccion">
+                <h2>Cirugías / Procedimientos</h2>
+                <ul>
+                    @foreach (var c in Model.Cirugias)
+                    {
+                        <li>@c</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- EXÁMENES -->
+        @if (Model.Examenes.Count > 0)
+        {
+            <div class="seccion">
+                <h2>Exámenes</h2>
+                <ul>
+                    @foreach (var e in Model.Examenes)
+                    {
+                        <li>@e</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- RECOMENDACIONES -->
+        @if (Model.Recomendaciones.Count > 0)
+        {
+            <div class="seccion">
+                <h2>Recomendaciones</h2>
+                <ul>
+                    @foreach (var r in Model.Recomendaciones)
+                    {
+                        <li>@r</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- NOTAS DE CONSULTA -->
+        @if (!string.IsNullOrWhiteSpace(Model.NotasConsulta))
+        {
+            <div class="seccion">
+                <h2>Notas de Consulta</h2>
+                <div class="texto">@Model.NotasConsulta</div>
+            </div>
+        }
+
+        <!-- FIRMA -->
+        <div class="firma">
+            <div class="sello">
+                Documento válido como<br/>epicrisis médica oficial
+            </div>
+            <div class="doctor-info">
+                <div style="margin-bottom:5px;font-size:12px;">Firma del Médico</div>
+                <div class="linea-firma"></div>
+                <div style="font-size:13px;font-weight:bold;">@Model.DoctorNombre</div>
+            </div>
+        </div>
+
+        <!-- PIE -->
+        <div class="footer">
+            <div>@Model.ClinicaNombre — Sistema Médico Vittal</div>
+        </div>
+
+    </div>
+
+    <div class="no-print" style="margin-top:10px;">
+        <button onclick="window.print()">🖨️ Imprimir Epicrisis</button>
+        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    </div>
+
+</body>
+</html>
