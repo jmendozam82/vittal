@@ -209,8 +209,13 @@
             try {
                 const res = await fetch('/Dashboard/Dashboard/JsonUltimasNotificaciones', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
                 });
+
+                // Si la sesión expiró, no intentar parsear
+                if (res.redirected || !res.ok) return;
+
                 const json = await res.json();
 
                 if (!json.success || !json.data || json.data.length === 0) {

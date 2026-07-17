@@ -96,10 +96,15 @@
 
             const res = await fetch('/Dashboard/Dashboard/JsonNotificacionesNoLeidas', {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
             });
 
-            if (!res.ok) return;
+            // Si la sesión expiró (redirect o error), detener el polling para no generar ruido
+            if (res.redirected || !res.ok) {
+                if (reconnectInterval) { clearInterval(reconnectInterval); reconnectInterval = null; }
+                return;
+            }
 
             const json = await res.json();
             if (json.success) {

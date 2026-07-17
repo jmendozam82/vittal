@@ -131,6 +131,8 @@
             }
 
             async function cargarDashboard() {
+                // ── Fase 1: Fetch + validación de respuesta ──
+                let data = null;
                 try {
                     const res = await fetch('@Url.Action("JsonDashboardData")', {
                         method: 'GET',
@@ -138,7 +140,7 @@
                         headers: { 'Accept': 'application/json' }
                     });
 
-                    // Si el server retornó redirect (302) o no es JSON, la sesión expiró
+                    // Sesión expirada o error del servidor
                     if (res.redirected || !res.ok) {
                         console.warn('Dashboard: sesión expirada o respuesta no exitosa (' + res.status + '). Redirigiendo a login.');
                         window.location.href = '@Url.Action("Login", "Auth", new { area = "Login" })';
@@ -152,23 +154,45 @@
                         return;
                     }
 
-                    const json = await res.json();
-
-                    if (!json.success) {
-                        mostrarError('Error al cargar datos del dashboard.');
+                    let json;
+                    try {
+                        json = await res.json();
+                    } catch (parseErr) {
+                        console.error('Dashboard: respuesta JSON inválida:', parseErr);
+                        mostrarError('Respuesta inválida del servidor.');
                         return;
                     }
 
-                    const data = json.data || {};
-                    renderizarKPIs(data);
-                    renderizarGrafico(data.citasPorHora || []);
-                    renderizarAlertas(data.ultimasAlertas || []);
-                    renderizarResumen(data);
+                    if (!json.success) {
+                        mostrarError(json.message || 'Error al cargar datos del dashboard.');
+                        return;
+                    }
 
-                } catch (err) {
-                    console.error('Error cargando dashboard:', err);
+                    data = json.data || {};
+
+                } catch (fetchErr) {
+                    // Solo errores de red / fetch: sí son "Error de conexión"
+                    console.error('Dashboard: error de conexión:', fetchErr);
                     mostrarError('Error de conexión al cargar el dashboard.');
+                    return;
                 }
+
+                // ── Fase 2: Rendering (try-catch separado para NO mezclar con errores de red) ──
+                try {
+                    renderizarKPIs(data);
+                } catch (e) { console.error('Dashboard: error en renderizarKPIs:', e); }
+
+                try {
+                    renderizarGrafico(data.citasPorHora || []);
+                } catch (e) { console.error('Dashboard: error en renderizarGrafico:', e); }
+
+                try {
+                    renderizarAlertas(data.ultimasAlertas || []);
+                } catch (e) { console.error('Dashboard: error en renderizarAlertas:', e); }
+
+                try {
+                    renderizarResumen(data);
+                } catch (e) { console.error('Dashboard: error en renderizarResumen:', e); }
             }
 
             function renderizarKPIs(data) {
