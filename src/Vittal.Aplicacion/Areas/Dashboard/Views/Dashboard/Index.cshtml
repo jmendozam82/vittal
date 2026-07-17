@@ -134,8 +134,24 @@
                 try {
                     const res = await fetch('@Url.Action("JsonDashboardData")', {
                         method: 'GET',
-                        headers: { 'Content-Type': 'application/json' }
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json' }
                     });
+
+                    // Si el server retornó redirect (302) o no es JSON, la sesión expiró
+                    if (res.redirected || !res.ok) {
+                        console.warn('Dashboard: sesión expirada o respuesta no exitosa (' + res.status + '). Redirigiendo a login.');
+                        window.location.href = '@Url.Action("Login", "Auth", new { area = "Login" })';
+                        return;
+                    }
+
+                    const contentType = res.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) {
+                        console.warn('Dashboard: respuesta no es JSON (' + contentType + '). Redirigiendo a login.');
+                        window.location.href = '@Url.Action("Login", "Auth", new { area = "Login" })';
+                        return;
+                    }
+
                     const json = await res.json();
 
                     if (!json.success) {

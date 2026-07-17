@@ -201,7 +201,7 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetPacientesDelDiaAsync(_clinicaId, _fecha)).ReturnsAsync(15);
         _dashboardRepoMock.Setup(r => r.GetCitasPendientesAsync(_clinicaId, _fecha)).ReturnsAsync(8);
         _dashboardRepoMock.Setup(r => r.GetPacientesEnEsperaAsync(_clinicaId)).ReturnsAsync(3);
-        _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId)).ReturnsAsync(12.5);
+        _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(12.5);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardGraficoDto>
             {
@@ -286,7 +286,7 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetPacientesDelDiaAsync(_clinicaId, _fecha)).ReturnsAsync(0);
         _dashboardRepoMock.Setup(r => r.GetCitasPendientesAsync(_clinicaId, _fecha)).ReturnsAsync(0);
         _dashboardRepoMock.Setup(r => r.GetPacientesEnEsperaAsync(_clinicaId)).ReturnsAsync(0);
-        _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId)).ReturnsAsync(0.0);
+        _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(0.0);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardGraficoDto>());
         _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, 5))
