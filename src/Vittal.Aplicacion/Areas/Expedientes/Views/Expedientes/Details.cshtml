@@ -339,6 +339,81 @@
     </div>
 </div>
 
+<!-- ========== MODAL: Emitir Constancia ========== -->
+<div class="modal fade" id="modalEmitirConstancia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard2-plus me-2 text-success"></i>Emitir Constancia Médica</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formConstancia" novalidate>
+                    <input type="hidden" id="constExpedienteId" />
+                    <input type="hidden" id="constHojaCitaId" />
+                    <input type="hidden" id="constDoctorId" />
+
+                    <!-- Info automática (solo lectura) -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted">Paciente</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="constPaciente" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted">Doctor</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="constDoctor" readonly />
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Constancia -->
+                    <div class="mb-3">
+                        <label for="constTipo" class="form-label fw-semibold">Tipo de Constancia <span class="text-danger">*</span></label>
+                        <select id="constTipo" class="form-select" required>
+                            <option value="">Seleccione un tipo...</option>
+                            <option value="ASISTENCIA">Asistencia</option>
+                            <option value="INCAPACIDAD">Incapacidad</option>
+                            <option value="REFERENCIA">Referencia</option>
+                            <option value="JUSTIFICANTE">Justificante</option>
+                        </select>
+                        <div class="invalid-feedback">Debe seleccionar un tipo.</div>
+                    </div>
+
+                    <!-- Contenido -->
+                    <div class="mb-3">
+                        <label for="constContenido" class="form-label fw-semibold">Contenido de la Constancia <span class="text-danger">*</span></label>
+                        <textarea id="constContenido" class="form-control" rows="6" maxlength="5000"
+                                  placeholder="Redacte el contenido completo de la constancia médica..."
+                                  required></textarea>
+                        <div class="form-text">Máximo 5,000 caracteres.</div>
+                        <div class="invalid-feedback">El contenido es obligatorio.</div>
+                    </div>
+
+                    <!-- Campos condicionales -->
+                    <div class="row g-3">
+                        <div class="col-md-6 d-none" id="constCampoDiasReposo">
+                            <label for="constDiasReposo" class="form-label fw-semibold">Días de Reposo</label>
+                            <input type="number" id="constDiasReposo" class="form-control" min="1" max="365" placeholder="Ej: 7" />
+                            <div class="form-text">1–365 días.</div>
+                        </div>
+                        <div class="col-md-6 d-none" id="constCampoEspecialista">
+                            <label for="constEspecialista" class="form-label fw-semibold">Especialista Referido</label>
+                            <input type="text" id="constEspecialista" class="form-control" maxlength="255" placeholder="Ej: Dr. Juan Pérez - Cardiólogo" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnEmitirConstancia">
+                    <span id="constSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                    <i class="bi bi-check-lg me-1" id="constIcon"></i>
+                    Emitir e Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ========== MODAL: Agregar Recomendación ========== -->
 <div class="modal fade" id="modalAgregarRecomendacion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -403,7 +478,9 @@
         tratamientosCatalogo: '@Url.Action("JsonTratamientosCatalogo")',
         cirugiasCatalogo: '@Url.Action("JsonCirugiasCatalogo")',
         examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")',
-        recomendacionesCatalogo: '@Url.Action("JsonRecomendacionesCatalogo")'
+        recomendacionesCatalogo: '@Url.Action("JsonRecomendacionesCatalogo")',
+        // Constancias
+        crearConstancia: '@Url.Action("JsonCrear", "Constancias")'
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
@@ -694,12 +771,9 @@
                             <a href="/Expedientes/Expedientes/ImprimirEpicrisis?hojaCitaId=${h.id}" target="_blank" class="btn btn-outline-primary btn-sm" title="Imprimir epicrisis">
                                 <i class="bi bi-file-medical me-1"></i> Epicrisis
                             </a>
-                            <a href="/Expedientes/Constancias/ImprimirConstancia?id=${h.constanciaId}" target="_blank" class="btn btn-outline-success btn-sm d-none" id="btnConstancia_${h.id}" title="Imprimir constancia">
-                                <i class="bi bi-clipboard2-pulse me-1"></i> Constancia
-                            </a>
-                            <a href="/Expedientes/Constancias/Create?hojaCitaId=${h.id}&expedienteId=${h.expedienteId}" target="_blank" class="btn btn-outline-success btn-sm" title="Crear constancia para esta consulta">
+                            <button class="btn btn-outline-success btn-sm" onclick="abrirModalConstancia('${h.id}', '${h.doctorId || ''}', '${h.doctorNombre || ''}')" title="Emitir constancia para esta consulta">
                                 <i class="bi bi-clipboard2-plus me-1"></i> + Constancia
-                            </a>
+                            </button>
                         </div>
                         <hr class="my-2">
                         <!-- Sub-contenedores de detalles -->
@@ -1332,6 +1406,110 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-upload me-1"></i> Subir Archivo';
+        }
+    });
+
+    // ========== MODAL CONSTANCIA: EMITIR + IMPRIMIR ==========
+
+    // Almacena el doctorId de la hoja de cita actual
+    let constanciaHojaCitaId = '';
+    let constanciaDoctorId = '';
+
+    window.abrirModalConstancia = function(hojaCitaId, doctorId, doctorNombre) {
+        constanciaHojaCitaId = hojaCitaId;
+        constanciaDoctorId = doctorId;
+
+        // Auto-poblar campos ocultos
+        document.getElementById('constExpedienteId').value = EXPEDIENTE_ID;
+        document.getElementById('constHojaCitaId').value = hojaCitaId;
+        document.getElementById('constDoctorId').value = doctorId;
+
+        // Auto-poblar campos de solo lectura
+        const pacienteEl = document.getElementById('headerPacienteNombre');
+        document.getElementById('constPaciente').value = pacienteEl ? pacienteEl.textContent : '';
+        document.getElementById('constDoctor').value = doctorNombre || '';
+
+        // Reset form
+        document.getElementById('constTipo').value = '';
+        document.getElementById('constContenido').value = '';
+        document.getElementById('constDiasReposo').value = '';
+        document.getElementById('constEspecialista').value = '';
+        document.getElementById('constCampoDiasReposo').classList.add('d-none');
+        document.getElementById('constCampoEspecialista').classList.add('d-none');
+        document.getElementById('constTipo').classList.remove('is-invalid');
+        document.getElementById('constContenido').classList.remove('is-invalid');
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEmitirConstancia')).show();
+    };
+
+    // Tipo constancia: mostrar/ocultar campos condicionales
+    document.getElementById('constTipo').addEventListener('change', function() {
+        const tipo = this.value;
+        document.getElementById('constCampoDiasReposo').classList.toggle('d-none', tipo !== 'INCAPACIDAD');
+        document.getElementById('constCampoEspecialista').classList.toggle('d-none', tipo !== 'REFERENCIA');
+        if (tipo !== 'INCAPACIDAD') document.getElementById('constDiasReposo').value = '';
+        if (tipo !== 'REFERENCIA') document.getElementById('constEspecialista').value = '';
+    });
+
+    // Botón Emitir e Imprimir
+    document.getElementById('btnEmitirConstancia').addEventListener('click', async function() {
+        const tipo = document.getElementById('constTipo').value;
+        const contenido = document.getElementById('constContenido').value.trim();
+
+        // Validación
+        let hasError = false;
+        if (!tipo) { document.getElementById('constTipo').classList.add('is-invalid'); hasError = true; }
+        else { document.getElementById('constTipo').classList.remove('is-invalid'); }
+        if (!contenido) { document.getElementById('constContenido').classList.add('is-invalid'); hasError = true; }
+        else { document.getElementById('constContenido').classList.remove('is-invalid'); }
+        if (hasError) return;
+
+        const btn = this;
+        const spinner = document.getElementById('constSpinner');
+        const icon = document.getElementById('constIcon');
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        icon.classList.add('d-none');
+
+        const payload = {
+            expedienteId: EXPEDIENTE_ID,
+            hojaCitaId: constanciaHojaCitaId || null,
+            doctorId: constanciaDoctorId,
+            tipoConstancia: tipo,
+            contenido: contenido,
+            diasReposo: tipo === 'INCAPACIDAD' && document.getElementById('constDiasReposo').value
+                ? parseInt(document.getElementById('constDiasReposo').value) : null,
+            especialistaReferido: tipo === 'REFERENCIA'
+                ? document.getElementById('constEspecialista').value.trim() || null : null
+        };
+
+        try {
+            const res = await fetch(URLS.crearConstancia, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast('success', 'Constancia emitida exitosamente.');
+                bootstrap.Modal.getInstance(document.getElementById('modalEmitirConstancia')).hide();
+
+                // Abrir impresión en nueva pestaña
+                const constanciaId = json.data?.id;
+                if (constanciaId) {
+                    window.open('/Expedientes/Constancias/ImprimirConstancia?id=' + constanciaId, '_blank');
+                }
+            } else {
+                const errMsg = json.message || (json.errors && json.errors.join(', ')) || 'Error al emitir la constancia.';
+                showToast('danger', errMsg);
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al emitir constancia.');
+        } finally {
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+            icon.classList.remove('d-none');
         }
     });
 

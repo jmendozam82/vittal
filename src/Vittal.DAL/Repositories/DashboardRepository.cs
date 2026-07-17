@@ -106,7 +106,7 @@ public class DashboardRepository : IDashboardRepository
     // ────────────────────────────────────────────────────────────────────
     // 4. GetTiempoPromedioEsperaAsync — Tiempo promedio en minutos
     // ────────────────────────────────────────────────────────────────────
-    public async Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId)
+    public async Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha)
     {
         const string sql = @"
             SELECT COALESCE(
@@ -119,6 +119,7 @@ public class DashboardRepository : IDashboardRepository
             )
             FROM public.citas c
             WHERE c.clinica_id = @ClinicaId
+              AND c.fecha_cita = @Fecha::date
               AND c.hora_llegada IS NOT NULL
               AND c.estado IN ('atendida', 'en_atencion')
               AND c.activo = true";
@@ -127,7 +128,7 @@ public class DashboardRepository : IDashboardRepository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             return await connection.ExecuteScalarAsync<double>(sql,
-                new { ClinicaId = clinicaId });
+                new { ClinicaId = clinicaId, Fecha = fecha });
         }
         catch (Exception ex)
         {

@@ -161,7 +161,7 @@ public class DashboardService : IDashboardService
                 pacientesEnEsperaTask = _dashboardRepository.GetPacientesEnEsperaAsync(clinicaId);
 
             if (dashboardData.MostrarTiempoPromedioEspera)
-                tiempoPromedioTask = _dashboardRepository.GetTiempoPromedioEsperaAsync(clinicaId);
+                tiempoPromedioTask = _dashboardRepository.GetTiempoPromedioEsperaAsync(clinicaId, fecha);
 
             if (dashboardData.MostrarGraficoCitasPorHora)
                 citasPorHoraTask = _dashboardRepository.GetCitasPorHoraAsync(clinicaId, fecha);

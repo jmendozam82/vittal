@@ -1,20 +1,13 @@
 ﻿@{
-    ViewData["Title"] = "Gestión de Constancias Médicas";
+    ViewData["Title"] = "Historial de Constancias Médicas";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
                              "<li class='breadcrumb-item'><a href='/Expedientes'>Expedientes</a></li>" +
-                             "<li class='breadcrumb-item active'>Constancias Médicas</li>";
+                             "<li class='breadcrumb-item active'>Historial de Constancias</li>";
 
     var jsonListarUrl = Url.Action("JsonListar");
-    var crearUrl = Url.Action("Create");
     var jsonPacientesUrl = Url.Action("JsonListarPacientes");
     var desactivarUrl = Url.Action("JsonDesactivar");
-}
-
-@section HeaderActions {
-    <a asp-action="Create" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i> Nueva Constancia
-    </a>
 }
 
 <div class="card shadow-sm border-0">
@@ -103,7 +96,6 @@
     // URLs seguras desde el servidor
     const URLS = {
         listar: '@jsonListarUrl',
-        crear: '@crearUrl',
         desactivar: '@desactivarUrl',
         pacientes: '@jsonPacientesUrl'
     };
@@ -279,10 +271,8 @@
             const hayDatos = constancias.length > 0;
             const mensaje = hayDatos
                 ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
-                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron constancias registradas.';
-            const accion = hayDatos
-                ? ''
-                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera constancia</a>';
+                : '<i class="bi bi-clipboard2-pulse fs-1 d-block mb-2"></i>No hay constancias emitidas aún.<br><small class="text-muted">Las constancias se crean desde la hoja de cita del expediente del paciente.</small>';
+            const accion = '';
 
             document.getElementById('tablaContainer').innerHTML = `
                 <div class="text-center py-5 text-muted">

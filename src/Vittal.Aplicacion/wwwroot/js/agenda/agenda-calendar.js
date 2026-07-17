@@ -168,6 +168,20 @@ const vittalAgenda = (function() {
         return `${state.horario.horarioApertura} — ${state.horario.horarioCierre}`;
     }
 
+    /** Retorna el rango de horas [start, end) del grid según el horario de la clínica.
+     *  Si no hay horario configurado, usa el rango por defecto 06–22 (6am a 10pm). */
+    function getGridHourRange() {
+        let startHour = 6;
+        let endHour = 22;
+        if (state.horario && state.horario.horarioApertura && state.horario.horarioCierre) {
+            startHour = Math.floor(parseTimeToMinutes(state.horario.horarioApertura) / 60);
+            endHour = Math.ceil(parseTimeToMinutes(state.horario.horarioCierre) / 60);
+            // Mínimo 1 hora de rango visible
+            if (endHour <= startHour) endHour = startHour + 1;
+        }
+        return { startHour: startHour, endHour: endHour };
+    }
+
     // ── DOM refs ───────────────────────────────────────────────
     let $ = (id) => document.getElementById(id);
     let container, dateTitleMain, dateTitleSub;
@@ -471,8 +485,9 @@ const vittalAgenda = (function() {
 
     // ── RENDER: Grid Semanal ────────────────────────────────────
     function renderWeekGrid(days, citas) {
+        const range = getGridHourRange();
         const hours = [];
-        for (let h = 6; h <= 21; h++) {
+        for (let h = range.startHour; h < range.endHour; h++) {
             hours.push(h);
         }
 
@@ -589,8 +604,9 @@ const vittalAgenda = (function() {
     }
 
     function renderDayViewWithLabels(day, citas) {
+        const range = getGridHourRange();
         const hours = [];
-        for (let h = 6; h <= 21; h++) {
+        for (let h = range.startHour; h < range.endHour; h++) {
             hours.push(h);
         }
         const dateKey = fmtDate(day);
