@@ -264,10 +264,20 @@
             }
 
             function renderizarGrafico(datos) {
+                var chartWrapper = document.querySelector('.chart-container');
+                if (!chartWrapper) return;
+
                 if (!datos || datos.length === 0) {
-                    document.getElementById('chartCitasPorHora').parentElement.innerHTML =
+                    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+                    chartWrapper.innerHTML =
                         '<div class="empty-state"><i class="bi bi-bar-chart"></i><p class="small">Sin datos de citas para hoy</p></div>';
+                    if (DOM.totalCitasDia) DOM.totalCitasDia.textContent = '0 citas';
                     return;
+                }
+
+                // Restaurar canvas si fue reemplazado por empty-state previo
+                if (!document.getElementById('chartCitasPorHora')) {
+                    chartWrapper.innerHTML = '<canvas id="chartCitasPorHora"></canvas>';
                 }
 
                 if (DOM.totalCitasDia) {
@@ -275,7 +285,9 @@
                     DOM.totalCitasDia.textContent = total + ' cita' + (total !== 1 ? 's' : '');
                 }
 
-                const ctx = document.getElementById('chartCitasPorHora').getContext('2d');
+                var canvas = document.getElementById('chartCitasPorHora');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
 
                 if (chartInstance) {
                     chartInstance.destroy();

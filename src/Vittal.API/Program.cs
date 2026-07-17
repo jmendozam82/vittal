@@ -64,6 +64,17 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
+            // SignalR: lee el token del query string (WebSocket no soporta headers)
+            var path = context.HttpContext.Request.Path;
+            if (path.StartsWithSegments("/hubs"))
+            {
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
+            }
+
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             var token = context.Token;
             if (string.IsNullOrEmpty(token))
