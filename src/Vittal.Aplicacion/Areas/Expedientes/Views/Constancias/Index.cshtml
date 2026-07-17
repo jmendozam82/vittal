@@ -179,9 +179,13 @@
     }
 
     function aplicarFiltro() {
-        if (constancias.length === 0) return;
-
         let filtrados = constancias;
+
+        if (constancias.length === 0) {
+            renderTabla([]);
+            actualizarContador(0, 0);
+            return;
+        }
 
         // Filtro por estado (activo/inactivo)
         if (!mostrarInactivos) {

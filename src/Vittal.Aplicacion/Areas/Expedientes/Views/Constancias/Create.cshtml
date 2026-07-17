@@ -172,11 +172,11 @@
             if (json.success && json.data) {
                 const select = document.getElementById('doctorId');
                 json.data.forEach(function(doc) {
-                    const nombre = doc.primerNombre || doc.nombre || 'Sin nombre';
-                    const apellido = doc.primerApellido || doc.apellido || '';
+                    const nombre = doc.nombres || doc.nombre || 'Sin nombre';
+                    const apellido = doc.apellidos || doc.apellido || '';
                     const label = (nombre + ' ' + apellido).trim();
                     const option = document.createElement('option');
-                    option.value = doc.id;
+                    option.value = doc.usuarioId || doc.id;
                     option.textContent = label || 'Doctor sin nombre';
                     select.appendChild(option);
                 });
