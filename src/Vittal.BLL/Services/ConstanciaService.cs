@@ -32,8 +32,9 @@ public class ConstanciaService : IConstanciaService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<ConstanciaResponseDto>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener constancias para ClinicaId={ClinicaId}", clinicaId);
             return ServiceResult<IEnumerable<ConstanciaResponseDto>>.Failure("Error al obtener las constancias.");
         }
     }
@@ -51,8 +52,9 @@ public class ConstanciaService : IConstanciaService
             var dto = MapToDto(entity);
             return ServiceResult<ConstanciaResponseDto>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener constancia Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<ConstanciaResponseDto>.Failure("Error al obtener la constancia.");
         }
     }
@@ -89,8 +91,9 @@ public class ConstanciaService : IConstanciaService
             var responseDto = MapToDto(created);
             return ServiceResult<ConstanciaResponseDto>.Success(responseDto, "Constancia emitida exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al emitir constancia para ClinicaId={ClinicaId}, ExpedienteId={ExpedienteId}", clinicaId, dto.ExpedienteId);
             return ServiceResult<ConstanciaResponseDto>.Failure("Error al emitir la constancia.");
         }
     }
@@ -104,8 +107,9 @@ public class ConstanciaService : IConstanciaService
                 ? ServiceResult<bool>.Success(result, "Constancia anulada exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃ³ la constancia.", ServiceErrorType.NotFound);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al anular constancia Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<bool>.Failure("Error al anular la constancia.");
         }
     }

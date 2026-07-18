@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -56,7 +58,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         TryAllIssuerSigningKeys = true,
-        ClockSkew = TimeSpan.FromMinutes(5)
+        ClockSkew = TimeSpan.FromMinutes(2)
     };
 
     // Log authentication for debugging
@@ -83,9 +85,9 @@ builder.Services.AddAuthentication(options =>
             }
             else
             {
-                // Decode JWT header for debugging
+                // Decode JWT header for debugging — solo en Development
                 var parts = token.Split('.');
-                if (parts.Length >= 2)
+                if (parts.Length >= 2 && context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
                 {
                     try
                     {
@@ -155,6 +157,36 @@ builder.Services.AddCors(options =>
 // SignalR hubs para tiempo real
 builder.Services.AddSignalR();
 
+// API Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("global", context =>
+    {
+        return RateLimitPartition.GetTokenBucketLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 100,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = 100,
+                AutoReplenishment = true
+            });
+    });
+    options.AddPolicy("auth", context =>
+    {
+        return RateLimitPartition.GetTokenBucketLimiter(
+            $"auth_{context.Connection.RemoteIpAddress}",
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 5,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = 5,
+                AutoReplenishment = true
+            });
+    });
+});
+
 // Background service para verificación periódica de alertas
 builder.Services.AddHostedService<BackgroundAlertCheckerService>();
 
@@ -170,17 +202,28 @@ var app = builder.Build();
     jwtParams.IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) => jwksCache.Keys;
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Correlation ID middleware — inyecta X-Correlation-ID en request/response
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+        ?? Guid.NewGuid().ToString();
+    context.Items["CorrelationId"] = correlationId;
+    context.Response.Headers.Append("X-Correlation-ID", correlationId);
+    await next();
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 
 // SignalR Hubs

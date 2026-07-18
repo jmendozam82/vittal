@@ -12,13 +12,16 @@ namespace Vittal.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class PlantillaEspecialidadController : ControllerBase
 {
     private readonly IPlantillaEspecialidadService _service;
+    private readonly ILogger<PlantillaEspecialidadController> _logger;
 
-    public PlantillaEspecialidadController(IPlantillaEspecialidadService service)
+    public PlantillaEspecialidadController(IPlantillaEspecialidadService service, ILogger<PlantillaEspecialidadController> logger)
     {
         _service = service;
+        _logger = logger;
     }
 
     [RequirePermission("plantillas_especialidad", PermissionType.Read)]

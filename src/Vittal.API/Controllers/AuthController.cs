@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Vittal.API.Models;
 using Vittal.BLL.Services;
@@ -15,6 +16,7 @@ namespace Vittal.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class AuthController : ControllerBase
 {
     private readonly HttpClient _httpClient;
@@ -33,6 +35,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         try
@@ -132,7 +135,7 @@ public class AuthController : ControllerBase
             return StatusCode(500, new ApiResponse
             {
                 Success = false,
-                Message = $"Error interno del servidor: {ex.GetType().Name} - {ex.Message}"
+                Message = "Error interno del servidor. Intente de nuevo o contacte al administrador."
             });
         }
     }

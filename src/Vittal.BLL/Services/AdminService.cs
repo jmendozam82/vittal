@@ -149,7 +149,7 @@ public class AdminService : IAdminService
                     await transaction.RollbackAsync();
                     _logger.LogError(ex, "Error en transacción inicial de provisionamiento (clínica + perfil + permisos)");
                     return ServiceResult<ClinicaProvisionResponseDto>.Failure(
-                        $"Error al crear la clínica: {ex.Message}");
+                        "Error al crear la clínica durante el provisionamiento. Intente de nuevo o contacte al administrador.");
                 }
             }
 
@@ -165,7 +165,7 @@ public class AdminService : IAdminService
                 // Rollback: eliminar clínica y perfil creados
                 await RollbackClinicaAsync(creadoClinicaId!.Value);
                 return ServiceResult<ClinicaProvisionResponseDto>.Failure(
-                    $"Error al crear la cuenta de autenticación del administrador: {authEx.Message}");
+                    "Error al crear la cuenta de autenticación del administrador. Intente de nuevo o contacte al administrador.");
             }
 
             // ── PASO 3: Crear usuario local ────────────────────────
@@ -198,14 +198,14 @@ public class AdminService : IAdminService
                 if (!string.IsNullOrEmpty(authUserId))
                 {
                     try { await DeleteSupabaseAuthUserAsync(authUserId); }
-                    catch (Exception rEx) { _logger.LogError(rEx, "Error en rollback de Supabase Auth"); }
+                    catch (Exception rEx) { _logger.LogCritical(rEx, "FALLO CRÍTICO en rollback de Supabase Auth para AuthUserId={AuthUserId}. Se requiere intervención manual.", authUserId); }
                 }
 
                 // Rollback clínica + perfil
                 await RollbackClinicaAsync(creadoClinicaId!.Value);
 
                 return ServiceResult<ClinicaProvisionResponseDto>.Failure(
-                    $"Error al guardar el usuario administrador: {dbEx.Message}");
+                    "Error al guardar el usuario administrador. Intente de nuevo o contacte al administrador.");
             }
 
             // ── PASO 4: Seedear configuraciones por defecto ────────
@@ -288,7 +288,7 @@ public class AdminService : IAdminService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado en provisionamiento de clínica '{Nombre}'", dto.Nombre);
-            return ServiceResult<ClinicaProvisionResponseDto>.Failure($"Error interno: {ex.Message}");
+            return ServiceResult<ClinicaProvisionResponseDto>.Failure("Error interno al provisionar la clínica. Intente de nuevo o contacte al administrador.");
         }
     }
 
@@ -334,7 +334,7 @@ public class AdminService : IAdminService
             {
                 _logger.LogError(authEx, "Error al crear usuario en Supabase Auth");
                 return ServiceResult<UsuarioResponseDto>.Failure(
-                    $"Error al crear la cuenta de autenticación: {authEx.Message}");
+                    "Error al crear la cuenta de autenticación. Intente de nuevo o contacte al administrador.");
             }
 
             // ── PASO 2: Crear en BD ────────────────────────────────
@@ -385,18 +385,18 @@ public class AdminService : IAdminService
                     }
                     catch (Exception rollbackEx)
                     {
-                        _logger.LogError(rollbackEx, "Error en rollback de Supabase Auth");
+                        _logger.LogCritical(rollbackEx, "FALLO CRÍTICO en rollback de Supabase Auth para AuthUserId={AuthUserId}. Se requiere intervención manual.", authUserId);
                     }
                 }
 
                 return ServiceResult<UsuarioResponseDto>.Failure(
-                    $"Error al guardar el usuario: {dbEx.Message}");
+                    "Error al guardar el usuario. Intente de nuevo o contacte al administrador.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al crear usuario como Super Admin");
-            return ServiceResult<UsuarioResponseDto>.Failure($"Error interno: {ex.Message}");
+            return ServiceResult<UsuarioResponseDto>.Failure("Error interno al crear el usuario. Intente de nuevo o contacte al administrador.");
         }
     }
 
@@ -425,7 +425,7 @@ public class AdminService : IAdminService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al consultar usuarios de clínica {ClinicaId}", clinicaId);
-            return ServiceResult<IEnumerable<UsuarioResponseDto>>.Failure($"Error interno: {ex.Message}");
+            return ServiceResult<IEnumerable<UsuarioResponseDto>>.Failure("Error al consultar los usuarios de la clínica. Intente de nuevo o contacte al administrador.");
         }
     }
 
@@ -442,7 +442,7 @@ public class AdminService : IAdminService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error en rollback de clínica {ClinicaId}", clinicaId);
+            _logger.LogCritical(ex, "FALLO CRÍTICO en rollback de clínica {ClinicaId}. Se requiere intervención manual.", clinicaId);
         }
     }
 

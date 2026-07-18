@@ -48,8 +48,7 @@ public class UsuariosController : ControllerBase
         // Los admins de clínica NO deben ver Super Admins
         if (result.IsSuccess && result.Data != null)
         {
-            var esSuperAdmin = User.FindFirst("app_es_super_admin") is System.Security.Claims.Claim c
-                && bool.TryParse(c.Value, out var esSA) && esSA;
+            var esSuperAdmin = User.EsSuperAdmin();
             if (!esSuperAdmin)
             {
                 var filtered = ServiceResult<IEnumerable<UsuarioResponseDto>>.Success(

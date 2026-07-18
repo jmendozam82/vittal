@@ -38,8 +38,9 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener tipos de signos vitales para ClinicaId={ClinicaId}, SalaId={SalaId}", clinicaId, salaId);
             return ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>.Failure("Error al obtener tipos de signos vitales.");
         }
     }
@@ -68,8 +69,9 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<TipoSignoVitalDTOs.Response>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener tipo de signo vital Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<TipoSignoVitalDTOs.Response>.Failure("Error al obtener el tipo de signo vital.");
         }
     }
@@ -97,8 +99,9 @@ public class TipoSignoVitalService : ITipoSignoVitalService
 
             return ServiceResult<Guid>.Success(id, "Tipo de signo vital creado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al crear tipo de signo vital '{Nombre}' para ClinicaId={ClinicaId}", request.Nombre, clinicaId);
             return ServiceResult<Guid>.Failure("Error al crear el tipo de signo vital.");
         }
     }
@@ -127,8 +130,9 @@ public class TipoSignoVitalService : ITipoSignoVitalService
                 ? ServiceResult<bool>.Success(result, "Actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al actualizar tipo de signo vital Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<bool>.Failure("Error al actualizar.");
         }
     }
@@ -142,8 +146,9 @@ public class TipoSignoVitalService : ITipoSignoVitalService
                 ? ServiceResult<bool>.Success(result, "Desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃ³ el registro.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al desactivar tipo de signo vital Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<bool>.Failure("Error al desactivar.");
         }
     }

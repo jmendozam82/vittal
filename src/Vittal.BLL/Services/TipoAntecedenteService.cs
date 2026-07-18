@@ -68,8 +68,9 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<TipoAntecedenteDTOs.Response>.Success(dto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener tipo de antecedente Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<TipoAntecedenteDTOs.Response>.Failure("Error al obtener el tipo de antecedente.");
         }
     }
@@ -95,8 +96,9 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<Guid>.Success(id, "Tipo de antecedente creado exitosamente.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al crear tipo de antecedente '{Nombre}' para ClinicaId={ClinicaId}", request.Nombre, clinicaId);
             return ServiceResult<Guid>.Failure("Error al crear el tipo de antecedente.");
         }
     }
@@ -123,8 +125,9 @@ public class TipoAntecedenteService : ITipoAntecedenteService
                 ? ServiceResult<bool>.Success(result, "Actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al actualizar tipo de antecedente Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<bool>.Failure("Error al actualizar el tipo de antecedente.");
         }
     }
@@ -138,8 +141,9 @@ public class TipoAntecedenteService : ITipoAntecedenteService
                 ? ServiceResult<bool>.Success(result, "Desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el registro.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al desactivar tipo de antecedente Id={Id} para ClinicaId={ClinicaId}", id, clinicaId);
             return ServiceResult<bool>.Failure("Error al desactivar.");
         }
     }

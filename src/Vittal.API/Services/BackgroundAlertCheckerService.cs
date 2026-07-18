@@ -41,53 +41,64 @@ public class BackgroundAlertCheckerService : BackgroundService
     {
         _logger.LogInformation("BackgroundAlertCheckerService iniciado — intervalo: {Interval}s", CheckInterval.TotalSeconds);
 
-        // Esperar a que la aplicación esté completamente iniciada
-        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            _totalExecutions++;
+            // Esperar a que la aplicación esté completamente iniciada
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
 
-            try
+            while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation(
-                    "Ejecutando verificación de alertas #{Execution}", _totalExecutions);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                _totalExecutions++;
 
-                var alertasEnCiclo = await VerificarTodasLasClinicasAsync(stoppingToken);
-                _alertasCreadas += alertasEnCiclo;
-
-                sw.Stop();
-                _lastExecutionTime = DateTime.UtcNow;
-                _lastExecutionDuration = sw.Elapsed;
-
-                _logger.LogInformation(
-                    "Verificación #{Execution} completada en {Duration}ms. Alertas creadas: {AlertCount}",
-                    _totalExecutions, sw.ElapsedMilliseconds, alertasEnCiclo);
-
-                // Log summary metrics every 10 executions
-                if (_totalExecutions % 10 == 0)
+                try
                 {
                     _logger.LogInformation(
-                        "Métricas BackgroundAlertChecker: Total={Total}, Alertas={Alerts}, Errores={Errors}",
-                        _totalExecutions, _alertasCreadas, _errores);
-                }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                // Apagado graceful — ignorar
-                break;
-            }
-            catch (Exception ex)
-            {
-                sw.Stop();
-                _errores++;
-                _logger.LogError(ex,
-                    "Error en verificación de alertas #{Execution} después de {Duration}ms",
-                    _totalExecutions, sw.ElapsedMilliseconds);
-            }
+                        "Ejecutando verificación de alertas #{Execution}", _totalExecutions);
 
-            await Task.Delay(CheckInterval, stoppingToken);
+                    var alertasEnCiclo = await VerificarTodasLasClinicasAsync(stoppingToken);
+                    _alertasCreadas += alertasEnCiclo;
+
+                    sw.Stop();
+                    _lastExecutionTime = DateTime.UtcNow;
+                    _lastExecutionDuration = sw.Elapsed;
+
+                    _logger.LogInformation(
+                        "Verificación #{Execution} completada en {Duration}ms. Alertas creadas: {AlertCount}",
+                        _totalExecutions, sw.ElapsedMilliseconds, alertasEnCiclo);
+
+                    // Log summary metrics every 10 executions
+                    if (_totalExecutions % 10 == 0)
+                    {
+                        _logger.LogInformation(
+                            "Métricas BackgroundAlertChecker: Total={Total}, Alertas={Alerts}, Errores={Errors}",
+                            _totalExecutions, _alertasCreadas, _errores);
+                    }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    // Apagado graceful — ignorar
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    sw.Stop();
+                    _errores++;
+                    _logger.LogError(ex,
+                        "Error en verificación de alertas #{Execution} después de {Duration}ms",
+                        _totalExecutions, sw.ElapsedMilliseconds);
+                }
+
+                await Task.Delay(CheckInterval, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Apagado graceful — ignorar
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fatal en BackgroundAlertCheckerService. El servicio se detendrá.");
         }
 
         _logger.LogInformation("BackgroundAlertCheckerService detenido.");

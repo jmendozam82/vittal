@@ -16,13 +16,16 @@ namespace Vittal.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class PlantillaItemController : ControllerBase
 {
     private readonly IPlantillaItemService _service;
+    private readonly ILogger<PlantillaItemController> _logger;
 
-    public PlantillaItemController(IPlantillaItemService service)
+    public PlantillaItemController(IPlantillaItemService service, ILogger<PlantillaItemController> logger)
     {
         _service = service;
+        _logger = logger;
     }
 
     /// <summary>Obtiene todos los items activos de una plantilla.</summary>

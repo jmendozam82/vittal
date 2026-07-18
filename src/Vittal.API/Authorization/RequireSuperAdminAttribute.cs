@@ -12,9 +12,9 @@ namespace Vittal.API.Authorization;
 /// Historia de Usuario: HU-SA01 — Super Admin Global
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-public class RequireSuperAdminAttribute : Attribute, IAuthorizationFilter
+public class RequireSuperAdminAttribute : Attribute, IAsyncAuthorizationFilter
 {
-    public void OnAuthorization(AuthorizationFilterContext context)
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var user = context.HttpContext.User;
 
@@ -28,5 +28,7 @@ public class RequireSuperAdminAttribute : Attribute, IAuthorizationFilter
         {
             context.Result = new ForbidResult();
         }
+
+        await Task.CompletedTask;
     }
 }
