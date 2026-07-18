@@ -4,32 +4,86 @@
  * Gestiona la suscripción a SignalR para notificaciones push,
  * badge de contador en navbar, toast de nuevas alertas.
  *
+ * Seguridad: Usa JWT de corta vida (60s, HMAC-SHA256) para SignalR,
+ * en lugar del token Supabase de vida larga (ES256).
+ * El token de corta vida se solicita al endpoint /api/auth/signalr-token
+ * y se renueva automáticamente en cada reconexión.
+ *
  * Dependencias: vittal-api.js, @microsoft/signalr (CDN)
- * Versión: 1.0.0
+ * Versión: 1.1.0 — WSS + Short-lived token
  */
 
 (function () {
     'use strict';
 
     const CLINICA_ID = window.VITTAL_CLINICA_ID || '';
+    const API_BASE = window.VITTAL_API_HUB_URL || '/api';
 
     let connection = null;
     let reconnectInterval = null;
 
     /**
+     * Solicita un JWT de corta vida (60s) para SignalR.
+     * @returns {Promise<string|null>} Token de corta vida o null si falla.
+     */
+    async function fetchSignalrToken() {
+        try {
+            const supabaseToken = VittalAPI.getToken();
+            if (!supabaseToken) {
+                console.warn('[VittalAlertas] No hay token Supabase disponible.');
+                return null;
+            }
+
+            const response = await fetch(`${API_BASE}/api/auth/signalr-token`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Authorization': `Bearer ${supabaseToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('[VittalAlertas] Error obteniendo token SignalR:', response.status);
+                return null;
+            }
+
+            const data = await response.json();
+            if (data.success && data.token) {
+                console.log(`[VittalAlertas] Token SignalR de corta vida obtenido (expira en ${data.expiresIn}s)`);
+                return data.token;
+            }
+
+            return null;
+        } catch (err) {
+            console.error('[VittalAlertas] Error obteniendo token SignalR:', err);
+            return null;
+        }
+    }
+
+    /**
      * Inicializa la conexión SignalR para notificaciones en tiempo real.
      */
-    function initSignalR() {
+    async function initSignalR() {
         if (typeof signalR === 'undefined') {
             console.warn('[VittalAlertas] SignalR no está disponible. Fallback a polling.');
             iniciarPollingFallback();
             return;
         }
 
+        // Obtener token de corta vida para SignalR
+        const signalrToken = await fetchSignalrToken();
+        if (!signalrToken) {
+            console.warn('[VittalAlertas] No se pudo obtener token SignalR. Fallback a polling.');
+            iniciarPollingFallback();
+            return;
+        }
+
+        // Usar WSS (https://) para WebSocket seguro
         const hubUrl = (window.VITTAL_API_HUB_URL || '') + '/hubs/alertas';
         connection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, {
-                accessTokenFactory: () => VittalAPI.getToken()
+                accessTokenFactory: () => fetchSignalrToken().then(t => t || signalrToken)
             })
             .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
             .build();
@@ -67,7 +121,7 @@
         // Iniciar conexión
         connection.start()
             .then(function () {
-                console.log('[VittalAlertas] Conectado a SignalR.');
+                console.log('[VittalAlertas] Conectado a SignalR (WSS, token de corta vida).');
                 // Unirse al grupo de la clínica para recibir alertas
                 if (CLINICA_ID) {
                     connection.invoke('JoinGroup', CLINICA_ID)

@@ -1,4 +1,4 @@
-@Vittal.API_HostAddress = http://localhost:5089
+@Vittal.API_HostAddress = https://localhost:5089
 
 ### Swagger UI
 GET {{Vittal.API_HostAddress}}/swagger
@@ -8,8 +8,8 @@ POST {{Vittal.API_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@vittal.com",
-  "password": "Admin@2026"
+  "email": "TU_EMAIL_AQUI",
+  "password": "TU_PASSWORD_AQUI"
 }
 
 ###

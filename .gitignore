@@ -18,6 +18,8 @@ appsettings.Development.json
 appsettings.Production.json
 appsettings.*.json
 !appsettings.json
+*.http
+!*.http.example
 *.pfx
 *.p12
 secrets.json

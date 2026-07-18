@@ -20,6 +20,16 @@ using Vittal.IOC;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Kestrel: HTTPS para WSS (WebSocket Secure) ─────────────────────
+// En desarrollo usa el dev-cert; en producción configurar un cert real.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(5089, listenOptions =>
+    {
+        listenOptions.UseHttps(); // Dev cert auto-managed by .NET
+    });
+});
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
@@ -37,6 +47,9 @@ builder.Services.AddVittalServices(builder.Configuration);
 // Register JWKS cache and async loader
 builder.Services.AddSingleton<JwksCacheService>();
 builder.Services.AddHostedService<JwksLoaderService>();
+
+// Register SignalR short-lived token service (HMAC-SHA256, 60s lifetime)
+builder.Services.AddSingleton<SignalrTokenService>();
 
 // Configure JWT Authentication
 var supabaseUrl = builder.Configuration["Supabase:Url"];
@@ -146,7 +159,7 @@ builder.Services.AddSwaggerGen(c =>
 var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 if (corsOrigins == null || corsOrigins.Length == 0)
 {
-    corsOrigins = new[] { "https://localhost:5001", "http://localhost:5000", "https://app.vittal.com" };
+    corsOrigins = new[] { "https://localhost:5001", "http://localhost:5000", "http://localhost:5218", "https://localhost:7106", "https://app.vittal.com" };
 }
 
 builder.Services.AddCors(options =>
@@ -195,11 +208,23 @@ var app = builder.Build();
 // Wire up JWKS key resolution now that DI is available.
 // JwksLoaderService populates JwksCacheService asynchronously at startup;
 // the resolver reads from it at request time when keys are loaded.
+// Also includes HMAC key for short-lived SignalR tokens.
 {
     var jwksCache = app.Services.GetRequiredService<JwksCacheService>();
+    var signalrTokenService = app.Services.GetRequiredService<SignalrTokenService>();
     var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
     var jwtParams = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
-    jwtParams.IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) => jwksCache.Keys;
+
+    // Combined key resolver: JWKS (ES256 for Supabase) + HMAC (short-lived SignalR tokens)
+    jwtParams.IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
+    {
+        var keys = jwksCache.Keys.ToList();
+
+        // Agregar clave HMAC para tokens de corta vida de SignalR
+        keys.Add(signalrTokenService.GetSigningKey());
+
+        return keys;
+    };
 }
 
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
