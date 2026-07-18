@@ -26,7 +26,7 @@ public class PlantillaItemService : IPlantillaItemService
             var dtos = entities.Select(MapToResponse);
             return ServiceResult<IEnumerable<PlantillaItemDTOs.Response>>.Success(dtos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<IEnumerable<PlantillaItemDTOs.Response>>.Failure("Error al obtener los items de la plantilla.");
         }
@@ -43,7 +43,7 @@ public class PlantillaItemService : IPlantillaItemService
             }
             return ServiceResult<PlantillaItemDTOs.Response>.Success(MapToResponse(entity));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<PlantillaItemDTOs.Response>.Failure("Error al obtener el item.");
         }
@@ -72,7 +72,7 @@ public class PlantillaItemService : IPlantillaItemService
             var id = await _repository.CreateAsync(entity);
             return ServiceResult<Guid>.Success(id, "Item creado exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<Guid>.Failure("Error al crear el item.");
         }
@@ -103,7 +103,7 @@ public class PlantillaItemService : IPlantillaItemService
                 ? ServiceResult<bool>.Success(result, "Item actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar el item.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al actualizar el item.");
         }
@@ -118,7 +118,7 @@ public class PlantillaItemService : IPlantillaItemService
                 ? ServiceResult<bool>.Success(result, "Item desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃ³ el item.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el item.");
         }
@@ -133,7 +133,7 @@ public class PlantillaItemService : IPlantillaItemService
                 ? ServiceResult<bool>.Success(result, "Item reactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃ³ el item.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al reactivar el item.");
         }

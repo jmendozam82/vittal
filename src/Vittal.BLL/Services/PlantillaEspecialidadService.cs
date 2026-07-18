@@ -49,7 +49,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
 
             return ServiceResult<IEnumerable<PlantillaEspecialidadDTOs.Response>>.Success(dtos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<IEnumerable<PlantillaEspecialidadDTOs.Response>>.Failure("Error al obtener plantillas de especialidad.");
         }
@@ -89,7 +89,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
 
             return ServiceResult<PlantillaEspecialidadDTOs.Response>.Success(dto);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<PlantillaEspecialidadDTOs.Response>.Failure("Error al obtener la plantilla.");
         }
@@ -126,7 +126,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
             var id = await _repository.CreateAsync(entity);
             return ServiceResult<Guid>.Success(id, "Plantilla creada exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<Guid>.Failure("Error al crear la plantilla.");
         }
@@ -155,7 +155,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
                 ? ServiceResult<bool>.Success(result, "Plantilla actualizada exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar la plantilla.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al actualizar la plantilla.");
         }
@@ -170,7 +170,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
                 ? ServiceResult<bool>.Success(result, "Plantilla desactivada exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃƒÂ³ la plantilla.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al desactivar la plantilla.");
         }
@@ -185,7 +185,7 @@ public class PlantillaEspecialidadService : IPlantillaEspecialidadService
                 ? ServiceResult<bool>.Success(result, "Plantilla reactivada exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontrÃƒÂ³ la plantilla.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al reactivar la plantilla.");
         }

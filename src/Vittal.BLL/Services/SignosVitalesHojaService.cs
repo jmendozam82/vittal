@@ -34,7 +34,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<SignosVitalesHojaResponseDto>>.Success(dtos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<IEnumerable<SignosVitalesHojaResponseDto>>.Failure("Error al obtener signos vitales.");
         }
@@ -53,7 +53,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var dto = MapToDto(entity);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(dto);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al obtener el signo vital.");
         }
@@ -89,7 +89,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var responseDto = MapToDto(created);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(responseDto, "Signo vital registrado exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al registrar el signo vital.");
         }
@@ -123,7 +123,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
             var responseDto = MapToDto(updated ?? entity);
             return ServiceResult<SignosVitalesHojaResponseDto>.Success(responseDto, "Signo vital actualizado exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<SignosVitalesHojaResponseDto>.Failure("Error al actualizar el signo vital.");
         }
@@ -138,7 +138,7 @@ public class SignosVitalesHojaService : ISignosVitalesHojaService
                 ? ServiceResult<bool>.Success(result, "Signo vital desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el signo vital.", ServiceErrorType.NotFound);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el signo vital.");
         }

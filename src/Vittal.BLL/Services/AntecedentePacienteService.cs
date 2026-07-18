@@ -32,7 +32,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<AntecedentePacienteDTOs.Response>>.Success(dtos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<IEnumerable<AntecedentePacienteDTOs.Response>>.Failure("Error al obtener antecedentes del paciente.");
         }
@@ -51,7 +51,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var dto = MapToDto(entity);
             return ServiceResult<AntecedentePacienteDTOs.Response>.Success(dto);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<AntecedentePacienteDTOs.Response>.Failure("Error al obtener el antecedente.");
         }
@@ -87,7 +87,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
             var responseDto = MapToDto(created);
             return ServiceResult<AntecedentePacienteDTOs.Response>.Success(responseDto, "Antecedente guardado exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<AntecedentePacienteDTOs.Response>.Failure("Error al guardar el antecedente.");
         }
@@ -102,7 +102,7 @@ public class AntecedentePacienteService : IAntecedentePacienteService
                 ? ServiceResult<bool>.Success(result, "Antecedente desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el antecedente.", ServiceErrorType.NotFound);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al desactivar el antecedente.");
         }

@@ -39,7 +39,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>.Success(dtos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _logger.LogError(ex, "Error al obtener tipos de antecedentes para clínica {ClinicaId}", clinicaId);
             return ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>.Failure("Error al obtener tipos de antecedentes.");
@@ -68,7 +68,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<TipoAntecedenteDTOs.Response>.Success(dto);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<TipoAntecedenteDTOs.Response>.Failure("Error al obtener el tipo de antecedente.");
         }
@@ -95,7 +95,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<Guid>.Success(id, "Tipo de antecedente creado exitosamente.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<Guid>.Failure("Error al crear el tipo de antecedente.");
         }
@@ -123,7 +123,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
                 ? ServiceResult<bool>.Success(result, "Actualizado exitosamente.")
                 : ServiceResult<bool>.Failure("No se pudo actualizar.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al actualizar el tipo de antecedente.");
         }
@@ -138,7 +138,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
                 ? ServiceResult<bool>.Success(result, "Desactivado exitosamente.")
                 : ServiceResult<bool>.Failure("No se encontró el registro.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ServiceResult<bool>.Failure("Error al desactivar.");
         }
