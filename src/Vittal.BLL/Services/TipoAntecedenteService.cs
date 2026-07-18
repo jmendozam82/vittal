@@ -39,7 +39,7 @@ public class TipoAntecedenteService : ITipoAntecedenteService
 
             return ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>.Success(dtos);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener tipos de antecedentes para clínica {ClinicaId}", clinicaId);
             return ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>.Failure("Error al obtener tipos de antecedentes.");
