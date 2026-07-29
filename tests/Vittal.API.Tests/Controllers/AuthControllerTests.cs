@@ -27,6 +27,7 @@ public class AuthControllerTests
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<IUsuarioService> _usuarioServiceMock;
     private readonly Mock<IPermisoService> _permisoServiceMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
     private readonly Mock<ILogger<AuthController>> _loggerMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly AuthController _controller;
@@ -37,6 +38,7 @@ public class AuthControllerTests
         _configurationMock = new Mock<IConfiguration>();
         _usuarioServiceMock = new Mock<IUsuarioService>();
         _permisoServiceMock = new Mock<IPermisoService>();
+        _emailServiceMock = new Mock<IEmailService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
 
@@ -51,6 +53,7 @@ public class AuthControllerTests
             _configurationMock.Object,
             _usuarioServiceMock.Object,
             _permisoServiceMock.Object,
+            _emailServiceMock.Object,
             _loggerMock.Object);
 
         // Setup authenticated user for endpoints that need it
