@@ -15,7 +15,9 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
         private readonly ApiClientHelper _apiClient;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(ApiClientHelper apiClient, ILogger<AuthController> logger)
+        public AuthController(
+            ApiClientHelper apiClient,
+            ILogger<AuthController> logger)
         {
             _apiClient = apiClient;
             _logger = logger;
@@ -147,5 +149,62 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
+
+        // ────────────────────────────────────────────────────────────────────
+        // Forgot Password — Notifica al admin de la clínica
+        // ────────────────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                _logger.LogInformation("Solicitud de recuperación de contraseña para email: {Email}", model.Email);
+
+                // Llamar a la API (no al BLL directamente) para mantener la arquitectura N-capas
+                var (success, response, errorMessage) = await _apiClient.PostAnonymousAsync<ApiResponse>(
+                    "api/Auth/forgot-password",
+                    new { email = model.Email });
+
+                if (success && response != null)
+                {
+                    _logger.LogInformation("API ForgotPassword respondió exitosamente para {Email}: {Message}",
+                        model.Email, response.Message);
+                }
+                else
+                {
+                    _logger.LogWarning("API ForgotPassword responded with {Error} for {Email}",
+                        errorMessage ?? response?.Message ?? "unknown error", model.Email);
+                }
+
+                // Siempre mostrar confirmación (por seguridad, no revelar si el email existe)
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado en ForgotPassword para {Email}", model.Email);
+                // Redirigir a confirmación igualmente (no revelar errores)
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
     }
 }

@@ -51,4 +51,16 @@ public interface IUsuarioRepository : IPaginatedRepository<Usuario>
 
     /// <summary>Verifica si ya existe un número de documento en la clínica. excludeId para ignorar el mismo usuario en update.</summary>
     Task<bool> ExistsByNumeroDocumentoAsync(Guid clinicaId, string numeroDocumento, Guid? excludeId);
+
+    /// <summary>
+    /// Busca un usuario por su email (sin filtro de clínica).
+    /// Utilizado en el flujo de "Olvidó su contraseña" para identificar al usuario antes de saber su clínica.
+    /// </summary>
+    Task<Usuario?> GetByEmailGlobalAsync(string email);
+
+    /// <summary>
+    /// Obtiene el primer usuario administrador de una clínica específica.
+    /// Utilizado para enviar notificaciones de "Olvidó su contraseña" al admin de la clínica.
+    /// </summary>
+    Task<Usuario?> GetAdminByClinicaAsync(Guid clinicaId);
 }

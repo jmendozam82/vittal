@@ -48,4 +48,17 @@ public interface IUsuarioService
 
     /// <summary>Actualiza el perfil del usuario autenticado (solo campos editables por él mismo).</summary>
     Task<ServiceResult<UsuarioResponseDto>> UpdateProfileAsync(Guid id, MiPerfilUpdateRequestDto dto, Guid clinicaId, Guid modificadoPor);
+
+    /// <summary>
+    /// Busca un usuario por email sin filtro de clínica.
+    /// Utilizado en el flujo de "Olvidó su contraseña" para identificar al usuario.
+    /// Retorna el usuario con su clinica_id para poder buscar al admin de esa clínica.
+    /// </summary>
+    Task<ServiceResult<UsuarioResponseDto>> GetByEmailAsync(string email);
+
+    /// <summary>
+    /// Obtiene el administrador de una clínica específica.
+    /// Utilizado para enviar notificación de "Olvidó su contraseña".
+    /// </summary>
+    Task<ServiceResult<UsuarioResponseDto>> GetAdminByClinicaAsync(Guid clinicaId);
 }

@@ -285,6 +285,24 @@ public class UsuarioService : IUsuarioService
                 }
             }
 
+            // Update email in Supabase Auth if it changed
+            if (existing.AuthUserId.HasValue &&
+                !string.Equals(existing.Email?.Trim(), dto.Email?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email);
+                    _logger.LogInformation("Email actualizado en Supabase Auth para {AuthUserId}: {NewEmail}",
+                        existing.AuthUserId, dto.Email);
+                }
+                catch (Exception authEx)
+                {
+                    _logger.LogError(authEx, "Error al actualizar email en Supabase Auth");
+                    return ServiceResult<UsuarioResponseDto>.Failure(
+                        $"Error al actualizar el correo electrónico en el sistema de autenticación: {authEx.Message}");
+                }
+            }
+
             // Update entity
             existing.Username = dto.Username;
             existing.Nombres = dto.Nombres;
@@ -456,6 +474,10 @@ public class UsuarioService : IUsuarioService
                     "Usuario no encontrado", ServiceErrorType.NotFound);
             }
 
+            // Detectar si el email cambió para actualizarlo también en Supabase Auth
+            var emailOriginal = existing.Email;
+            var emailCambio = !string.Equals(emailOriginal?.Trim(), dto.Email?.Trim(), StringComparison.OrdinalIgnoreCase);
+
             // Actualizar solo campos editables por el propio usuario
             existing.Nombres = dto.Nombres;
             existing.Apellidos = dto.Apellidos;
@@ -466,6 +488,23 @@ public class UsuarioService : IUsuarioService
             existing.FotoUrl = dto.FotoUrl;
             existing.ModificadoPor = modificadoPor;
             existing.FechaModificacion = DateTime.UtcNow;
+
+            // Actualizar email en Supabase Auth si cambió
+            if (emailCambio && existing.AuthUserId.HasValue)
+            {
+                try
+                {
+                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email);
+                    _logger.LogInformation("Email actualizado en Supabase Auth para {AuthUserId}: {NewEmail}",
+                        existing.AuthUserId, dto.Email);
+                }
+                catch (Exception authEx)
+                {
+                    _logger.LogError(authEx, "Error al actualizar email en Supabase Auth desde perfil");
+                    return ServiceResult<UsuarioResponseDto>.Failure(
+                        $"Error al actualizar el correo electrónico: {authEx.Message}");
+                }
+            }
 
             var updated = await _repo.UpdateAsync(existing);
             if (!updated)
@@ -510,6 +549,52 @@ public class UsuarioService : IUsuarioService
         {
             _logger.LogError(ex, "Error al obtener doctores de la clinica {ClinicaId}", clinicaId);
             return ServiceResult<IEnumerable<UsuarioResponseDto>>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    public async Task<ServiceResult<UsuarioResponseDto>> GetByEmailAsync(string email)
+    {
+        try
+        {
+            _logger.LogInformation("Buscando usuario por email (global): {Email}", email);
+            var usuario = await _repo.GetByEmailGlobalAsync(email);
+
+            if (usuario == null)
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "Usuario no encontrado", ServiceErrorType.NotFound);
+            }
+
+            var dto = MapUsuarioToDto(usuario);
+            return ServiceResult<UsuarioResponseDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar usuario por email: {Email}", email);
+            return ServiceResult<UsuarioResponseDto>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    public async Task<ServiceResult<UsuarioResponseDto>> GetAdminByClinicaAsync(Guid clinicaId)
+    {
+        try
+        {
+            _logger.LogInformation("Buscando administrador de la clínica {ClinicaId}", clinicaId);
+            var admin = await _repo.GetAdminByClinicaAsync(clinicaId);
+
+            if (admin == null)
+            {
+                return ServiceResult<UsuarioResponseDto>.Failure(
+                    "No se encontró administrador para esta clínica", ServiceErrorType.NotFound);
+            }
+
+            var dto = MapUsuarioToDto(admin);
+            return ServiceResult<UsuarioResponseDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar admin de la clínica {ClinicaId}", clinicaId);
+            return ServiceResult<UsuarioResponseDto>.Failure($"Error interno: {ex.Message}");
         }
     }
 
@@ -644,6 +729,38 @@ public class UsuarioService : IUsuarioService
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new InvalidOperationException($"Supabase Auth password update failed ({response.StatusCode}): {errorContent}");
         }
+    }
+
+    private async Task UpdateSupabaseAuthEmailAsync(string authUserId, string newEmail)
+    {
+        var supabaseUrl = _config["Supabase:Url"] ?? throw new InvalidOperationException("Supabase:Url not configured");
+        var serviceRoleKey = _config["Supabase:ServiceRoleKey"] ?? throw new InvalidOperationException("Supabase:ServiceRoleKey not configured");
+
+        var client = _httpClientFactory.CreateClient("SupabaseAuth");
+        client.DefaultRequestHeaders.Clear();
+        client.DefaultRequestHeaders.Add("apikey", serviceRoleKey);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {serviceRoleKey}");
+
+        var body = new { email = newEmail };
+        var content = new StringContent(
+            JsonSerializer.Serialize(body),
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{supabaseUrl}/auth/v1/admin/users/{authUserId}")
+        {
+            Content = content
+        };
+
+        var response = await client.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Supabase Auth email update failed ({response.StatusCode}): {errorContent}");
+        }
+
+        _logger.LogInformation("Email actualizado en Supabase Auth para {AuthUserId}: {NewEmail}", authUserId, newEmail);
     }
 
     private async Task BanSupabaseAuthUserAsync(string authUserId)

@@ -494,4 +494,54 @@ public class UsuarioRepository : IUsuarioRepository
             throw;
         }
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 13. GetByEmailGlobalAsync — Busca usuario por email (sin filtro de clínica)
+    //     Para flujo de "Olvidó su contraseña" antes de conocer la clínica.
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<Usuario?> GetByEmailGlobalAsync(string email)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE LOWER(u.email) = LOWER(@Email) AND u.activo = true
+            LIMIT 1;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<Usuario>(sql, new { Email = email });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar usuario por email global: {Email}", email);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 14. GetAdminByClinicaAsync — Obtiene el admin de una clínica
+    //     Para enviar notificación de "Olvidó su contraseña".
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<Usuario?> GetAdminByClinicaAsync(Guid clinicaId)
+    {
+        const string sql = $@"
+            SELECT {SelectColumns}
+            {FromJoin}
+            WHERE u.clinica_id = @ClinicaId
+              AND p.es_admin = true
+              AND u.activo = true
+            LIMIT 1;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<Usuario>(sql, new { ClinicaId = clinicaId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener admin de la clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
 }
