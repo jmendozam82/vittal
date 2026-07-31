@@ -1,205 +1,206 @@
 # Vittal — Sistema Médico SaaS Multi-Tenant
 
-> Plataforma integral para la gestión de citas, expedientes clínicos y operaciones médicas, diseñada para clínicas médicas bajo modelo SaaS.
+> Plataforma integral de gestión clínica para centros médicos, diseñada bajo modelo SaaS con aislamiento total de datos por tenant.
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
-[![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-MVC%20%2B%20Web%20API-512BD4?style=for-the-badge&logo=aspdotnetcore&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet)
+[![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-MVC_%2B_Web_API-512BD4?style=for-the-badge&logo=aspdotnetcore&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Dapper](https://img.shields.io/badge/ORM-Dapper-008080?style=for-the-badge)](https://github.com/DapperLib/Dapper)
-[![Bootstrap](https://img.shields.io/badge/UI-Bootstrap%205.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
-[![xUnit](https://img.shields.io/badge/Tests-87%20passing-2D8C3C?style=for-the-badge&logo=xunit&logoColor=white)](https://xunit.net/)
-[![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](#)
+[![Bootstrap](https://img.shields.io/badge/UI-Bootstrap_5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![License](https://img.shields.io/badge/Licencia-Privada-red?style=for-the-badge)](#licencia)
 
 ---
 
-## 📋 Descripción
+## Descripción
 
-**Vittal** es una plataforma SaaS (Software as a Service) multi-tenant que centraliza toda la operación clínica de centros médicos: desde la gestión de pacientes y citas médicas, hasta expedientes clínicos completos con diagnósticos, tratamientos, cirugías, exámenes y resultados.
+**Vittal** es una plataforma **SaaS (Software as a Service) multi-tenant** que centraliza toda la operación clínica de centros médicos: gestión de pacientes, agenda de citas, expedientes clínicos completos, diagnósticos, tratamientos, cirugías, reportes analíticos y notificaciones en tiempo real.
 
-Cada clínica opera con **aislamiento total de datos** mediante Row Level Security (RLS) en PostgreSQL, mientras un **Super Admin Global** puede provisionar nuevas clínicas de forma automatizada.
-
-### Cliente Principal
-
-| Campo | Valor |
-|-------|-------|
-| **Cliente** | MedicCore — Clínicas Médicas |
-| **Tipo** | Clínica médica multi-sala |
-| **Modelo** | SaaS + BaaS (Backend as a Service) |
+Cada clínica opera con **aislamiento total de datos** mediante Row Level Security (RLS) en PostgreSQL. La plataforma está diseñada para ser adoptada por múltiples clínicas como servicio y expone su API como BaaS para integraciones externas.
 
 ---
 
-## ✨ Características Principales
+## Características del Sistema
 
-### 🏥 Gestión Clínica
-
-| Módulo | Descripción |
-|--------|-------------|
-| **Pacientes** | Registro completo con datos personales, foto y expediente médico |
-| **Agenda** | Programación de citas con estados: Agendada, En espera, En atención, Atendida, Cancelada |
-| **Cola de Espera** | Vista en tiempo real del flujo de pacientes del día (SignalR) |
-| **Línea de Tiempo** | Tracking de pasos del paciente por sala/área con timer en vivo |
-| **Expedientes** | Hojas de cita con diagnósticos, tratamientos, cirugías, exámenes y archivos adjuntos |
-
-### 📊 Analítica y Reportes
+### Gestión Clínica
 
 | Módulo | Descripción |
 |--------|-------------|
-| **Dashboard** | KPIs en tiempo real: pacientes del día, citas pendientes, tiempos de espera |
-| **Reportes** | 4 tipos de reporte con filtros dinámicos, gráficos Chart.js y exportación CSV |
-| **Alertas** | Notificaciones push configurables cuando se exceden tiempos de espera |
+| **Pacientes** | Registro completo con datos personales, documento de identificación y foto |
+| **Agenda** | Gestión de citas médicas con estados: Agendada, En espera, En atención, Atendida, Cancelada |
+| **Cola de Espera** | Vista en tiempo real del flujo de pacientes del día |
+| **Línea de Tiempo** | Seguimiento de pasos del paciente por sala con control de tiempos |
+| **Expedientes Clínicos** | Hojas de cita con diagnósticos, tratamientos, cirugías, exámenes, recomendaciones y archivos adjuntos |
+| **Constancias Médicas** | Generación de constancias a partir del expediente del paciente |
 
-### ⚙️ Administración Multi-Tenant
+### Catálogos Médicos
+
+| Catálogo | Descripción |
+|----------|-------------|
+| **Medicamentos** | Catálogo de medicamentos utilizados en tratamientos |
+| **Tipos de Cirugías / Cirugías** | Clasificación y registro de procedimientos quirúrgicos |
+| **Tipos de Diagnósticos / Diagnósticos** | Clasificación diagnóstica por sala y especialidad |
+| **Tratamientos** | Protocolos de tratamiento por diagnóstico |
+| **Recomendaciones** | Indicaciones médicas estandarizadas |
+| **Exámenes** | Registro de exámenes clínicos y resultados |
+| **Antecedentes por Sala** | Catálogo de antecedentes configurado por especialidad |
+| **Signos Vitales por Sala** | Tipos de signos vitales según la especialidad de la sala |
+| **Plantillas de Especialidad** | Plantillas globales del sistema para onboarding rápido de nuevas salas |
+
+### Analítica y Reportes
 
 | Módulo | Descripción |
 |--------|-------------|
-| **Super Admin** | Provisionamiento automatizado de nuevas clínicas con un solo endpoint |
-| **Clínicas** | Gestión de tenants con configuración independiente |
+| **Dashboard** | Indicadores clave en tiempo real: pacientes del día, citas pendientes, tiempos de espera |
+| **Reportes** | Reportes con filtros dinámicos y exportación |
+| **Alertas Configurables** | Notificaciones automáticas cuando se exceden tiempos de espera por clínica |
+
+### Administración Multi-Tenant
+
+| Módulo | Descripción |
+|--------|-------------|
+| **Clínicas** | Gestión de tenants con configuración independiente por organización |
+| **Salas / Áreas** | Configuración de salas con especialidades médicas dinámicas |
 | **Usuarios** | Creación, edición y asignación de perfiles y salas |
-| **Permisos** | Sistema granular: READ, CREATE, UPDATE por módulo y perfil |
-| **Salas** | Configuración de salas con especialidades médicas dinámicas |
+| **Perfiles** | Definición de roles y alcance de acceso |
+| **Permisos** | Control granular de permisos por módulo y perfil |
+| **Provisionamiento** | Creación automatizada de nuevas clínicas (Super Admin) |
 
-### 📚 Catálogos Médicos
+### Landing Page Pública
 
-- **Medicamentos** · **Tipos de Cirugías** · **Cirugías**
-- **Tipos de Diagnósticos** · **Diagnósticos** · **Tratamientos**
-- **Recomendaciones** · **Exámenes** · **Plantillas de Especialidad**
-- **Antecedentes por Sala** · **Signos Vitales por Sala**
-- **Constancias Médicas**
+Página informativa para prospectos y futuros socios de la plataforma, con formulario de contacto integrado.
 
 ---
 
-## 🏗 Arquitectura
+## Arquitectura
 
 ### Patrón: N-Capas (N-Tier) + MVC
 
-Arquitectura estricta con separación de responsabilidades. Ninguna capa puede saltarse otra.
+La solución implementa una arquitectura de N-capas estricta con separación de responsabilidades entre proyectos independientes. El patrón MVC se aplica en la capa de presentación y el patrón Repositorio en el acceso a datos.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Vittal.Aplicacion (MVC)                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────┐   │
-│  │  Areas/  │  │Controllers│  │  Views/  │  │   wwwroot/    │   │
-│  │ (10 áreas)│  │  (26)    │  │ (~95+)   │  │ JS + CSS      │   │
-│  └────┬─────┘  └──────────┘  └──────────┘  └───────────────┘   │
-└───────┼─────────────────────────────────────────────────────────┘
-        │ HTTP
-┌───────▼─────────────────────────────────────────────────────────┐
-│                    Vittal.API (Web API)                         │
-│  ┌──────────────┐  ┌────────────┐  ┌─────────────────────────┐ │
-│  │ Controllers  │  │ SignalR    │  │ Auth (JWT + Supabase)   │ │
-│  │    (36)      │  │ Hubs (2)   │  │ RequirePermission       │ │
-│  └──────┬───────┘  └────────────┘  │ RequireSuperAdmin       │ │
-└───────┼───────────────────────────┴───────────────────────────┘
-        │
-┌───────▼─────────────────────────────────────────────────────────┐
-│                    Vittal.BLL (Business Logic)                  │
-│  ┌──────────────────┐  ┌──────────────────────────────────────┐ │
-│  │ Interfaces (35)  │  │ Services (35)                        │ │
-│  │ IService         │  │ ServiceResult<T> + FluentValidation  │ │
-│  └────────┬─────────┘  └──────────────────────────────────────┘ │
-└─────────┼───────────────────────────────────────────────────────┘
-          │
-┌─────────▼───────────────────────────────────────────────────────┐
-│                    Vittal.DAL (Data Access)                     │
-│  ┌──────────────────┐  ┌──────────────────────────────────────┐ │
-│  │ Interfaces (36)  │  │ Repositories (36)                    │ │
-│  │ IRepository      │  │ Dapper + DbConnectionFactory         │ │
-│  └────────┬─────────┘  └──────────────────────────────────────┘ │
-└─────────┼───────────────────────────────────────────────────────┘
-          │ SQL
-┌─────────▼───────────────────────────────────────────────────────┐
-│              Supabase (PostgreSQL 15 + BaaS)                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────┐  │
-│  │ 31 Migs  │  │ RLS      │  │ Realtime │  │ Storage Buckets│  │
-│  │ ~38 Tablas│  │ Policies │  │ Channels │  │ expedientes/   │  │
-│  └──────────┘  └──────────┘  └──────────┘  │ avatares/      │  │
-│                                             └────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Vittal.Aplicacion (MVC)                    │
+│          11 Áreas · Controllers MVC · Vistas Razor           │
+└───────────────────────────┬──────────────────────────────────┘
+                            │ HTTP / JSON
+┌───────────────────────────▼──────────────────────────────────┐
+│                    Vittal.API (Web API)                      │
+│       42 Controllers REST · 2 Hubs SignalR · Middleware      │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│               Vittal.BLL (Business Logic Layer)              │
+│              40 Interfaces · 40 Services · 41 Validators     │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│               Vittal.DAL (Data Access Layer)                 │
+│           40 Interfaces · 39 Repositories · Dapper           │
+└───────────────────────────┬──────────────────────────────────┘
+                            │ SQL (Npgsql)
+┌───────────────────────────▼──────────────────────────────────┐
+│              Supabase — PostgreSQL 15 + BaaS                 │
+│     42 Migraciones · RLS · Realtime · Storage Buckets        │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Flujo de Datos
 
 ```
-Vista Razor → MVC Controller → API Controller → BLL Service → DAL Repository → PostgreSQL
-             ← DTO Response ← BLL ← DAL ← Entity ← PostgreSQL
+Vista Razor → Controller MVC → Controller API → BLL Service → DAL Repository → PostgreSQL
+             ← DTO Response  ← BLL            ← DAL         ← Entity        ← PostgreSQL
 ```
 
-### Principios Arquitectónicos
+**Regla fundamental:** Ninguna capa puede saltarse otra. El Controller no llama directamente al DAL. La Vista no accede al BLL. El DAL no contiene lógica de negocio.
 
-| Principio | Implementación |
-|-----------|---------------|
-| **Multi-Tenant** | `clinica_id` en toda tabla de negocio + RLS policies |
-| **Soft Delete** | `activo = false` — nunca DELETE físico |
-| **Tenant Isolation** | JWT claims + `TenantMiddleware` + RLS en BD |
-| **Super Admin** | `RequireSuperAdminAttribute` con bypass de tenant |
-| **Audit Trail** | `fecha_creacion`, `fecha_modificacion` en toda entidad |
-| **UUID IDs** | `gen_random_uuid()` autogenerado en PostgreSQL |
-| **API Responses** | Wrapper `ApiResponse<T>` consistente en todos los endpoints |
-| **Validación** | FluentValidation (server) + jQuery Validate (client) |
+### Principios de Diseño
+
+| Principio | Descripción |
+|-----------|-------------|
+| **Multi-Tenant** | `clinica_id` en toda tabla de negocio + Row Level Security |
+| **Soft Delete** | Los registros se desactivan (`activo = false`), nunca se eliminan físicamente |
+| **Aislamiento de Datos** | Cada tenant opera en un espacio de datos completamente aislado |
+| **Especialidad por Sala** | Catálogos médicos configurados por sala, no por clínica (discriminador `sala_id`) |
+| **Auditoría** | `fecha_creacion`, `fecha_modificacion` en toda entidad del sistema |
+| **UUIDs autogenerados** | Ningún ID puede ser asignado manualmente — se genera en la base de datos |
+| **Respuestas consistentes** | Wrapper `ApiResponse<T>` estándar en todos los endpoints REST |
+| **Validación en dos niveles** | FluentValidation en servidor + jQuery Validate en cliente |
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 vittal/
 ├── src/
-│   ├── Vittal.Aplicacion/          # Frontend MVC (10 áreas, ~95 vistas)
-│   │   ├── Areas/
-│   │   │   ├── Administracion/     # Perfiles, Usuarios, Permisos, Salas
-│   │   │   ├── Agenda/             # Citas médicas
-│   │   │   ├── Alertas/            # Alertas configurables
-│   │   │   ├── Catalogos/          # 12 catálogos médicos
-│   │   │   ├── ColaEspera/         # Cola en tiempo real
-│   │   │   ├── Dashboard/          # KPIs y gráficos
-│   │   │   ├── Expedientes/        # Expediente clínico completo
-│   │   │   ├── LineaTiempo/        # Timeline de pacientes
-│   │   │   ├── Login/              # Autenticación
-│   │   │   └── Reportes/           # Reportes y exportación
-│   │   └── wwwroot/                # CSS, JS, assets
-│   ├── Vittal.API/                 # Backend Web API (36 controllers + 2 hubs)
-│   │   ├── Controllers/
-│   │   ├── Hubs/                   # AlertasHub, LineaTiempoHub
-│   │   ├── Authorization/          # RequirePermission, RequireSuperAdmin
-│   │   ├── Extensions/             # ClaimsPrincipal, ServiceResult
-│   │   └── Middleware/             # TenantMiddleware
-│   ├── Vittal.BLL/                 # Business Logic Layer
-│   │   ├── Interfaces/             # 35 service interfaces
-│   │   └── Services/               # 35 service implementations
-│   ├── Vittal.DAL/                 # Data Access Layer
-│   │   ├── Interfaces/             # 36 repository interfaces
-│   │   ├── Repositories/           # 36 repository implementations
-│   │   └── Connections/            # DbConnectionFactory
-│   ├── Vittal.Entity/              # Domain entities (38 classes)
-│   ├── Vittal.DTO/                 # Data Transfer Objects (~75+ files)
-│   ├── Vittal.IOC/                 # Dependency Injection (~76 registros)
-│   └── Vittal.Utility/             # Shared helpers y extensiones
+│   ├── Vittal.Aplicacion/          # Frontend MVC — 11 Áreas, vistas Razor
+│   │   └── Areas/
+│   │       ├── Landing/            # Página pública informativa
+│   │       ├── Login/              # Autenticación
+│   │       ├── Administracion/     # Usuarios, Perfiles, Permisos, Salas
+│   │       ├── Catalogos/          # 12 catálogos médicos
+│   │       ├── Expedientes/        # Expediente clínico completo
+│   │       ├── Agenda/             # Gestión de citas
+│   │       ├── ColaEspera/         # Cola de pacientes en tiempo real
+│   │       ├── LineaTiempo/        # Timeline de atención del día
+│   │       ├── Dashboard/          # KPIs e indicadores
+│   │       ├── Reportes/           # Generación y exportación de reportes
+│   │       └── Alertas/            # Configuración de alertas
+│   │
+│   ├── Vittal.API/                 # Backend Web API REST
+│   │   ├── Controllers/            # 42 controllers documentados con Swagger
+│   │   ├── Hubs/                   # SignalR: AlertasHub, LineaTiempoHub
+│   │   ├── Authorization/          # Atributos de control de acceso
+│   │   ├── Middleware/             # Middleware de contexto de tenant
+│   │   ├── Extensions/             # Extensiones de claims y resultados
+│   │   └── Services/               # Servicios de infraestructura y background
+│   │
+│   ├── Vittal.BLL/                 # Capa de Lógica de Negocio
+│   │   ├── Interfaces/             # 40 interfaces de servicios
+│   │   ├── Services/               # 40 implementaciones
+│   │   └── Validators/             # 41 validadores FluentValidation
+│   │
+│   ├── Vittal.DAL/                 # Capa de Acceso a Datos
+│   │   ├── Interfaces/             # 40 interfaces de repositorios
+│   │   ├── Repositories/           # 39 implementaciones con Dapper
+│   │   ├── Context/                # Fábrica de conexiones y type handlers
+│   │   └── Exceptions/             # Excepciones de acceso a datos
+│   │
+│   ├── Vittal.Entity/              # Entidades del dominio (40 modelos)
+│   ├── Vittal.DTO/                 # Data Transfer Objects (Request / Response)
+│   ├── Vittal.IOC/                 # Registro centralizado de dependencias
+│   └── Vittal.Utility/             # Utilidades compartidas: ServiceResult, PermissionType
+│
 ├── tests/
-│   ├── Vittal.BLL.Tests/           # 66 unit tests (xUnit + Moq)
-│   └── Vittal.API.Tests/           # 21 integration tests
+│   ├── Vittal.BLL.Tests/           # Tests unitarios de servicios (xUnit + Moq)
+│   └── Vittal.API.Tests/           # Tests de integración de endpoints
+│
 ├── supabase/
-│   ├── config.toml
-│   └── migrations/                 # 31 migraciones SQL versionadas
-├── skills/                         # 29 archivos de instrucciones por capa
-├── docs/                           # Documentación del proyecto
-├── CLAUDE.md                       # Archivo maestro del proyecto
-├── ORCHESTRATOR.md                 # Guía de orquestación de agentes
-├── AGENTS.md                       # Reglas para agentes de IA
-└── Vittal.sln                      # Solución .NET (10 proyectos)
+│   ├── config.toml                 # Configuración Supabase CLI
+│   └── migrations/                 # 42 migraciones SQL versionadas
+│
+├── skills/                         # Instrucciones técnicas por capa
+├── docs/                           # Documentación técnica del proyecto
+├── Dockerfile.api                  # Imagen Docker para el API
+├── Dockerfile.web                  # Imagen Docker para el Frontend
+└── Vittal.sln                      # Solución .NET — 8 proyectos
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## Requisitos Previos
 
-### Prerrequisitos
+| Herramienta | Versión | Uso |
+|-------------|---------|-----|
+| [.NET SDK](https://dotnet.microsoft.com/download/dotnet/8.0) | 8.0 o superior | Runtime y compilación |
+| [Supabase CLI](https://supabase.com/docs/guides/cli) | Última estable | Gestión de base de datos y migraciones |
+| [Git](https://git-scm.com/) | 2.40 o superior | Control de versiones |
+| [Visual Studio Code](https://code.visualstudio.com/) | Última | IDE recomendado con C# Dev Kit |
 
-| Herramienta | Versión | Descripción |
-|-------------|---------|-------------|
-| [.NET SDK](https://dotnet.microsoft.com/download/dotnet/8.0) | 8.0+ | Runtime y SDK |
-| [Supabase CLI](https://supabase.com/docs/guides/cli) | Latest | Gestión de BD local |
-| [Git](https://git-scm.com/) | 2.40+ | Control de versiones |
+---
+
+## Configuración del Entorno de Desarrollo
 
 ### 1. Clonar el repositorio
 
@@ -208,274 +209,188 @@ git clone <repository-url>
 cd vittal
 ```
 
-### 2. Configurar Supabase (local)
+### 2. Inicializar la base de datos local
 
 ```bash
-# Iniciar Supabase local
+# Iniciar los servicios de Supabase en modo local
 supabase start
 
-# Aplicar migraciones
+# Aplicar todas las migraciones al entorno local
 supabase db push
 ```
 
-### 3. Configurar conexión
+### 3. Configurar variables de entorno
 
-Crear `appsettings.Development.json` en `Vittal.API/` y `Vittal.Aplicacion/`:
+Crear el archivo `appsettings.Development.json` dentro de `src/Vittal.API/` con las credenciales del entorno local de Supabase. Consultar con el equipo el archivo de ejemplo `.env.example` o la guía en `docs/configuracion.md`.
 
-```json
-{
-  "ConnectionStrings": {
-    "Supabase": "Host=localhost;Database=postgres;Username=postgres;Password=<tu-password>;Port=54322"
-  },
-  "Supabase": {
-    "Url": "http://localhost:54321",
-    "AnonKey": "<tu-anon-key>",
-    "ServiceRoleKey": "<tu-service-role-key>"
-  },
-  "Jwt": {
-    "Secret": "<tu-jwt-secret>",
-    "Issuer": "vittal-api",
-    "Audience": "vittal-client",
-    "ExpirationHours": 8
-  }
-}
-```
+> **Importante:** No incluir credenciales reales en el repositorio. Utilizar únicamente las claves del entorno local de Supabase (`supabase start` las genera automáticamente).
 
-### 4. Ejecutar la aplicación
+### 4. Ejecutar los proyectos
 
 ```bash
-# API Backend (puerto configurado en launchSettings.json)
+# Levantar el API Backend
 dotnet run --project src/Vittal.API
 
-# Frontend MVC (puerto configurado en launchSettings.json)
+# Levantar el Frontend MVC (en otra terminal)
 dotnet run --project src/Vittal.Aplicacion
 ```
 
-### 5. Acceder al sistema
+### 5. Verificar los servicios
 
-| Servicio | URL |
-|----------|-----|
-| **Frontend** | `https://localhost:<port>` |
-| **API** | `https://localhost:<port>/api` |
-| **Swagger** | `https://localhost:<port>/swagger` |
-| **Supabase Studio** | `http://localhost:54323` |
+Una vez en ejecución, los servicios estarán disponibles según la configuración de `launchSettings.json` de cada proyecto:
+
+| Servicio | Descripción |
+|----------|-------------|
+| **Frontend** | Interfaz web del sistema |
+| **API REST** | Backend con documentación Swagger en `/swagger` |
+| **Supabase Studio** | Administrador de base de datos (entorno local) |
 
 ---
 
-## 🧪 Testing
+## Tests
 
 ```bash
-# Ejecutar todos los tests
+# Ejecutar la suite completa de tests
 dotnet test
 
-# Tests de BLL (66 tests)
+# Ejecutar únicamente tests unitarios de BLL
 dotnet test tests/Vittal.BLL.Tests/
 
-# Tests de API (21 tests)
+# Ejecutar únicamente tests de integración de API
 dotnet test tests/Vittal.API.Tests/
 
-# Con cobertura
+# Generar reporte de cobertura de código
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-### Cobertura actual
-
-| Proyecto | Tests | Framework | Estado |
-|----------|-------|-----------|--------|
-| Vittal.BLL.Tests | 66 | xUnit + Moq + FluentAssertions | ✅ Passing |
-| Vittal.API.Tests | 21 | xUnit + Moq | ✅ Passing |
-| **Total** | **87** | | ✅ **All passing** |
+| Suite | Framework | Módulos cubiertos |
+|-------|-----------|-------------------|
+| `Vittal.BLL.Tests` | xUnit + Moq + FluentAssertions | Admin, AlertaEspera, Cita, Dashboard, Expediente, LineaTiempo, Paciente, Reporte, Usuario |
+| `Vittal.API.Tests` | xUnit + Moq | Integration tests de endpoints |
 
 ---
 
-## 📊 Métricas del Proyecto
+## Base de Datos
 
-| Métrica | Valor |
-|---------|-------|
-| **Proyectos en solución** | 10 |
-| **Migraciones SQL** | 31 |
-| **Tablas de negocio** | ~38 + 2 buckets Storage |
-| **Entities** | 38 |
-| **DTOs** | ~75+ archivos en 36 carpetas |
-| **Interfaces DAL** | 36 |
-| **Repositorios DAL** | 36 |
-| **Servicios BLL** | 35 |
-| **Controllers API** | 36 |
-| **SignalR Hubs** | 2 |
-| **Controllers MVC** | 26 |
-| **Áreas MVC** | 10 |
-| **Vistas Razor** | ~95+ |
-| **Registros DI** | ~76 |
-| **Tests unitarios** | 87 |
-| **Build** | 0 errores, 0 warnings |
-| **Violaciones críticas** | 0 |
+### Motor: PostgreSQL 15 vía Supabase
 
----
+| Característica | Implementación |
+|----------------|---------------|
+| **Identificadores** | UUID generado automáticamente por la base de datos |
+| **Aislamiento de tenant** | Campo `clinica_id` en toda tabla de negocio |
+| **Borrado lógico** | Campo `activo BOOLEAN` — los registros nunca se eliminan físicamente |
+| **Timestamps** | `TIMESTAMPTZ` en UTC para todas las fechas |
+| **Seguridad a nivel fila** | Row Level Security habilitado en todas las tablas |
+| **Migraciones** | 42 migraciones versionadas en `/supabase/migrations/` |
 
-## 🔐 Modelo de Seguridad
-
-### Autenticación
-
-```
-Usuario → Supabase Auth → JWT Token → API Request → Claims Extraídos
-```
-
-El JWT contiene: `user_id`, `clinica_id`, `perfil_id`, `permisos[]`, `es_super_admin`
-
-### Autorización
-
-| Filtro | Propósito |
-|--------|-----------|
-| `[Authorize]` | Requiere JWT válido |
-| `[RequirePermission("modulo", PermissionType.Read)]` | Verifica permiso granular |
-| `[RequireSuperAdmin]` | Acceso exclusivo de Super Admin Global |
-
-### Aislamiento Multi-Tenant
-
-```
-┌─────────────────────────────────────────────┐
-│              Tenant Isolation               │
-├──────────────┬──────────────────────────────┤
-│ Application  │ TenantMiddleware + JWT claims│
-│ Database     │ RLS policies (clinica_id)    │
-│ API          │ clinicaId extraído del JWT   │
-│ Super Admin  │ Bypass de tenant isolation   │
-└──────────────┴──────────────────────────────┘
-```
-
-### Permisos Granulares
-
-| Permiso | Código | Operaciones |
-|---------|--------|-------------|
-| Leer | `READ` | GET — Visualizar listados y registros |
-| Crear | `CREATE` | POST — Insertar nuevos registros |
-| Actualizar | `UPDATE` | PUT/PATCH — Editar registros existentes |
-
-> **No existe eliminación física.** Los registros se desactivan con `activo = false`.
-
----
-
-## 📡 API Endpoints
-
-La API REST está documentada con **Swagger/OpenAPI 3.0**. Accede a `/swagger` para la documentación interactiva.
-
-### Endpoints principales
-
-| Recurso | GET | POST | PUT/PATCH |
-|---------|-----|------|-----------|
-| `/api/pacientes` | Listar pacientes | Crear paciente | — |
-| `/api/citas` | Listar citas | Crear cita | Actualizar cita |
-| `/api/expedientes` | Listar expedientes | Crear expediente | Actualizar |
-| `/api/dashboard/data` | KPIs del día | — | — |
-| `/api/linea-tiempo/dia` | Timeline del día | Iniciar paso | Finalizar/Saltar |
-| `/api/alertas` | Alertas activas | Resolver alerta | — |
-| `/api/notificaciones` | Notificaciones | — | Marcar leída |
-| `/api/reportes` | Historial reportes | Generar reporte | Exportar CSV |
-| `/api/admin/provision` | — | Provisionar clínica | — |
-
-### SignalR Hubs
-
-| Hub | Ruta | Propósito |
-|-----|------|-----------|
-| `AlertasHub` | `/hubs/alertas` | Notificaciones push de alertas de espera |
-| `LineaTiempoHub` | `/hubs/linea-tiempo` | Actualizaciones en vivo del timeline |
-
----
-
-## 🗄 Base de Datos
-
-### Motor: PostgreSQL 15 (Supabase)
-
-| Característica | Detalle |
-|----------------|---------|
-| **IDs** | UUID con `gen_random_uuid()` |
-| **Tenant** | `clinica_id UUID NOT NULL` en toda tabla de negocio |
-| **Soft Delete** | `activo BOOLEAN NOT NULL DEFAULT true` |
-| **Timestamps** | `TIMESTAMPTZ` (UTC) |
-| **RLS** | Habilitado en todas las tablas de negocio |
-| **Migraciones** | 31 migraciones versionadas en `/supabase/migrations/` |
-
-### Campos obligatorios en toda tabla de negocio
-
-```sql
-id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-clinica_id          UUID NOT NULL REFERENCES clinicas(id),
-activo              BOOLEAN NOT NULL DEFAULT true,
-fecha_creacion      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-fecha_modificacion  TIMESTAMPTZ
-```
-
-### Migraciones
+### Gestión de migraciones
 
 ```bash
-# Ver estado de migraciones
+# Consultar el estado de migraciones aplicadas
 supabase migration list
 
-# Aplicar migraciones pendientes
+# Aplicar migraciones pendientes al entorno conectado
 supabase db push
 
-# Crear nueva migración
-supabase migration new nombre_de_la_migracion
+# Crear una nueva migración
+supabase migration new <nombre_descriptivo>
 ```
 
 ---
 
-## 🤖 Desarrollo con Agentes de IA
+## API REST
 
-Este proyecto está configurado para desarrollo orquestado con **Claude Code Agent Teams**:
+La API está completamente documentada con **Swagger / OpenAPI 3.0**. Al ejecutar el proyecto en modo desarrollo, acceder a `/swagger` para la documentación interactiva con todos los endpoints, esquemas de request/response y posibilidad de pruebas directas.
 
-| Rol | Agente | Responsabilidad |
-|-----|--------|-----------------|
-| **@PM** | Director de Proyecto | Orquestación, asignación, QA |
-| **@Arquitecto** | Arquitecto de Software | Entity, DTO, interfaces, IOC |
-| **@IngenieroDatos** | Ingeniero de Datos | Migraciones SQL, RLS, Repositories |
-| **@EspecialistaUI** | Especialista UI/UX | BLL Services, API Controllers, Views |
+### Recursos principales
 
-### Archivos de configuración
+| Área | Recursos expuestos |
+|------|--------------------|
+| **Autenticación** | Login, refresh, perfil propio |
+| **Administración** | Clínicas, usuarios, perfiles, permisos, salas |
+| **Catálogos** | Pacientes, medicamentos, cirugías, diagnósticos, tratamientos, exámenes, recomendaciones |
+| **Especialidades** | Plantillas, tipos de antecedente, tipos de signo vital |
+| **Expedientes** | Expedientes, hojas de cita, archivos adjuntos, constancias |
+| **Operaciones** | Citas, cola de espera, línea de tiempo, alertas, notificaciones |
+| **Analítica** | Dashboard, reportes |
+| **Landing** | Formulario de contacto |
 
-| Archivo | Propósito |
-|---------|-----------|
-| `CLAUDE.md` | Archivo maestro con contexto completo del proyecto |
-| `ORCHESTRATOR.md` | Guía de orquestación, roles y flujos de trabajo |
-| `AGENTS.md` | Reglas y convenciones para agentes de IA |
-| `skills/` | 29 archivos de instrucciones por capa técnica |
+### Tiempo Real (SignalR)
+
+| Hub | Propósito |
+|-----|-----------|
+| **AlertasHub** | Notificaciones push cuando se exceden tiempos de espera configurados |
+| **LineaTiempoHub** | Actualizaciones en vivo del timeline de atención del día |
 
 ---
 
-## 📚 Documentación Adicional
+## Modelo de Seguridad
+
+El sistema implementa múltiples capas de seguridad complementarias:
+
+- **Autenticación:** JWT emitido por Supabase Auth, validado en cada request
+- **Autorización granular:** Permisos de lectura, creación y actualización verificados por módulo y perfil
+- **Aislamiento de tenant:** Cada request opera únicamente sobre los datos del tenant autenticado
+- **Seguridad a nivel de base de datos:** Row Level Security como segunda línea de defensa
+- **Sin eliminación física:** Los datos nunca se borran, solo se desactivan — garantizando trazabilidad completa
+- **Auditoría:** Registro de creación y modificación en cada entidad del sistema
+
+> Para detalles de configuración de seguridad, consultar la documentación interna en `docs/`.
+
+---
+
+## Métricas del Sistema
+
+| Métrica | Valor actual |
+|---------|-------------|
+| Proyectos en solución | 8 |
+| Migraciones SQL | 42 |
+| Entidades de dominio | 40 |
+| Interfaces DAL | 40 |
+| Repositorios DAL | 39 (+1 interfaz base genérica) |
+| Interfaces BLL | 40 |
+| Servicios BLL | 40 |
+| Validadores FluentValidation | 41 |
+| Controllers API REST | 42 |
+| Hubs SignalR | 2 |
+| Áreas MVC | 11 |
+| Historias de usuario completadas | 29 / 29 |
+| Estado del build | ✅ Sin errores ni warnings |
+| Violaciones arquitectónicas | 0 |
+
+---
+
+## Documentación
 
 | Recurso | Descripción |
 |---------|-------------|
-| [CLAUDE.md](./CLAUDE.md) | Archivo maestro — contexto, convenciones, reglas de negocio |
-| [ORCHESTRATOR.md](./ORCHESTRATOR.md) | Guía de orquestación del equipo de agentes |
-| [AGENTS.md](./AGENTS.md) | Reglas de desarrollo para agentes de IA |
-| [skills/](./skills/) | Instrucciones detalladas por capa (BLL, DAL, Controller, View, Supabase) |
-| [docs/](./docs/) | Documentación adicional del proyecto |
-| Swagger UI | Documentación interactiva de la API (al ejecutar el proyecto) |
+| `docs/CLAUDE.md` | Archivo maestro del proyecto — contexto, arquitectura y reglas de negocio |
+| `docs/ORCHESTRATOR.md` | Guía de orquestación del equipo de desarrollo |
+| `docs/AGENTS.md` | Convenciones y reglas de desarrollo |
+| `docs/configuracion.md` | Guía de configuración del entorno |
+| `skills/` | Instrucciones técnicas por capa (BLL, DAL, Controller, View, Supabase) |
+| Swagger UI | Documentación interactiva de la API (disponible al ejecutar el proyecto) |
 
 ---
 
-## 📄 Licencia
+## Despliegue con Docker
 
-**Propiedad privada** — Todos los derechos reservados.
+El repositorio incluye `Dockerfile.api` y `Dockerfile.web` para construir imágenes de contenedor del API y del Frontend respectivamente.
 
-Este software es propiedad de **MedicCore**. Su uso, distribución y modificación están restringidos a los términos del contrato de desarrollo establecido.
+Consultar la documentación de despliegue en `docs/` para instrucciones de configuración de variables de entorno en producción.
 
 ---
 
-## 👥 Equipo de Desarrollo
+## Licencia
 
-| Rol | Descripción |
-|-----|-------------|
-| **Cliente** | MedicCore — Clínicas Médicas |
-| **Desarrollo** | Claude Code Agent Teams (IA orquestada) |
-| **Arquitectura** | N-Tier + MVC + Repository Pattern |
-| **Base de Datos** | Supabase (PostgreSQL 15) |
+**Propiedad privada — Todos los derechos reservados.**
+
+Este software es propiedad de **MedicCore**. Su uso, distribución y modificación están restringidos a los términos del contrato de desarrollo vigente. Queda prohibida su reproducción total o parcial sin autorización expresa y por escrito.
 
 ---
 
 <p align="center">
-  <strong>Vittal v1.2.0</strong> — Sistema Médico SaaS Multi-Tenant<br>
-  <em>Desarrollado con .NET 8, Supabase y arquitectura N-Tier</em><br>
-  <sub>Última actualización: Mayo 2026</sub>
+  <strong>Vittal v1.0.0</strong> — Sistema Médico SaaS Multi-Tenant<br>
+  <em>Construido con .NET 8 · Supabase · PostgreSQL 15 · Arquitectura N-Tier</em><br>
+  <sub>Última actualización: Julio 2026</sub>
 </p>

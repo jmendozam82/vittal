@@ -10,15 +10,17 @@
     @* ── Sidebar Header: Logo + Toggle ── *@
     <div class="sidebar-header">
         <a class="d-flex align-items-center text-decoration-none sidebar-logo" href="/">
+            @* Icono de marca: siempre visible (fijo, expandido y colapsado) *@
+            <img src="~/images/landing/icon-vittal-white.svg" alt="Vittal" class="sidebar-icon" decoding="async" />
+            @* Logo de la clínica / marca: visible solo cuando el sidebar está expandido.
+               Above the fold -> sin lazy, fetchpriority alta, y fallback al logo de marca si falla la URL remota *@
+            <img src="~/images/landing/logo-vittal-white.svg" alt="Vittal" class="sidebar-brand-logo @(!string.IsNullOrEmpty(Model.ClinicaActualLogoUrl) ? "d-none" : string.Empty)" decoding="async" />
             @if (!string.IsNullOrEmpty(Model.ClinicaActualLogoUrl))
             {
-                <img src="@Model.ClinicaActualLogoUrl" alt="@Model.ClinicaActualNombre" height="32" class="me-2 rounded" style="object-fit:contain; max-width:32px; background:#fff; padding:2px;" loading="lazy" />
+                <img src="@Model.ClinicaActualLogoUrl" alt="@Model.ClinicaActualNombre" class="sidebar-clinic-logo rounded"
+                     fetchpriority="high" decoding="async"
+                     onerror="this.remove(); var b=this.parentElement.querySelector('.sidebar-brand-logo'); if(b){b.classList.remove('d-none');}" />
             }
-            else
-            {
-                <img src="~/images/vittal-logo.png" alt="Vittal" height="32" class="me-2" loading="lazy" />
-            }
-            <span class="fw-bold text-white sidebar-brand-text" style="font-size:1.1rem;">Vittal</span>
         </a>
         <button class="sidebar-toggle btn btn-link text-white p-0 border-0" id="sidebarToggle"
                 title="Colapsar menú" type="button">
@@ -263,11 +265,11 @@
         }
     </div>
 
-    @* ── Sidebar Footer: Usuario Dropdown ── *@
+    @* ── Sidebar Footer: Usuario Dropdown (dropup: abre hacia arriba) ── *@
     <div class="sidebar-footer">
-        <div class="dropdown user-dropdown">
+        <div class="dropdown dropup user-dropdown">
             <button class="btn dropdown-toggle d-flex align-items-center w-100 p-3 border-0 text-white"
-                    type="button" data-bs-toggle="dropdown" data-bs-auto-close="true"
+                    type="button" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static"
                     aria-expanded="false" id="userDropdownBtn">
                 <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:34px;height:34px;font-size:0.85rem;font-weight:700;color:#fff;background:var(--vittal-primary, #1a6fa8);">
@@ -279,7 +281,7 @@
                 </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdownBtn"
-                style="min-width:200px;margin-bottom:8px;">
+                style="min-width:200px;">
                 <li>
                     <a class="dropdown-item" href="/Perfil/MiPerfil">
                         <i class="bi bi-person-circle me-2"></i>Mi Perfil

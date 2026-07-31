@@ -791,10 +791,6 @@ body {
     .contact-card {
         padding: 1.5rem;
     }
-
-    .landing-navbar .navbar-brand span {
-        font-size: 1rem !important;
-    }
 }
 
 @media (max-width: 576px) {

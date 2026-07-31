@@ -4,72 +4,102 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vittal</title>
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" />
     <link rel="icon" type="image/png" sizes="96x96" href="~/images/favicon-96x96.png" />
     <link rel="shortcut icon" href="~/images/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="~/images/apple-touch-icon.png" />
     <link rel="manifest" href="~/images/site.webmanifest" />
-    
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 + Iconos -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Vittal Variables + Login Styles (homologado con landing hero) -->
     <link rel="stylesheet" href="~/css/vittal-variables.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/vittal.css" asp-append-version="true" />
-    
-    <style>
-        body {
-            background: linear-gradient(135deg, var(--vittal-bg) 0%, #e9ecef 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 15px;
-        }
-        .login-logo-img {
-            max-width: 220px;
-            width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
-        }
-        .login-subtitle {
-            font-size: 0.85rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-            margin-top: 0.5rem;
-            margin-bottom: 0;
-        }
-        .vittal-card {
-            border: none;
-            box-shadow: var(--vittal-shadow-lg);
-            padding: 2.5rem;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-logo">
-            <img src="~/images/vittal-logo.png" alt="Vittal - Gestión Clínica Inteligente" class="login-logo-img" loading="lazy" />
-            <p class="login-subtitle">Gestión Clínica Inteligente</p>
+<body class="login-body">
+    <div class="login-wrapper">
+
+        <!-- ════════════════════════════════════════════════════════
+             TARJETAS JUNTAS — hero izquierda + formulario derecha
+             (mismo tamaño, centradas en pantalla)
+             ════════════════════════════════════════════════════════ -->
+        <div class="login-panels">
+
+            <!-- PANEL IZQUIERDO — Hero de marca (homologado con landing) -->
+            <aside class="login-hero-panel">
+                <div class="login-hero-inner">
+
+                    <div class="login-hero-content">
+                        <div class="login-hero-badge">
+                            <i class="bi bi-star-fill me-1"></i> SaaS Médico Multi-Tenant
+                        </div>
+                        <h1 class="login-hero-title">
+                            Gestión Clínica<br />
+                            <span class="highlight">Inteligente</span>
+                        </h1>
+                        <p class="login-hero-subtitle">
+                            Vittal centraliza citas, expedientes clínicos, diagnósticos,
+                            tratamientos y toda la información médica de tus pacientes
+                            en un solo lugar. Diseñado para clínicas médicas modernas.
+                        </p>
+                        <ul class="login-hero-points">
+                            <li>
+                                <i class="bi bi-check-circle-fill"></i>
+                                Citas y agenda médica en tiempo real
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill"></i>
+                                Expedientes clínicos digitales y seguros
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill"></i>
+                                Reportes y dashboard con métricas clave
+                            </li>
+                        </ul>
+                        <div class="login-hero-stats">
+                            <div>
+                                <div class="login-hero-stat-number">100%</div>
+                                <div class="login-hero-stat-label">Web Cloud</div>
+                            </div>
+                            <div>
+                                <div class="login-hero-stat-number">Multi</div>
+                                <div class="login-hero-stat-label">Tenant</div>
+                            </div>
+                            <div>
+                                <div class="login-hero-stat-number">24/7</div>
+                                <div class="login-hero-stat-label">Disponible</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- PANEL DERECHO — Formulario de autenticación -->
+            <main class="login-form-panel">
+                <div class="login-form-container">
+                    @RenderBody()
+                </div>
+            </main>
         </div>
-        
-        <main role="main">
-            @RenderBody()
-        </main>
-        
-        <div class="text-center mt-4">
-            <small class="text-muted">&copy; @DateTime.Now.Year - Vittal Software</small>
+
+        <!-- Pie debajo de las tarjetas -->
+        <div class="login-form-footer">
+            <small>
+                &copy; @DateTime.Now.Year - Vittal Software &nbsp;·&nbsp;
+                <a href="/Landing/Landing"><i class="bi bi-house-door me-1"></i>Ir a la página de inicio</a>
+            </small>
         </div>
     </div>
 

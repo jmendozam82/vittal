@@ -1,0 +1,460 @@
+/* ═══════════════════════════════════════════════════════════════════
+   login.css — Estilos de Autenticación Vittal
+   Diseño homologado con el HERO de la Landing Page
+   (misma paleta, gradientes y lenguaje visual que landing.css)
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+    --landing-primary:       #1A6FA8;
+    --landing-primary-dark:  #14527D;
+    --landing-primary-light: #E8F3FB;
+    --landing-accent:        #2ECC71;
+    --landing-accent-dark:   #27AE60;
+    --landing-dark:          #0F1A2E;
+    --landing-dark-2:        #162240;
+    --landing-gradient:      linear-gradient(135deg, #0F1A2E 0%, #1A2A4A 50%, #1A6FA8 100%);
+    --landing-section-alt:   #F8FAFC;
+}
+
+html, body {
+    height: 100%;
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+.login-body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--landing-section-alt);
+    color: #2C3E50;
+    overflow-x: hidden;
+}
+
+/* Contenedor que centra las dos tarjetas en la pantalla */
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TARJETAS JUNTAS — hero izquierda + formulario derecha
+   (mismo tamaño, centradas, como una sola pieza)
+   ═══════════════════════════════════════════════════════════════ */
+.login-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    max-width: 1040px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(15, 26, 46, 0.14);
+    background: #fff;
+    border: 1px solid #eef2f6;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL IZQUIERDO — Hero de marca (mismos colores que landing hero)
+   ═══════════════════════════════════════════════════════════════ */
+.login-hero-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Capa clara sobre la imagen: opaca el diseño para no competir con el texto */
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.75), rgba(248, 250, 252, 0.77)),
+        url('../images/landing/hero-bg-premium.png') center/cover no-repeat,
+        #fff;
+    padding: 2.5rem;
+    overflow: hidden;
+}
+
+.login-hero-panel::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -15%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(26, 111, 168, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.login-hero-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -25%;
+    left: -15%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(46, 204, 113, 0.10) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.login-hero-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Contenido hero centrado verticalmente (ocupa toda la tarjeta) */
+.login-hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+}
+
+.login-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--landing-accent-dark);
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.login-hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.12;
+    color: var(--landing-dark);
+    margin-bottom: 1.5rem;
+}
+
+.login-hero-title .highlight {
+    background: linear-gradient(135deg, var(--landing-accent), #3498DB);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-hero-subtitle {
+    font-size: 1rem;
+    color: #1E293B;
+    font-weight: 500;
+    line-height: 1.7;
+    margin-bottom: 1.75rem;
+}
+
+/* Puntos destacados */
+.login-hero-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.75rem;
+}
+
+.login-hero-points li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    color: #1E293B;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.login-hero-points li i {
+    color: var(--landing-accent);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* Stats (igual que hero-stats de la landing) */
+.login-hero-stats {
+    display: flex;
+    gap: 2.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(15, 26, 46, 0.08);
+}
+
+.login-hero-stat-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--landing-primary);
+}
+
+.login-hero-stat-label {
+    font-size: 0.8rem;
+    color: #3F5068;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL DERECHO — Formulario de autenticación
+   ═══════════════════════════════════════════════════════════════ */
+.login-form-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    padding: 2.5rem;
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* La tarjeta interior ahora vive dentro del panel blanco */
+.login-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    width: 100%;
+    animation: loginFadeUp 0.6s ease-out;
+}
+
+.login-card-logo {
+    width: 100%;
+    max-width: 337px;   /* 4× el alto original (46px → ~184px, ancho ~337px) */
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+
+.login-card h4 {
+    font-weight: 800;
+    color: var(--landing-dark);
+    margin-bottom: 0.35rem;
+}
+
+.login-card-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+/* Inputs flotantes en fondo claro */
+.login-form-panel .form-floating > .form-control {
+    background: #fff;
+    border: 1px solid #DEE2E6;
+    color: #2C3E50;
+    border-radius: 12px;
+}
+
+.login-form-panel .form-floating > .form-control:focus {
+    background: #fff;
+    border-color: var(--landing-primary);
+    box-shadow: 0 0 0 0.25rem rgba(26, 111, 168, 0.12);
+    color: #2C3E50;
+}
+
+.login-form-panel .form-floating > label {
+    color: #7f8c8d;
+}
+
+.login-form-panel .form-floating > .form-control:focus ~ label,
+.login-form-panel .form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--landing-primary);
+}
+
+/* Botón principal (homologado con hero-cta-primary) */
+.btn-login-primary {
+    background: linear-gradient(135deg, var(--landing-accent) 0%, var(--landing-accent-dark) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login-primary:hover {
+    background: var(--landing-accent-dark);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(46, 204, 113, 0.5);
+}
+
+.btn-login-primary:active {
+    transform: translateY(0);
+}
+
+/* Botón secundario (volver / logout) */
+.btn-login-secondary {
+    background: var(--landing-primary-light);
+    border: 1px solid rgba(26, 111, 168, 0.25);
+    color: var(--landing-primary);
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-login-secondary:hover {
+    background: rgba(26, 111, 168, 0.12);
+    color: var(--landing-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 111, 168, 0.12);
+}
+
+/* Enlaces */
+.link-login {
+    color: var(--landing-primary);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.link-login:hover {
+    color: var(--landing-primary-dark);
+    text-decoration: underline;
+}
+
+/* Círculos de icono (olvidé contraseña / éxito) */
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--landing-primary-light);
+    color: var(--landing-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.5rem;
+}
+
+.icon-circle-success {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(46, 204, 113, 0.12);
+    color: var(--landing-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    animation: loginPulse 2s infinite;
+}
+
+/* Caja de información (confirmation) */
+.login-info-box {
+    background: var(--landing-primary-light);
+    border: 1px solid rgba(26, 111, 168, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.login-info-box p {
+    margin: 0;
+}
+
+/* Pie debajo de las tarjetas */
+.login-form-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.login-form-footer a {
+    color: var(--landing-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.login-form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* ── Animaciones ──────────────────────────────────────────────── */
+@keyframes loginFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loginPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+    70%  { box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .login-panels {
+        grid-template-columns: 1fr;
+        max-width: 520px;
+    }
+
+    .login-hero-panel {
+        padding: 2rem;
+    }
+
+    .login-hero-content {
+        padding: 1.5rem 0 0.5rem;
+    }
+
+    .login-hero-title {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .login-hero-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .login-form-panel {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .login-wrapper {
+        padding: 1rem 0.75rem;
+    }
+
+    .login-panels {
+        border-radius: 18px;
+    }
+
+    .login-hero-panel {
+        padding: 1.5rem;
+    }
+
+    .login-hero-title {
+        font-size: 1.9rem;
+    }
+
+    .login-hero-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .login-hero-points {
+        display: none;
+    }
+
+    .login-hero-stats {
+        gap: 1.25rem;
+    }
+
+    .login-card-logo {
+        max-width: 260px;
+        margin-bottom: 1.25rem;
+    }
+
+    .login-form-panel {
+        padding: 1.75rem 1.25rem;
+    }
+}
