@@ -108,16 +108,39 @@ public class DashboardRepository : IDashboardRepository
     // ────────────────────────────────────────────────────────────────────
     public async Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha)
     {
+        // Tiempo de espera = desde que el paciente llega (hora_llegada) hasta que
+        // inicia su consulta (paso "Consulta" en linea_tiempo). Si la consulta aún
+        // no ha iniciado, se usa la hora programada (hora_cita) como respaldo.
+        // GREATEST(0, ...) evita valores negativos cuando el paciente llega temprano
+        // (nunca puede "esperar" un tiempo negativo).
+        // ROUND(..., 0) devuelve minutos enteros para una presentación limpia.
         const string sql = @"
             SELECT COALESCE(
-                AVG(
-                    EXTRACT(EPOCH FROM (
-                        (c.fecha_cita + c.hora_llegada) - (c.fecha_cita + c.hora_cita)
-                    )) / 60
+                ROUND(
+                    AVG(
+                        GREATEST(
+                            EXTRACT(EPOCH FROM (
+                                (c.fecha_cita + COALESCE(lt.hora_llegada, c.hora_cita))
+                                - (c.fecha_cita + c.hora_llegada)
+                            )) / 60,
+                            0
+                        )
+                    ),
+                    0
                 ),
                 0
             )
             FROM public.citas c
+            LEFT JOIN LATERAL (
+                SELECT lt.hora_llegada
+                FROM public.linea_tiempo lt
+                WHERE lt.cita_id = c.id
+                  AND lt.nombre_paso = 'Consulta'
+                  AND lt.estado IN ('en_sala', 'completado')
+                  AND lt.hora_llegada IS NOT NULL
+                ORDER BY lt.orden
+                LIMIT 1
+            ) lt ON true
             WHERE c.clinica_id = @ClinicaId
               AND c.fecha_cita = @Fecha::date
               AND c.hora_llegada IS NOT NULL
@@ -171,10 +194,10 @@ public class DashboardRepository : IDashboardRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 6. GetUltimasAlertasAsync — Últimas N alertas no resueltas
+    // 6. GetUltimasAlertasAsync — Últimas N alertas no resueltas de una fecha
     // ────────────────────────────────────────────────────────────────────
     public async Task<IEnumerable<DashboardGraficoDto>> GetUltimasAlertasAsync(
-        Guid clinicaId, int limit = 5)
+        Guid clinicaId, DateTime fecha, int limit = 5)
     {
         const string sql = @"
             SELECT
@@ -183,6 +206,7 @@ public class DashboardRepository : IDashboardRepository
             FROM public.alertas_espera ae
             INNER JOIN public.pacientes p ON p.id = ae.paciente_id
             WHERE ae.clinica_id = @ClinicaId
+              AND ae.fecha_alerta::date = @Fecha::date
               AND ae.resuelta = false
             ORDER BY ae.fecha_alerta DESC
             LIMIT @Limit";
@@ -191,7 +215,7 @@ public class DashboardRepository : IDashboardRepository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             return await connection.QueryAsync<DashboardGraficoDto>(sql,
-                new { ClinicaId = clinicaId, Limit = limit });
+                new { ClinicaId = clinicaId, Fecha = fecha, Limit = limit });
         }
         catch (Exception ex)
         {

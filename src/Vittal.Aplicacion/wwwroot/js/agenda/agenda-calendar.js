@@ -819,16 +819,22 @@ const vittalAgenda = (function() {
             showToast('No se pueden agendar citas en fechas pasadas.', 'warning');
             return;
         }
-        // Si es hoy, bloquear horas que ya pasaron
-        if (dateStr === hoyStr) {
-            const ahora = new Date();
-            const horaActualMin = ahora.getHours() * 60 + ahora.getMinutes();
-            if (hour * 60 < horaActualMin) {
-                showToast('Esta hora ya pasó. Seleccione una hora futura.', 'warning');
-                return;
+        const ahora = new Date();
+        // Si es hoy, bloquear solo horas COMPLETAMENTE pasadas (no por minutos)
+        if (dateStr === hoyStr && hour < ahora.getHours()) {
+            showToast('Esta hora ya pasó. Seleccione una hora futura.', 'warning');
+            return;
+        }
+        // Pre-fill de hora: si es la hora actual de hoy, usar el siguiente slot de 5 minutos
+        let timeStr = `${String(hour).padStart(2,'0')}:00`;
+        if (dateStr === hoyStr && hour === ahora.getHours()) {
+            const minSlot = Math.ceil(ahora.getMinutes() / 5) * 5;
+            if (minSlot < 60) {
+                timeStr = `${String(hour).padStart(2,'0')}:${String(minSlot).padStart(2,'0')}`;
+            } else {
+                timeStr = `${String(hour + 1).padStart(2,'0')}:00`;
             }
         }
-        const timeStr = `${String(hour).padStart(2,'0')}:00`;
         openNewCitaAt(dateStr, timeStr);
     }
 
@@ -1061,12 +1067,13 @@ const vittalAgenda = (function() {
             return;
         }
 
-        // Si es hoy, validar que la hora no sea en el pasado
+        // Si es hoy, validar que la hora no sea en el pasado (precisión de segundos)
         if (!state.editingId && fechaVal === hoyStr && horaVal) {
             const ahora = new Date();
-            const horaActualMin = ahora.getHours() * 60 + ahora.getMinutes();
-            if (parseTimeToMinutes(horaVal) < horaActualMin) {
-                showToast(`La hora ${horaVal} ya pasó. Seleccione una hora posterior a las ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}.`, 'warning');
+            const horaElegida = new Date(`${fechaVal}T${horaVal}:00`);
+            if (horaElegida < ahora) {
+                const ahoraStr = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`;
+                showToast(`La hora ${horaVal} ya pasó. Seleccione una hora posterior a las ${ahoraStr}.`, 'warning');
                 return;
             }
         }

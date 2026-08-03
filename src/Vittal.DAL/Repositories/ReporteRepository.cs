@@ -309,12 +309,26 @@ public class ReporteRepository : IReporteRepository
                     c.fecha_cita::text AS Etiqueta,
                     COALESCE(
                         AVG(
-                            EXTRACT(EPOCH FROM (
-                                (c.fecha_cita + c.hora_llegada) - (c.fecha_cita + c.hora_cita)
-                            )) / 60
+                            GREATEST(
+                                EXTRACT(EPOCH FROM (
+                                    (c.fecha_cita + COALESCE(lt.hora_llegada, c.hora_cita))
+                                    - (c.fecha_cita + c.hora_llegada)
+                                )) / 60,
+                                0
+                            )
                         ), 0
                     ) AS Valor
                 FROM public.citas c
+                LEFT JOIN LATERAL (
+                    SELECT lt.hora_llegada
+                    FROM public.linea_tiempo lt
+                    WHERE lt.cita_id = c.id
+                      AND lt.nombre_paso = 'Consulta'
+                      AND lt.estado IN ('en_sala', 'completado')
+                      AND lt.hora_llegada IS NOT NULL
+                    ORDER BY lt.orden
+                    LIMIT 1
+                ) lt ON true
                 WHERE c.clinica_id = @ClinicaId
                   AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
                   AND c.hora_llegada IS NOT NULL
@@ -373,13 +387,27 @@ public class ReporteRepository : IReporteRepository
                     COALESCE(
                         ROUND(
                             AVG(
-                                EXTRACT(EPOCH FROM (
-                                    (c.fecha_cita + c.hora_llegada) - (c.fecha_cita + c.hora_cita)
-                                )) / 60
+                                GREATEST(
+                                    EXTRACT(EPOCH FROM (
+                                        (c.fecha_cita + COALESCE(lt.hora_llegada, c.hora_cita))
+                                        - (c.fecha_cita + c.hora_llegada)
+                                    )) / 60,
+                                    0
+                                )
                             ), 1
                         ), 0
                     ) AS Promedio
                 FROM public.citas c
+                LEFT JOIN LATERAL (
+                    SELECT lt.hora_llegada
+                    FROM public.linea_tiempo lt
+                    WHERE lt.cita_id = c.id
+                      AND lt.nombre_paso = 'Consulta'
+                      AND lt.estado IN ('en_sala', 'completado')
+                      AND lt.hora_llegada IS NOT NULL
+                    ORDER BY lt.orden
+                    LIMIT 1
+                ) lt ON true
                 WHERE c.clinica_id = @ClinicaId
                   AND c.fecha_cita BETWEEN @FechaInicio AND @FechaFin
                   AND c.hora_llegada IS NOT NULL

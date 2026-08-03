@@ -208,7 +208,7 @@ public class DashboardServiceTests
                 new() { Etiqueta = "09:00", Valor = 5, Color = "#4F46E5" },
                 new() { Etiqueta = "10:00", Valor = 8, Color = "#4F46E5" }
             });
-        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, 5))
+        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, _fecha, 5))
             .ReturnsAsync(new List<DashboardGraficoDto>
             {
                 new() { Etiqueta = "Alta espera", Valor = 25, Color = "#EF4444" }
@@ -289,7 +289,7 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(0.0);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardGraficoDto>());
-        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, 5))
+        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, _fecha, 5))
             .ReturnsAsync(new List<DashboardGraficoDto>());
 
         // Act

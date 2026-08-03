@@ -38,7 +38,9 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetDashboardData([FromQuery] DateTime? fecha)
     {
         var clinicaId = User.GetClinicaId();
-        var fechaConsulta = fecha?.Date ?? DateTime.UtcNow.Date;
+        // Usar fecha LOCAL (DateTime.Today), no UTC: en zonas negativas (UTC−6) entre 18:00 y 23:59
+        // local ya es el día siguiente en UTC y el dashboard consultaría el día equivocado (todo 0).
+        var fechaConsulta = fecha?.Date ?? DateTime.Today;
 
         var result = await _service.GetDashboardDataAsync(clinicaId, fechaConsulta);
         return result.ToActionResult();

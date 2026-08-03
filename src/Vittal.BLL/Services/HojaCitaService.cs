@@ -111,13 +111,16 @@ public class HojaCitaService : IHojaCitaService
         {
             _logger.LogInformation("Creando hoja de cita para expediente {ExpedienteId}", dto.ExpedienteId);
 
+            // Si la FechaConsulta es solo fecha (00:00:00), normalizar con hora actual del servidor
+            var fechaConsulta = NormalizarFechaConsulta(dto.FechaConsulta) ?? DateTime.UtcNow;
+
             var entity = new HojaCita
             {
                 ClinicaId = clinicaId,
                 ExpedienteId = dto.ExpedienteId,
                 CitaId = dto.CitaId,
                 DoctorId = dto.DoctorId,
-                FechaConsulta = dto.FechaConsulta ?? DateTime.UtcNow,
+                FechaConsulta = fechaConsulta,
                 MotivoConsulta = dto.MotivoConsulta,
                 NotasConsulta = dto.NotasConsulta,
                 Activo = true,
@@ -164,7 +167,11 @@ public class HojaCitaService : IHojaCitaService
 
             existing.CitaId = dto.CitaId;
             existing.DoctorId = dto.DoctorId;
-            existing.FechaConsulta = dto.FechaConsulta ?? existing.FechaConsulta;
+            
+            // Si el cliente proporcionó una fecha Consulta, normalizarla
+            var fechaConsulta = NormalizarFechaConsulta(dto.FechaConsulta);
+            existing.FechaConsulta = fechaConsulta ?? existing.FechaConsulta;
+            
             existing.MotivoConsulta = dto.MotivoConsulta;
             existing.NotasConsulta = dto.NotasConsulta;
             existing.FechaModificacion = DateTime.UtcNow;
@@ -191,6 +198,29 @@ public class HojaCitaService : IHojaCitaService
             _logger.LogError(ex, "Error al actualizar hoja de cita {Id}", id);
             return ServiceResult<HojaCitaResponseDto>.Failure($"Error interno: {ex.Message}");
         }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Helper: Normaliza FechaConsulta cuando el cliente envía solo una fecha
+    // (input type="date" viene como 2026-08-02 → DateTime 2026-08-02 00:00:00)
+    // Devuelve null cuando el cliente NO envió fecha (para conservar la existente en Update).
+    // ────────────────────────────────────────────────────────────────────────
+    private DateTime? NormalizarFechaConsulta(DateTime? fechaConsulta)
+    {
+        if (!fechaConsulta.HasValue)
+        {
+            return null;
+        }
+
+        // Si la hora es exactamente medianoche (00:00:00), es probable que el cliente envió solo una fecha
+        if (fechaConsulta.Value.TimeOfDay == TimeSpan.Zero)
+        {
+            // Usar la hora actual del servidor en UTC. La BD usa TIMESTAMPTZ (siempre UTC),
+            // y el navegador convierte automáticamente a la zona local (UTC−6 → 20:32 local).
+            return DateTime.UtcNow;
+        }
+
+        return fechaConsulta.Value;
     }
 
     // ────────────────────────────────────────────────────────────────────────

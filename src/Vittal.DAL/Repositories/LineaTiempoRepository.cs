@@ -87,6 +87,7 @@ public class LineaTiempoRepository : ILineaTiempoRepository
             WHERE lt.clinica_id = @ClinicaId
               AND lt.activo = true
               AND c.estado != 'atendida'
+              AND c.activo = true
               AND c.fecha_cita = @Fecha
               AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
             ORDER BY c.fecha_cita, lt.orden ASC";

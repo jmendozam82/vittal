@@ -262,6 +262,24 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             return Json(new { success = true, data = data });
         }
 
+        /// <summary>Obtiene una cita por su ID — proxy MVC para el prefill del modal de hoja de cita.
+        /// El médico puede no tener permiso sobre el listado de usuarios (api/Usuarios → 403),
+        /// pero la cita trae doctorId y doctorNombre para precargar el modal.</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonCita(Guid id)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{id}");
+
+            if (!success)
+            {
+                _logger.LogWarning("JsonCita API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar la cita" });
+            }
+
+            var data = ExtractDataObject(response);
+            return Json(new { success = true, data = data });
+        }
+
         /// <summary>Obtiene hojas de cita de un expediente — para fetch() desde Details</summary>
         [HttpGet]
         public async Task<IActionResult> JsonHojasCita(Guid expedienteId)

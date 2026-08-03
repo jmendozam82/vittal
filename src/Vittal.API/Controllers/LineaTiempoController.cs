@@ -51,7 +51,8 @@ public class LineaTiempoController : ControllerBase
     public async Task<IActionResult> GetTimelineDelDia([FromQuery] DateTime? fecha, [FromQuery] Guid? doctorId)
     {
         var clinicaId = User.GetClinicaId();
-        var fechaConsulta = fecha?.Date ?? DateTime.UtcNow.Date;
+        // Fecha LOCAL (DateTime.Today) no UTC — mismo patrón de zona horaria que Dashboard
+        var fechaConsulta = fecha?.Date ?? DateTime.Today;
         var result = await _service.GetTimelineDelDiaAsync(clinicaId, doctorId, fechaConsulta);
         return result.ToActionResult();
     }

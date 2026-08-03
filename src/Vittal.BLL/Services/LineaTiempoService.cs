@@ -96,7 +96,8 @@ public class LineaTiempoService : ILineaTiempoService
                     ServiceErrorType.Validation);
             }
 
-            var horaActual = DateTime.UtcNow.TimeOfDay;
+            // Hora local (los TimeOnly de la línea de tiempo se almacenan en hora local)
+            var horaActual = DateTime.Now.TimeOfDay;
             var updated = await _repository.UpdateEstadoAsync(clinicaId, pasoId, "en_sala", horaActual);
             if (!updated)
             {
@@ -138,7 +139,8 @@ public class LineaTiempoService : ILineaTiempoService
                     ServiceErrorType.Validation);
             }
 
-            var horaActual = DateTime.UtcNow.TimeOfDay;
+            // Hora local (los TimeOnly de la línea de tiempo se almacenan en hora local)
+            var horaActual = DateTime.Now.TimeOfDay;
             var updated = await _repository.UpdateEstadoAsync(clinicaId, pasoId, "completado", horaActual);
             if (!updated)
             {
@@ -363,7 +365,7 @@ public class LineaTiempoService : ILineaTiempoService
         // Si está activo (en_sala) o completado, calcular duración hasta ahora
         if (estado == "en_sala")
         {
-            var ahora = DateTime.UtcNow.TimeOfDay;
+            var ahora = DateTime.Now.TimeOfDay;
             var duracion = ahora - horaLlegada.Value;
             if (duracion < TimeSpan.Zero) duracion = TimeSpan.Zero;
             return duracion.ToString(@"hh\:mm\:ss");

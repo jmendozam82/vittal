@@ -68,3 +68,6 @@ AGENTS.md
 CLAUDE.md
 ORCHESTRATOR.md
 INSPECCION_GENERAL.md
+
+# Credenciales temporales de pruebas (no commitear)
+login.json

@@ -119,6 +119,29 @@ public class CitaService : ICitaService
         return null;
     }
 
+    /// <summary>
+    /// Valida que una cita nueva no esté programada en el pasado (fecha o hora de hoy).
+    /// Se usa SOLO al crear; la edición permite fechas retroactivas.
+    /// Comparación con precisión de segundos.
+    /// </summary>
+    private static string? ValidarCitaEnPasado(DateOnly fechaCita, TimeOnly horaCita)
+    {
+        var ahora = DateTime.Now;
+        var hoy = DateOnly.FromDateTime(ahora);
+
+        if (fechaCita < hoy)
+        {
+            return "No se pueden agendar citas en fechas pasadas.";
+        }
+
+        if (fechaCita == hoy && horaCita < TimeOnly.FromDateTime(ahora))
+        {
+            return $"La hora de inicio ({horaCita:HH:mm:ss}) ya pasó. Seleccione una hora posterior a las {ahora:HH:mm:ss}.";
+        }
+
+        return null;
+    }
+
     public async Task<ServiceResult<IEnumerable<CitaResponseDto>>> GetAllAsync(Guid clinicaId)
     {
         try
@@ -165,6 +188,14 @@ public class CitaService : ICitaService
             {
                 _logger.LogWarning("Validación de horario rechazó cita: {Error}", horarioError);
                 return ServiceResult<CitaResponseDto>.Failure(horarioError, ServiceErrorType.Validation);
+            }
+
+            // ── Validar que la cita no esté en el pasado (solo al crear) ──
+            var pasadoError = ValidarCitaEnPasado(dto.FechaCita, dto.HoraCita);
+            if (pasadoError != null)
+            {
+                _logger.LogWarning("Validación de fecha/hora rechazó cita: {Error}", pasadoError);
+                return ServiceResult<CitaResponseDto>.Failure(pasadoError, ServiceErrorType.Validation);
             }
 
             var entity = new Cita

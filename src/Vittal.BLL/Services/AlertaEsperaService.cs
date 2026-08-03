@@ -131,12 +131,22 @@ public class AlertaEsperaService : IAlertaEsperaService
             var citasEnEspera = await _citaRepository.GetCitasEnEsperaAsync(clinicaId);
 
             var alertasGeneradas = 0;
-            var horaActual = TimeOnly.FromDateTime(DateTime.UtcNow);
+            // Hora local del servidor (mismo huso horario que las clínicas).
+            // Los campos TimeOnly (HoraCita, HoraLlegada) se almacenan en hora local,
+            // por lo que comparar contra DateTime.UtcNow produce falsos tiempos de espera.
+            var horaActual = TimeOnly.FromDateTime(DateTime.Now);
 
             foreach (var cita in citasEnEspera)
             {
-                // Calcular minutos desde la hora de cita hasta ahora
-                var minutosEspera = CalcularMinutosDeEspera(cita.HoraCita, horaActual);
+                // La espera se mide desde la llegada real del paciente (HoraLlegada).
+                // Si aún no ha llegado (HoraLlegada nula), no cuenta como tiempo de espera.
+                if (cita.HoraLlegada == null)
+                {
+                    continue;
+                }
+
+                // Calcular minutos desde la llegada del paciente hasta ahora
+                var minutosEspera = CalcularMinutosDeEspera(cita.HoraLlegada.Value, horaActual);
 
                 if (minutosEspera >= config.TiempoEsperaMaximoMinutos)
                 {
@@ -202,15 +212,16 @@ public class AlertaEsperaService : IAlertaEsperaService
     // ── Métodos auxiliares ──────────────────────────────────────────────
 
     /// <summary>
-    /// Calcula los minutos de espera desde la hora de cita hasta ahora.
+    /// Calcula los minutos de espera desde la llegada del paciente hasta ahora.
+    /// Ambos valores se expresan en hora local.
     /// </summary>
-    private static int CalcularMinutosDeEspera(TimeOnly horaCita, TimeOnly horaActual)
+    private static int CalcularMinutosDeEspera(TimeOnly horaLlegada, TimeOnly horaActual)
     {
-        // Si la cita es a las 10:00 y son las 10:35 → 35 minutos de espera
-        var diff = horaActual - horaCita;
+        // Si el paciente llegó a las 10:00 y son las 10:35 → 35 minutos de espera
+        var diff = horaActual - horaLlegada;
         if (diff < TimeSpan.Zero)
         {
-            // La cita aún no ha llegado su hora
+            // El paciente aún no ha llegado a la clínica
             return 0;
         }
         return (int)diff.TotalMinutes;

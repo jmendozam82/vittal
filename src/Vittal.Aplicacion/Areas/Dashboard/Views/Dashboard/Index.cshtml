@@ -18,13 +18,21 @@
             <i class="bi bi-calendar3 me-1"></i>@fechaHoy
         </span>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="input-group input-group-sm" style="max-width:280px;">
+            <span class="input-group-text"><i class="bi bi-calendar-week"></i></span>
+            <input type="date" id="filtroFecha" class="form-control" title="Filtrar KPIs y gráfico por fecha" />
+            <button class="btn btn-outline-secondary" type="button" id="btnHoy" title="Volver al día actual">
+                <i class="bi bi-house me-1"></i>Hoy
+            </button>
+        </div>
         <button class="btn btn-outline-primary btn-sm" id="btnRefrescar" title="Refrescar datos">
             <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
         </button>
         <span class="badge bg-light text-muted" id="contadorPacientes">
             <i class="bi bi-people me-1"></i><span id="kpiPacientesCount">—</span>
         </span>
+        <span class="badge bg-secondary d-none" id="fechaFiltroBadge"></span>
     </div>
 </div>
 
@@ -82,6 +90,7 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h5 class="mb-0 fw-semibold">
             <i class="bi bi-people-fill text-primary me-2"></i>Resumen del Día
+            <span class="badge bg-primary-light text-primary ms-2 align-middle">siempre hoy</span>
         </h5>
     </div>
     <div id="resumenContainer">
@@ -99,6 +108,7 @@
 
             let chartInstance = null;
             let pollingInterval = null;
+            let fechaFiltro = '';
 
             const DOM = {
                 kpiContainer: document.getElementById('kpiContainer'),
@@ -107,10 +117,27 @@
                 resumenContainer: document.getElementById('resumenContainer'),
                 totalCitasDia: document.getElementById('totalCitasDia'),
                 btnRefrescar: document.getElementById('btnRefrescar'),
-                kpiPacientesCount: document.getElementById('kpiPacientesCount')
+                kpiPacientesCount: document.getElementById('kpiPacientesCount'),
+                filtroFecha: document.getElementById('filtroFecha'),
+                btnHoy: document.getElementById('btnHoy'),
+                fechaFiltroBadge: document.getElementById('fechaFiltroBadge')
             };
 
             document.addEventListener('DOMContentLoaded', function() {
+                DOM.filtroFecha.value = hoyStr();
+                fechaFiltro = '';
+
+                DOM.filtroFecha.addEventListener('change', function() {
+                    fechaFiltro = DOM.filtroFecha.value;
+                    cargarDashboard();
+                });
+
+                DOM.btnHoy.addEventListener('click', function() {
+                    fechaFiltro = '';
+                    DOM.filtroFecha.value = hoyStr();
+                    cargarDashboard();
+                });
+
                 cargarDashboard();
                 iniciarPolling();
 
@@ -134,7 +161,8 @@
                 // ── Fase 1: Fetch + validación de respuesta ──
                 let data = null;
                 try {
-                    const res = await fetch('@Url.Action("JsonDashboardData")', {
+                    const query = fechaFiltro ? '?fecha=' + encodeURIComponent(fechaFiltro) : '';
+                    const res = await fetch('@Url.Action("JsonDashboardData")' + query, {
                         method: 'GET',
                         credentials: 'same-origin',
                         headers: { 'Accept': 'application/json' }
@@ -190,9 +218,47 @@
                     renderizarAlertas(data.ultimasAlertas || []);
                 } catch (e) { console.error('Dashboard: error en renderizarAlertas:', e); }
 
+                // El resumen del día (inferior) SIEMPRE muestra el día actual, sin aplicar el filtro.
+                // Si hay filtro con otra fecha, se hace una segunda carga dedicada a HOY.
                 try {
-                    renderizarResumen(data);
-                } catch (e) { console.error('Dashboard: error en renderizarResumen:', e); }
+                    if (fechaFiltro && fechaFiltro !== hoyStr()) {
+                        cargarResumenDiaActual();
+                    } else {
+                        renderizarResumen(data);
+                    }
+                } catch (e) { console.error('Dashboard: error en resumen del día:', e); }
+
+                // Indicador visual cuando el filtro no es hoy
+                if (fechaFiltro && fechaFiltro !== hoyStr()) {
+                    DOM.fechaFiltroBadge.textContent = 'Mostrando: ' + fechaFiltro.split('-').reverse().join('/');
+                    DOM.fechaFiltroBadge.classList.remove('d-none');
+                } else {
+                    DOM.fechaFiltroBadge.classList.add('d-none');
+                }
+            }
+
+            // ── Helpers de fecha (siempre LOCAL, no UTC) ──
+            function hoyStr() {
+                const h = new Date();
+                return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0');
+            }
+
+            // ── Carga dedicada del resumen del DÍA ACTUAL (sin filtro) ──
+            async function cargarResumenDiaActual() {
+                try {
+                    const res = await fetch('@Url.Action("JsonDashboardData")', {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    if (json.success && json.data) {
+                        renderizarResumen(json.data);
+                    }
+                } catch (e) {
+                    console.error('Dashboard: error en resumen del día actual:', e);
+                }
             }
 
             function renderizarKPIs(data) {
@@ -204,7 +270,7 @@
                         color: 'primary',
                         bg: 'var(--vittal-primary-light)',
                         trend: 'stable',
-                        trendText: 'vs. ayer'
+                        trendText: 'Conteo del día'
                     },
                     {
                         label: 'Citas Pendientes',
@@ -226,12 +292,12 @@
                     },
                     {
                         label: 'Tiempo Promedio',
-                        value: (data.tiempoPromedioEspera ?? 0) + ' min',
+                        value: Math.round(data.tiempoPromedioEspera ?? 0) + ' min',
                         icon: 'bi-speedometer2',
                         color: 'success',
                         bg: '#E8F8F0',
-                        trend: (data.tiempoPromedioEspera ?? 0) < 15 ? 'down' : 'up',
-                        trendText: (data.tiempoPromedioEspera ?? 0) < 15 ? 'Óptimo' : 'Elevado'
+                        trend: Math.round(data.tiempoPromedioEspera ?? 0) < 15 ? 'down' : 'up',
+                        trendText: Math.round(data.tiempoPromedioEspera ?? 0) < 15 ? 'Óptimo' : 'Elevado'
                     }
                 ];
 
@@ -364,7 +430,7 @@
                 const pacientes = data.pacientesDelDia ?? 0;
                 const pendientes = data.citasPendientes ?? 0;
                 const espera = data.pacientesEnEspera ?? 0;
-                const tiempo = data.tiempoPromedioEspera ?? 0;
+                const tiempo = Math.round(data.tiempoPromedioEspera ?? 0);
 
                 DOM.resumenContainer.innerHTML = `
                     <div class="row g-3">

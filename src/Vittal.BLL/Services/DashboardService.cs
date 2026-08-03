@@ -167,7 +167,7 @@ public class DashboardService : IDashboardService
                 citasPorHoraTask = _dashboardRepository.GetCitasPorHoraAsync(clinicaId, fecha);
 
             if (dashboardData.MostrarUltimasAlertas)
-                ultimasAlertasTask = _dashboardRepository.GetUltimasAlertasAsync(clinicaId, 5);
+                ultimasAlertasTask = _dashboardRepository.GetUltimasAlertasAsync(clinicaId, fecha);
 
             // 3. Esperar todos los KPIs en paralelo
             if (pacientesDelDiaTask != null) dashboardData.PacientesDelDia = await pacientesDelDiaTask;

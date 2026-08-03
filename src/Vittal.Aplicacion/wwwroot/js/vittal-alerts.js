@@ -208,7 +208,7 @@
      */
     function reproducirSonido() {
         try {
-            var audio = new Audio('/sounds/alert.mp3');
+            var audio = new Audio('/sounds/alert.wav');
             audio.volume = 0.5;
             audio.play().catch(function () {
                 // Autoplay bloqueado por el navegador — silencioso

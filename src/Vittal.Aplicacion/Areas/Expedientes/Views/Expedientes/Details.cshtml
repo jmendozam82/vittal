@@ -13,10 +13,8 @@
             <i class="bi bi-folder2-open me-2 text-primary"></i>Expediente: <span id="headerPacienteNombre">Cargando...</span>
         </h5>
         <div>
-            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaHojaCita">
-                <i class="bi bi-plus-lg me-1"></i> Nueva Hoja de Cita
-            </button>
-            <a href="/Expedientes/Expedientes" class="btn btn-outline-secondary btn-sm ms-1">
+            <!-- La hoja de cita se crea SOLO desde la Cola de Espera (botón "Atender"), no manualmente aquí -->
+            <a href="/Expedientes/Expedientes" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i> Volver
             </a>
         </div>
@@ -80,13 +78,8 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label for="hcCitaId" class="form-label fw-semibold">Cita Asociada</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="hcCitaId" placeholder="ID de la cita (opcional)" readonly />
-                                <button class="btn btn-outline-secondary" type="button" id="btnLimpiarCita" title="Quitar cita asociada">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </div>
-                            <small class="text-muted" id="hcCitaInfo">Si viene desde Cola de Espera, la cita se asigna automáticamente.</small>
+                            <input type="text" class="form-control" id="hcCitaId" placeholder="Se asigna desde Cola de Espera" readonly />
+                            <small class="text-muted" id="hcCitaInfo">Asignada automáticamente desde Cola de Espera (botón "Atender").</small>
                         </div>
                         <div class="col-md-6">
                             <label for="hcDoctorId" class="form-label fw-semibold">Doctor <span class="text-danger">*</span></label>
@@ -472,6 +465,7 @@
         crearExamen: '@Url.Action("JsonCrearExamen")',
         crearRecomendacion: '@Url.Action("JsonCrearRecomendacion")',
         doctores: '@Url.Action("JsonDoctores")',
+        cita: '@Url.Action("JsonCita")',
         // Catálogos para dropdowns (proxy MVC con JWT)
         diagnosticosCatalogo: '@Url.Action("JsonDiagnosticosCatalogo")',
         medicamentosCatalogo: '@Url.Action("JsonMedicamentosCatalogo")',
@@ -584,8 +578,8 @@
                 hcCitaId.value = citaId;
             }
 
-            // Fetch cita data para auto-poblar doctor, fecha y motivo
-            const res = await fetch('/api/Citas/' + encodeURIComponent(citaId), {
+            // Fetch cita data para auto-poblar doctor, fecha y motivo (vía proxy MVC con JWT)
+            const res = await fetch(`${URLS.cita}?id=${encodeURIComponent(citaId)}`, {
                 headers: { 'Content-Type': 'application/json' }
             });
             if (!res.ok) return;
@@ -593,27 +587,35 @@
             const cita = json.success && json.data ? (Array.isArray(json.data) ? json.data[0] : json.data) : null;
             if (!cita) return;
 
-            // Auto-poblar doctor
+            // Auto-poblar doctor (viene en la cita). Se añade la opción directamente porque
+            // el médico puede NO tener permiso sobre /api/Usuarios (403) y el dropdown quedar vacío.
             const doctorId = cita.doctorId || cita.usuarioId || '';
+            const doctorNombre = cita.doctorNombre || cita.doctor_nombre || '';
             const hcDoctorId = document.getElementById('hcDoctorId');
             if (hcDoctorId && doctorId) {
-                // Esperar a que el dropdown esté poblado
-                const waitForDoctors = setInterval(function() {
-                    const option = hcDoctorId.querySelector('option[value="' + doctorId + '"]');
-                    if (option) {
-                        hcDoctorId.value = doctorId;
-                        clearInterval(waitForDoctors);
-                    }
-                }, 100);
-                // Timeout after 5 seconds
-                setTimeout(function() { clearInterval(waitForDoctors); }, 5000);
+                let option = hcDoctorId.querySelector('option[value="' + doctorId + '"]');
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = doctorId;
+                    option.textContent = doctorNombre || 'Doctor asignado';
+                    hcDoctorId.appendChild(option);
+                }
+                hcDoctorId.value = doctorId;
+                // Bloquear el campo: el doctor lo define la cita (no editable desde Cola de Espera)
+                hcDoctorId.disabled = true;
             }
 
-            // Auto-poblar fecha de consulta
-            const fechaCita = cita.fechaCita || cita.fecha || '';
-            if (fechaCita) {
-                const fechaStr = fechaCita.substring(0, 10);
-                document.getElementById('hcFechaConsulta').value = fechaStr;
+            // Auto-poblar fecha de consulta: usar HOY (consulta actual) no la fecha programada de la cita
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            const hoyStr = `${yyyy}-${mm}-${dd}`;
+            const hcFechaConsulta = document.getElementById('hcFechaConsulta');
+            if (hcFechaConsulta) {
+                hcFechaConsulta.value = hoyStr;
+                // Bloquear el campo: la fecha es la actual (no editable desde Cola de Espera)
+                hcFechaConsulta.disabled = true;
             }
 
             // Auto-poblar motivo de consulta
@@ -622,25 +624,14 @@
                 document.getElementById('hcMotivoConsulta').value = motivo;
             }
 
-            // Actualizar info del campo
+            // Actualizar info del campo: cita + doctor precargados desde Cola de Espera
             const infoLabel = document.getElementById('hcCitaInfo');
             if (infoLabel) {
-                infoLabel.textContent = '✓ Cita #' + citaId.substring(0, 8) + '... pre-seleccionada desde Cola de Espera.';
+                const doctorPre = cita.doctorNombre || cita.doctor_nombre || '';
+                infoLabel.textContent = '✓ Cita #' + citaId.substring(0, 8) + '... pre-seleccionada' +
+                    (doctorPre ? ' · Dr(a). ' + doctorPre : '');
                 infoLabel.className = 'text-success fw-semibold';
             }
-
-            // Botón para limpiar cita
-            document.getElementById('btnLimpiarCita').addEventListener('click', function() {
-                hcCitaId.value = '';
-                hcDoctorId.value = '';
-                document.getElementById('hcFechaConsulta').value = '';
-                document.getElementById('hcMotivoConsulta').value = '';
-                document.getElementById('hcNotasConsulta').value = '';
-                if (infoLabel) {
-                    infoLabel.textContent = 'Cita desvinculada. Puede ingresar manualmente.';
-                    infoLabel.className = 'text-muted';
-                }
-            });
 
         } catch (err) {
             console.error('Error al pre-fill cita:', err);
@@ -708,9 +699,7 @@
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
                     No hay hojas de cita registradas.
-                    <br><button class="btn btn-sm btn-outline-success mt-2" data-bs-toggle="modal" data-bs-target="#modalNuevaHojaCita">
-                        <i class="bi bi-plus-lg me-1"></i>Crear primera hoja de cita
-                    </button>
+                    <br><small>La hoja de cita se genera desde la Cola de Espera al dar "Atender" al paciente.</small>
                 </div>`;
             return;
         }
