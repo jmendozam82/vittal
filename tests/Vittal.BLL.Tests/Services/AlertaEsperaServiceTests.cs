@@ -143,13 +143,15 @@ public class AlertaEsperaServiceTests
         var citaId = Guid.NewGuid();
         var pacienteId = Guid.NewGuid();
         var doctorId = Guid.NewGuid();
-        var horaCita = new TimeOnly(9, 0, 0);
-        var horaActual = TimeOnly.FromDateTime(DateTime.UtcNow);
-        var minutosEspera = (int)(horaActual - horaCita).TotalMinutes;
+        // Hora local del servidor — misma referencia que usa el servicio (DateTime.Now).
+        var horaActual = TimeOnly.FromDateTime(DateTime.Now);
+        // El paciente llegó hace 40 minutos → excede el umbral de 30 min.
+        var horaLlegada = horaActual.AddMinutes(-40);
+        var horaCita = horaLlegada.AddMinutes(-5);
 
         var citasEnEspera = new List<Cita>
         {
-            new() { Id = citaId, ClinicaId = _clinicaId, PacienteId = pacienteId, DoctorId = doctorId, HoraCita = horaCita, Estado = "en_espera", Activo = true, PacienteNombre = "Test Patient", DoctorNombre = "Dr. Test" }
+            new() { Id = citaId, ClinicaId = _clinicaId, PacienteId = pacienteId, DoctorId = doctorId, HoraCita = horaCita, HoraLlegada = horaLlegada, Estado = "en_espera", Activo = true, PacienteNombre = "Test Patient", DoctorNombre = "Dr. Test" }
         };
         _citaRepositoryMock.Setup(r => r.GetCitasEnEsperaAsync(_clinicaId)).ReturnsAsync(citasEnEspera);
         _repositoryMock.Setup(r => r.ExisteAlertaNoResueltaParaCitaAsync(_clinicaId, citaId)).ReturnsAsync(false);
@@ -160,17 +162,10 @@ public class AlertaEsperaServiceTests
         // Act
         var result = await _service.VerificarTiemposEsperaAsync(_clinicaId);
 
-        // Assert
+        // Assert — la espera se mide desde HoraLlegada (40 min > 30) → debe generar 1 alerta
         result.IsSuccess.Should().BeTrue();
-        if (minutosEspera >= 30)
-        {
-            result.Data.Should().BeGreaterThanOrEqualTo(1);
-            _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<AlertaEspera>()), Times.Once);
-        }
-        else
-        {
-            result.Data.Should().Be(0);
-        }
+        result.Data.Should().BeGreaterThanOrEqualTo(1);
+        _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<AlertaEspera>()), Times.Once);
     }
 
     [Fact]
