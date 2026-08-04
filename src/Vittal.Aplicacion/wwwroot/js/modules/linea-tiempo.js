@@ -1,10 +1,12 @@
 /**
  * linea-tiempo.js — Módulo de Línea de Tiempo (HU19)
  *
- * Gestiona la visualización del timeline de atención de pacientes,
- * con iniciar/finalizar/saltar pasos y timer en vivo.
+ * Gestiona la visualización del timeline de atención de pacientes.
+ * El avance de pasos es AUTOMÁTICO desde la Cola de Espera (Llegó/Atender/Completar):
+ * el timeline solo se renderiza (sin botones manuales) y se actualiza en tiempo real
+ * vía SignalR (evento "TimelineActualizada").
  *
- * Dependencias: vittal-api.js
+ * Dependencias: vittal-api.js, @microsoft/signalr (CDN global en _Layout)
  */
 
 (function () {
@@ -48,7 +50,67 @@
         if (DOM.btnRefrescar) {
             DOM.btnRefrescar.addEventListener('click', cargarTimeline);
         }
+
+        conectarSignalRTimeline();
     });
+
+    /**
+     * Conecta a SignalR (hub de línea de tiempo) para refresco automático.
+     * Cuando la Cola de Espera avanza un paso, la API emite "TimelineActualizada"
+     * con el citaId → si estamos viendo esa cita (o la vista general), se recarga.
+     */
+    function conectarSignalRTimeline() {
+        if (typeof signalR === 'undefined') return;
+        if (!window.VITTAL_API_HUB_URL || !window.VITTAL_CLINICA_ID) return;
+
+        var hubUrl = window.VITTAL_API_HUB_URL + '/hubs/linea-tiempo';
+
+        async function obtenerToken() {
+            try {
+                var supabaseToken = VittalAPI.getToken();
+                if (!supabaseToken) return null;
+                var res = await fetch(window.VITTAL_API_HUB_URL + '/api/auth/signalr-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + supabaseToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                var json = await res.json();
+                return json.success && json.token ? json.token : null;
+            } catch (err) {
+                console.warn('[LineaTiempo] Error obteniendo token SignalR:', err);
+                return null;
+            }
+        }
+
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, {
+                accessTokenFactory: obtenerToken
+            })
+            .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+            .build();
+
+        connection.on('TimelineActualizada', function (citaId) {
+            console.log('[LineaTiempo] Timeline actualizada para cita:', citaId);
+            if (citaIdActual && citaIdActual === citaId) {
+                recargarVista();
+            } else if (!citaIdActual) {
+                cargarTimeline(); // Vista general: refrescar siempre
+            }
+        });
+
+        connection.start()
+            .then(function () {
+                return connection.invoke('SubscribeToClinica', window.VITTAL_CLINICA_ID);
+            })
+            .then(function () {
+                console.log('[LineaTiempo] Suscrito al grupo timeline_' + window.VITTAL_CLINICA_ID);
+            })
+            .catch(function (err) {
+                console.warn('[LineaTiempo] No se pudo conectar a SignalR:', err);
+            });
+    }
 
     async function cargarDoctores() {
         if (!DOM.filtroDoctor) return;
@@ -148,9 +210,10 @@
         var html = '';
 
         if (esModoCita) {
-            // ── MODO CITA ESPECÍFICA — mostrar progreso global ──────────
+            // ── MODO CITA ESPECÍFICA — timeline animado + lead time ──
             var totalPasos = pasos.length;
             var completados = pasos.filter(function (p) { return p.estado === 'completado'; }).length;
+            var enCurso = pasos.filter(function (p) { return p.estado === 'en_sala' || p.estado === 'activo'; })[0] || null;
             var progreso = totalPasos > 0 ? Math.round((completados / totalPasos) * 100) : 0;
 
             html += '<div class="d-flex align-items-center gap-2 mb-3">';
@@ -161,18 +224,49 @@
             html += '<small class="fw-bold text-primary">' + progreso + '%</small>';
             html += '</div>';
 
-            // Timeline único (un solo paciente)
-            html += '<div class="timeline-vertical">';
-            pasos.forEach(function (paso) {
-                html += renderPasoCard(paso);
+            // Stepper horizontal animado (3 pasos: Llegada → Consulta → Salida)
+            html += '<div class="timeline-stepper">';
+            pasos.forEach(function (paso, idx) {
+                var esUltimo = idx === pasos.length - 1;
+                var stateClass = paso.estado === 'completado' ? 'done'
+                    : (paso.estado === 'en_sala' || paso.estado === 'activo') ? 'active'
+                    : paso.estado === 'saltado' ? 'skipped' : 'pending';
+                var icono = paso.estado === 'completado' ? 'bi-check-lg'
+                    : (paso.estado === 'en_sala' || paso.estado === 'activo') ? 'bi-play-fill'
+                    : paso.estado === 'saltado' ? 'bi-forward' : 'bi-circle';
+                var horaLabel = paso.estado === 'completado'
+                    ? (paso.horaSalida || paso.horaLlegada || '--:--')
+                    : (paso.estado === 'en_sala' || paso.estado === 'activo') ? (paso.horaLlegada || '--:--') : '';
+
+                html += '<div class="timeline-step ' + stateClass + '">';
+                html += '<div class="step-node"><i class="bi ' + icono + '"></i></div>';
+                html += '<div class="step-label">' + escapeHtml(paso.nombrePaso || 'Paso') + '</div>';
+                if (horaLabel) {
+                    html += '<div class="step-time">' + horaLabel.substring(0, 5) + '</div>';
+                }
+                if (paso.estado === 'en_sala' || paso.estado === 'activo') {
+                    html += '<div class="step-live" id="step-live-' + paso.id + '">--:--</div>';
+                }
+                if (!esUltimo) {
+                    html += '<div class="step-connector"></div>';
+                }
+                html += '</div>';
             });
             html += '</div>';
 
-            // Tiempo total
+            // KPI Lead Time Total
             var duracionTotal = calcularDuracionTotal(pasos);
             html += '<div class="timeline-total">';
-            html += '<div class="total-label">Tiempo Total</div>';
+            html += '<div class="total-label">Lead Time Total</div>';
             html += '<div class="total-value" id="tiempoTotal">' + duracionTotal + '</div>';
+            html += '<div class="total-sub">Desde llegada hasta salida del paciente</div>';
+            html += '</div>';
+
+            // Detalle de cada paso (solo informativo — sin botones manuales)
+            html += '<div class="timeline-vertical mt-3">';
+            pasos.forEach(function (paso) {
+                html += renderPasoCard(paso);
+            });
             html += '</div>';
         } else {
             // ── MODO GENERAL — agrupar pasos por cita/paciente ─────────
@@ -232,9 +326,6 @@
                 iniciarTimerActivo(grupos[key].pasos);
             });
         }
-
-        // Binding de botones
-        bindPasoButtons();
     }
 
     function renderPasoResumen(paso) {
@@ -341,16 +432,9 @@
         html += '<span><i class="bi bi-clock me-1"></i>' + horaLlegada + ' - ' + horaSalida + '</span>';
         html += '</div>';
 
-        html += '<div class="paso-acciones">';
-        if (estado === 'pendiente') {
-            html += '<button class="btn btn-primary btn-sm btn-iniciar-paso" data-paso-id="' + id + '">';
-            html += '<i class="bi bi-play-fill me-1"></i>Iniciar</button> ';
-            html += '<button class="btn btn-outline-warning btn-sm btn-saltar-paso" data-paso-id="' + id + '">';
-            html += '<i class="bi bi-forward me-1"></i>Saltar</button>';
-        } else if (estado === 'en_sala') {
-            html += '<button class="btn btn-success btn-sm btn-finalizar-paso" data-paso-id="' + id + '">';
-            html += '<i class="bi bi-check-lg me-1"></i>Finalizar</button>';
-        }
+        // ── Sin botones manuales: el avance es automático desde la Cola de Espera ──
+        html += '<div class="paso-automatico small text-muted">';
+        html += '<i class="bi bi-magic me-1"></i>Avance automático desde Cola de Espera';
         html += '</div>';
 
         html += '</div>'; // card
@@ -359,109 +443,11 @@
         return html;
     }
 
-    function bindPasoButtons() {
-        document.querySelectorAll('.btn-iniciar-paso').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                iniciarPaso(this.dataset.pasoId, this);
-            });
-        });
-        document.querySelectorAll('.btn-finalizar-paso').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                finalizarPaso(this.dataset.pasoId, this);
-            });
-        });
-        document.querySelectorAll('.btn-saltar-paso').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                saltarPaso(this.dataset.pasoId, this);
-            });
-        });
-    }
-
     async function recargarVista() {
         if (citaIdActual) {
             await cargarTimelinePorCita(citaIdActual);
         } else {
             await cargarTimeline();
-        }
-    }
-
-    async function iniciarPaso(pasoId, btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
-
-        try {
-            var res = await fetch('/LineaTiempo/LineaTiempo/JsonIniciarPaso?pasoId=' + pasoId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            var json = await res.json();
-
-            if (res.ok && json.success) {
-                VittalAPI.showToast('Paso iniciado correctamente.', 'success');
-                await recargarVista();
-            } else {
-                VittalAPI.showToast(json.message || 'Error al iniciar paso.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Iniciar';
-            }
-        } catch (err) {
-            VittalAPI.showToast('Error de conexión.', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Iniciar';
-        }
-    }
-
-    async function finalizarPaso(pasoId, btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
-
-        try {
-            var res = await fetch('/LineaTiempo/LineaTiempo/JsonFinalizarPaso?pasoId=' + pasoId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            var json = await res.json();
-
-            if (res.ok && json.success) {
-                VittalAPI.showToast('Paso finalizado correctamente.', 'success');
-                await recargarVista();
-            } else {
-                VittalAPI.showToast(json.message || 'Error al finalizar paso.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Finalizar';
-            }
-        } catch (err) {
-            VittalAPI.showToast('Error de conexión.', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Finalizar';
-        }
-    }
-
-    async function saltarPaso(pasoId, btn) {
-        if (!confirm('¿Está seguro de saltar este paso?')) return;
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
-
-        try {
-            var res = await fetch('/LineaTiempo/LineaTiempo/JsonSaltarPaso?pasoId=' + pasoId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            var json = await res.json();
-
-            if (res.ok && json.success) {
-                VittalAPI.showToast('Paso saltado correctamente.', 'success');
-                await recargarVista();
-            } else {
-                VittalAPI.showToast(json.message || 'Error al saltar paso.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-forward me-1"></i>Saltar';
-            }
-        } catch (err) {
-            VittalAPI.showToast('Error de conexión.', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-forward me-1"></i>Saltar';
         }
     }
 
@@ -473,7 +459,7 @@
 
         var pasoActivo = null;
         for (var i = 0; i < pasos.length; i++) {
-            if (pasos[i].estado === 'en_sala') {
+            if (pasos[i].estado === 'en_sala' || pasos[i].estado === 'activo') {
                 pasoActivo = pasos[i];
                 break;
             }
@@ -507,13 +493,20 @@
             var segs = diffSeg % 60;
             var tiempoStr = pad(mins) + ':' + pad(segs);
 
+            // Timer del paso activo (tarjeta de detalle)
             var duracionEl = document.getElementById('duracion-' + pasoActivo.id);
             if (duracionEl) {
                 duracionEl.innerHTML = '<i class="bi bi-hourglass me-1"></i>' + tiempoStr;
                 duracionEl.classList.add('vivo');
             }
 
-            // Actualizar tiempo total (completados + activo)
+            // Timer del paso activo en el stepper horizontal
+            var stepLiveEl = document.getElementById('step-live-' + pasoActivo.id);
+            if (stepLiveEl) {
+                stepLiveEl.textContent = tiempoStr;
+            }
+
+            // Actualizar lead time total (completados + activo)
             var totalSeg = segundosCompletados + diffSeg;
             var totalEl = document.getElementById('tiempoTotal');
             if (totalEl) {

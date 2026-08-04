@@ -201,6 +201,10 @@ public class ColaEsperaController : Controller
             return BadRequest(new { success = false, message = errorMessage ?? "Error al registrar llegada" });
         }
 
+        // ── Automatizar línea de tiempo: iniciar paso "Llegada" (paciente en espera) ──
+        // El paso queda "en_sala" (en curso) y registra la hora de llegada real.
+        await IniciarPasoTimelineAsync(id, "Llegada");
+
         return Ok(new { success = true, message = "Llegada registrada — paciente en espera" });
     }
 
@@ -245,6 +249,11 @@ public class ColaEsperaController : Controller
         {
             return BadRequest(new { success = false, message = errorMessage ?? "Error al iniciar atención" });
         }
+
+        // ── Automatizar línea de tiempo: finalizar "Llegada" e iniciar "Consulta" ──
+        // La espera queda capturada (hora salida de Llegada) y la consulta entra "en_sala".
+        await FinalizarPasoTimelineAsync(id, "Llegada");
+        await IniciarPasoTimelineAsync(id, "Consulta");
 
         // Buscar el expediente del paciente para redirigir a la hoja de cita
         Guid? expedienteId = null;
@@ -309,6 +318,12 @@ public class ColaEsperaController : Controller
             return BadRequest(new { success = false, message = errorMessage ?? "Error al completar atención" });
         }
 
+        // ── Automatizar línea de tiempo: finalizar "Consulta" y completar "Salida" ──
+        // La consulta queda capturada y el paso Salida se marca completado (salida real).
+        await FinalizarPasoTimelineAsync(id, "Consulta");
+        await IniciarPasoTimelineAsync(id, "Salida");
+        await FinalizarPasoTimelineAsync(id, "Salida");
+
         return Ok(new { success = true, message = "Atención completada" });
     }
 
@@ -372,6 +387,83 @@ public class ColaEsperaController : Controller
         if (dict != null && dict.TryGetValue(key, out var val) && val is string strVal && Guid.TryParse(strVal, out var guid))
             return guid;
         return null;
+    }
+
+    // ── Automatización de Línea de Tiempo (HU19) ──────────────────
+    // La Cola de Espera dispara la línea de tiempo automáticamente:
+    //   Llegó      → inicia paso "Llegada"
+    //   Atender    → finaliza "Llegada" e inicia "Consulta"
+    //   Completar  → finaliza "Consulta" y completa "Salida"
+    // Así, el médico NO necesita acciones manuales en la línea de tiempo.
+
+    /// <summary>
+    /// Obtiene el ID del paso de línea de tiempo por su nombre para una cita.
+    /// </summary>
+    private async Task<Guid?> GetPasoIdByNombreAsync(Guid citaId, string nombrePaso)
+    {
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/LineaTiempo/cita/{citaId}");
+
+        if (!success)
+        {
+            _logger.LogWarning("Timeline lookup failed for cita {CitaId} paso {Paso}: {Error}", citaId, nombrePaso, errorMessage);
+            return null;
+        }
+
+        var data = ExtractDataArray(response);
+        foreach (var item in data)
+        {
+            if (item is Dictionary<string, object?> dict)
+            {
+                var nombre = GetValue<string>(dict, "nombrePaso");
+                var id = GetValue<string>(dict, "id");
+                if (string.Equals(nombre, nombrePaso, StringComparison.OrdinalIgnoreCase)
+                    && Guid.TryParse(id, out var pasoId))
+                {
+                    return pasoId;
+                }
+            }
+        }
+
+        _logger.LogWarning("Paso {Paso} no encontrado en timeline de cita {CitaId}", nombrePaso, citaId);
+        return null;
+    }
+
+    /// <summary>
+    /// Inicia un paso de la línea de tiempo por nombre (estado "en_sala").
+    /// No bloquea la transición de la cola si falla (solo se loguea).
+    /// </summary>
+    private async Task IniciarPasoTimelineAsync(Guid citaId, string nombrePaso)
+    {
+        try
+        {
+            var pasoId = await GetPasoIdByNombreAsync(citaId, nombrePaso);
+            if (!pasoId.HasValue) return;
+
+            await _apiClient.PostAsync<JsonElement>($"api/LineaTiempo/{pasoId.Value}/iniciar", new { });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo iniciar paso {Paso} de cita {CitaId}", nombrePaso, citaId);
+        }
+    }
+
+    /// <summary>
+    /// Finaliza un paso de la línea de tiempo por nombre (estado "completado").
+    /// No bloquea la transición de la cola si falla (solo se loguea).
+    /// </summary>
+    private async Task FinalizarPasoTimelineAsync(Guid citaId, string nombrePaso)
+    {
+        try
+        {
+            var pasoId = await GetPasoIdByNombreAsync(citaId, nombrePaso);
+            if (!pasoId.HasValue) return;
+
+            await _apiClient.PostAsync<JsonElement>($"api/LineaTiempo/{pasoId.Value}/finalizar", new { });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo finalizar paso {Paso} de cita {CitaId}", nombrePaso, citaId);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────

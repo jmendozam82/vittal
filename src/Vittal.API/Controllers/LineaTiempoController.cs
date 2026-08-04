@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Vittal.API.Authorization;
+using Vittal.API.Hubs;
 using Vittal.Utility;
 using Vittal.API.Extensions;
 using Vittal.API.Models;
@@ -21,11 +23,16 @@ namespace Vittal.API.Controllers;
 public class LineaTiempoController : ControllerBase
 {
     private readonly ILineaTiempoService _service;
+    private readonly IHubContext<LineaTiempoHub> _hubContext;
     private readonly ILogger<LineaTiempoController> _logger;
 
-    public LineaTiempoController(ILineaTiempoService service, ILogger<LineaTiempoController> logger)
+    public LineaTiempoController(
+        ILineaTiempoService service,
+        IHubContext<LineaTiempoHub> hubContext,
+        ILogger<LineaTiempoController> logger)
     {
         _service = service;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -70,6 +77,10 @@ public class LineaTiempoController : ControllerBase
         var usuarioId = User.GetInternalUserId();
 
         var result = await _service.IniciarPasoAsync(clinicaId, pasoId, usuarioId);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            await NotifyTimelineChangedAsync(clinicaId, result.Data.CitaId);
+        }
         return result.ToActionResult();
     }
 
@@ -86,6 +97,10 @@ public class LineaTiempoController : ControllerBase
         var usuarioId = User.GetInternalUserId();
 
         var result = await _service.FinalizarPasoAsync(clinicaId, pasoId, usuarioId);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            await NotifyTimelineChangedAsync(clinicaId, result.Data.CitaId);
+        }
         return result.ToActionResult();
     }
 
@@ -116,5 +131,23 @@ public class LineaTiempoController : ControllerBase
         var clinicaId = User.GetClinicaId();
         var result = await _service.ForzarCompletarCitaAsync(clinicaId, citaId);
         return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Notifica a los clientes suscritos del grupo de la clínica que la línea de tiempo cambió.
+    /// El frontend escucha "TimelineActualizada" para refrescar la vista automáticamente.
+    /// </summary>
+    private async Task NotifyTimelineChangedAsync(Guid clinicaId, Guid citaId)
+    {
+        try
+        {
+            await _hubContext.Clients
+                .Group($"timeline_{clinicaId}")
+                .SendAsync("TimelineActualizada", citaId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al notificar cambio de timeline de cita {CitaId}", citaId);
+        }
     }
 }

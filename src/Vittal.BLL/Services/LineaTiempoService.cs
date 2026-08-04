@@ -202,7 +202,10 @@ public class LineaTiempoService : ILineaTiempoService
 
     /// <summary>
     /// Genera los pasos predeterminados de línea de tiempo para una cita.
-    /// Pasos por defecto: Llegada → Sala → Consulta → Diagnóstico → Salida.
+    /// Pasos por defecto: Llegada → Consulta → Salida.
+    /// Se consolidaron Sala y Diagnóstico dentro de Llegada y Consulta respectivamente
+    /// para alinearse con los 3 disparos de la Cola de Espera (Llegó / Atender / Completar).
+    /// Historia de Usuario: HU19 — Línea de Tiempo (flujo automático)
     /// </summary>
     public async Task<ServiceResult<List<LineaTiempoResponseDto>>> GenerarPasosParaCitaAsync(Guid clinicaId, Guid citaId)
     {
@@ -224,14 +227,12 @@ public class LineaTiempoService : ILineaTiempoService
                 return ServiceResult<List<LineaTiempoResponseDto>>.Failure("La cita ya tiene pasos de línea de tiempo generados.", ServiceErrorType.Conflict);
             }
 
-            // Pasos por defecto
+            // Pasos por defecto (3 pasos automáticos alineados con la Cola de Espera)
             var pasosDefault = new (string Nombre, int Orden)[]
             {
                 ("Llegada", 1),
-                ("Sala", 2),
-                ("Consulta", 3),
-                ("Diagnóstico", 4),
-                ("Salida", 5)
+                ("Consulta", 2),
+                ("Salida", 3)
             };
 
             var dtos = new List<LineaTiempoResponseDto>();

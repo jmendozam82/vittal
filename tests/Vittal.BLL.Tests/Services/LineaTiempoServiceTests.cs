@@ -40,7 +40,7 @@ public class LineaTiempoServiceTests
         var pasos = new List<LineaTiempo>
         {
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, CitaId = citaId, PacienteId = Guid.NewGuid(), NombrePaso = "Llegada", Orden = 1, Estado = "completado", HoraLlegada = new TimeSpan(9, 0, 0), HoraSalida = new TimeSpan(9, 5, 0), PacienteNombre = "Juan Pérez" },
-            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, CitaId = citaId, PacienteId = Guid.NewGuid(), NombrePaso = "Sala", Orden = 2, Estado = "en_sala", HoraLlegada = new TimeSpan(9, 5, 0), PacienteNombre = "Juan Pérez" }
+            new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, CitaId = citaId, PacienteId = Guid.NewGuid(), NombrePaso = "Consulta", Orden = 2, Estado = "en_sala", HoraLlegada = new TimeSpan(9, 5, 0), PacienteNombre = "Juan Pérez" }
         };
         _repositoryMock.Setup(r => r.GetByCitaIdAsync(_clinicaId, citaId)).ReturnsAsync(pasos);
 
@@ -148,7 +148,7 @@ public class LineaTiempoServiceTests
             ClinicaId = _clinicaId,
             CitaId = Guid.NewGuid(),
             PacienteId = Guid.NewGuid(),
-            NombrePaso = "Sala",
+            NombrePaso = "Consulta",
             Orden = 2,
             Estado = "en_sala"
         };
@@ -284,5 +284,38 @@ public class LineaTiempoServiceTests
         result.IsSuccess.Should().BeFalse();
         result.ErrorType.Should().Be(ServiceErrorType.Conflict);
         result.Message.Should().Contain("ya tiene pasos");
+    }
+
+    [Fact]
+    public async Task GenerarPasosParaCitaAsync_ShouldGenerateThreeAutomaticSteps()
+    {
+        // Arrange
+        var citaId = Guid.NewGuid();
+        var cita = new Cita
+        {
+            Id = citaId,
+            ClinicaId = _clinicaId,
+            PacienteId = Guid.NewGuid(),
+            DoctorId = Guid.NewGuid(),
+            Estado = "agendada",
+            PacienteNombre = "Test Patient",
+            SalaNombre = "Sala 1"
+        };
+
+        _citaRepositoryMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync(cita);
+        _repositoryMock.Setup(r => r.GetByCitaIdAsync(_clinicaId, citaId)).ReturnsAsync(new List<LineaTiempo>());
+        _repositoryMock.Setup(r => r.CreateAsync(It.IsAny<LineaTiempo>()))
+            .ReturnsAsync((LineaTiempo p) => { p.Id = Guid.NewGuid(); return p.Id; });
+
+        // Act
+        var result = await _service.GenerarPasosParaCitaAsync(_clinicaId, citaId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().HaveCount(3);
+        result.Data!.Select(p => p.NombrePaso).Should().ContainInOrder("Llegada", "Consulta", "Salida");
+        result.Data!.All(p => p.Orden == Array.IndexOf(new[] { "Llegada", "Consulta", "Salida" }, p.NombrePaso) + 1)
+            .Should().BeTrue();
+        result.Data!.All(p => p.Estado == "pendiente").Should().BeTrue();
     }
 }

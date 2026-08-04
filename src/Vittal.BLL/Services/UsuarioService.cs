@@ -291,7 +291,7 @@ public class UsuarioService : IUsuarioService
             {
                 try
                 {
-                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email);
+                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email ?? string.Empty);
                     _logger.LogInformation("Email actualizado en Supabase Auth para {AuthUserId}: {NewEmail}",
                         existing.AuthUserId, dto.Email);
                 }
@@ -307,7 +307,7 @@ public class UsuarioService : IUsuarioService
             existing.Username = dto.Username;
             existing.Nombres = dto.Nombres;
             existing.Apellidos = dto.Apellidos;
-            existing.Email = dto.Email;
+            existing.Email = dto.Email ?? string.Empty;
             existing.PerfilId = dto.PerfilId;
             existing.Sexo = dto.Sexo;
             existing.Direccion = dto.Direccion;
@@ -481,7 +481,7 @@ public class UsuarioService : IUsuarioService
             // Actualizar solo campos editables por el propio usuario
             existing.Nombres = dto.Nombres;
             existing.Apellidos = dto.Apellidos;
-            existing.Email = dto.Email;
+            existing.Email = dto.Email ?? string.Empty;
             existing.Sexo = dto.Sexo;
             existing.Celular = dto.Celular;
             existing.Direccion = dto.Direccion;
@@ -494,7 +494,7 @@ public class UsuarioService : IUsuarioService
             {
                 try
                 {
-                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email);
+                    await UpdateSupabaseAuthEmailAsync(existing.AuthUserId.Value.ToString(), dto.Email ?? string.Empty);
                     _logger.LogInformation("Email actualizado en Supabase Auth para {AuthUserId}: {NewEmail}",
                         existing.AuthUserId, dto.Email);
                 }

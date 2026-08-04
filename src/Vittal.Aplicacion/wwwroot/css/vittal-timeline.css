@@ -169,6 +169,131 @@
     color: var(--vittal-primary);
 }
 
+/* ── Stepper Horizontal (3 pasos: Llegada → Consulta → Salida) ── */
+.timeline-stepper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1rem;
+    background: var(--vittal-bg-card);
+    border: 1px solid var(--vittal-border);
+    border-radius: var(--vittal-radius-lg);
+    box-shadow: var(--vittal-shadow);
+    position: relative;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+}
+
+.timeline-step .step-node {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    background: var(--vittal-border);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.timeline-step.done .step-node {
+    background: var(--vittal-secondary);
+    animation: timeline-pop 0.4s ease;
+}
+
+.timeline-step.active .step-node {
+    background: var(--vittal-primary);
+    animation: timeline-pulse 1.6s infinite;
+}
+
+.timeline-step.skipped .step-node {
+    background: var(--vittal-warning);
+}
+
+.timeline-step.pending .step-node {
+    background: var(--vittal-border);
+    color: var(--vittal-text-muted);
+}
+
+.timeline-step .step-label {
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--vittal-text);
+}
+
+.timeline-step .step-time {
+    font-size: 0.75rem;
+    color: var(--vittal-text-muted);
+    font-weight: 500;
+}
+
+.timeline-step .step-live {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--vittal-primary);
+    background: var(--vittal-primary-light);
+    border-radius: 10px;
+    padding: 0.1rem 0.55rem;
+    margin-top: 0.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.timeline-step .step-connector {
+    position: absolute;
+    top: 22px;
+    left: calc(50% + 24px);
+    width: calc(100% - 48px);
+    height: 3px;
+    background: var(--vittal-border);
+    z-index: 1;
+}
+
+.timeline-step.done .step-connector {
+    background: var(--vittal-secondary);
+}
+
+.timeline-step.active .step-connector {
+    background: var(--vittal-border);
+}
+
+@keyframes timeline-pop {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* ── Badge de avance automático ───────────────────────────────── */
+.paso-automatico {
+    border-top: 1px dashed var(--vittal-border);
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--vittal-text-muted);
+}
+
+/* ── Subtítulo del KPI ────────────────────────────────────────── */
+.timeline-total .total-sub {
+    font-size: 0.78rem;
+    color: var(--vittal-text-muted);
+    margin-top: 0.15rem;
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .timeline-vertical {
@@ -186,5 +311,12 @@
     }
     .paso-header .paso-nombre {
         font-size: 0.85rem;
+    }
+    .timeline-stepper {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .timeline-step {
+        min-width: 90px;
     }
 }
