@@ -784,6 +784,9 @@
             const doctor = h.doctorNombre || 'Sin doctor';
             const motivo = h.motivoConsulta || 'Sin motivo';
             const idx = i;
+            // Integridad clínica: una hoja cuya cita está 'atendida' es una consulta FINALIZADA.
+            const finalizada = (h.citaEstado || '').toLowerCase() === 'atendida';
+            const bloqueoTitle = finalizada ? 'Consulta finalizada — no se puede modificar' : '';
 
             html += `
             <div class="accordion-item">
@@ -794,11 +797,13 @@
                         <div class="d-flex w-100 justify-content-between align-items-center me-3">
                             <span><i class="bi bi-calendar-event me-2 text-primary"></i><strong>${fecha}</strong></span>
                             <span class="badge bg-light text-dark ms-3">${escapeHtml(doctor)}</span>
+                            ${finalizada ? '<span class="badge bg-secondary ms-2" title="Esta consulta ya fue finalizada. Su contenido está protegido contra edición."><i class="bi bi-lock-fill me-1"></i>Consulta finalizada</span>' : ''}
                         </div>
                     </button>
                 </h2>
                 <div id="hoja${h.id}" class="accordion-collapse collapse" data-bs-parent="#accordionHojas">
                     <div class="accordion-body">
+                        ${finalizada ? '<div class="alert alert-secondary py-2 px-3 mb-2 d-flex align-items-center"><i class="bi bi-shield-lock-fill me-2"></i><small><strong>Consulta finalizada.</strong> El contenido clínico de esta hoja está protegido. Solo puede imprimir Receta, Epicrisis o emitir Constancia.</small></div>' : ''}
                         <div class="mb-2">
                             <small class="text-muted">Motivo:</small>
                             <p class="mb-2">${escapeHtml(motivo)}</p>
@@ -806,22 +811,22 @@
                         </div>
                         <hr class="my-2">
                         <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-outline-primary btn-sm" onclick="abrirModalDiagnostico('${h.id}')">
+                            <button class="btn btn-outline-primary btn-sm" onclick="abrirModalDiagnostico('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-heart-pulse me-1"></i> + Diagnóstico
                             </button>
-                            <button class="btn btn-outline-success btn-sm" onclick="abrirModalTratamiento('${h.id}')">
+                            <button class="btn btn-outline-success btn-sm" onclick="abrirModalTratamiento('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-capsule me-1"></i> + Tratamiento
                             </button>
-                            <button class="btn btn-outline-warning btn-sm" onclick="abrirModalCirugia('${h.id}')">
+                            <button class="btn btn-outline-warning btn-sm" onclick="abrirModalCirugia('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-hospital me-1"></i> + Cirugía
                             </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalExamen('${h.id}')">
+                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalExamen('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-clipboard2-pulse me-1"></i> + Examen
                             </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="abrirModalRecomendacion('${h.id}')">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="abrirModalRecomendacion('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-chat-quote me-1"></i> + Recomendación
                             </button>
-                            <button class="btn btn-outline-dark btn-sm" onclick="abrirModalArchivo('${h.id}')">
+                            <button class="btn btn-outline-dark btn-sm" onclick="abrirModalArchivo('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-paperclip me-1"></i> + Archivo
                             </button>
                             <a href="/Expedientes/Expedientes/ImprimirReceta?hojaCitaId=${h.id}" target="_blank" class="btn btn-outline-dark btn-sm" title="Imprimir receta médica">
@@ -833,10 +838,10 @@
                             <button class="btn btn-outline-success btn-sm" onclick="abrirModalConstancia('${h.id}', '${h.doctorId || ''}', '${h.doctorNombre || ''}')" title="Emitir constancia para esta consulta">
                                 <i class="bi bi-clipboard2-plus me-1"></i> + Constancia
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="abrirModalSignosVitales('${h.id}')" title="Registrar signos vitales de esta consulta">
+                            <button class="btn btn-outline-danger btn-sm" onclick="abrirModalSignosVitales('${h.id}')" title="Registrar signos vitales de esta consulta" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-activity me-1"></i> + Signos Vitales
                             </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalAntecedentes('${h.id}')" title="Registrar antecedentes del paciente para esta especialidad">
+                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalAntecedentes('${h.id}')" title="Registrar antecedentes del paciente para esta especialidad" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-journal-medical me-1"></i> + Antecedentes
                             </button>
                         </div>
@@ -1164,7 +1169,19 @@
     });
 
     // --- AGREGAR DIAGNÓSTICO ---
+    // Guard de integridad: bloquea abrir modales de edición de una hoja cuya consulta ya finalizó.
+    function esHojaFinalizada(hojaCitaId) {
+        const hoja = (hojasCita || []).find(x => x.id === hojaCitaId);
+        return !!(hoja && (hoja.citaEstado || '').toLowerCase() === 'atendida');
+    }
+    function bloquearSiFinalizada(hojaCitaId) {
+        if (!esHojaFinalizada(hojaCitaId)) return false;
+        showToast('warning', 'La consulta ya fue finalizada y no se puede modificar.');
+        return true;
+    }
+
     window.abrirModalDiagnostico = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('diagHojaCitaId').value = hojaCitaId;
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarDiagnostico')).show();
     };
@@ -1207,6 +1224,7 @@
 
     // --- AGREGAR TRATAMIENTO ---
     window.abrirModalTratamiento = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('tratHojaCitaId').value = hojaCitaId;
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarTratamiento')).show();
     };
@@ -1250,6 +1268,7 @@
 
     // --- AGREGAR CIRUGÍA ---
     window.abrirModalCirugia = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('cirHojaCitaId').value = hojaCitaId;
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarCirugia')).show();
     };
@@ -1293,6 +1312,7 @@
 
     // --- AGREGAR EXAMEN ---
     window.abrirModalExamen = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('exaHojaCitaId').value = hojaCitaId;
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarExamen')).show();
     };
@@ -1336,6 +1356,7 @@
 
     // --- AGREGAR RECOMENDACIÓN ---
     window.abrirModalRecomendacion = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('recHojaCitaId').value = hojaCitaId;
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAgregarRecomendacion')).show();
     };
@@ -1379,6 +1400,7 @@
     // ─── SIGNOS VITALES (HU-E06) ───
     let svTipos = [];
     window.abrirModalSignosVitales = async function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('svHojaCitaId').value = hojaCitaId;
         document.getElementById('svSalaInfo').classList.add('d-none');
         const container = document.getElementById('svFormContainer');
@@ -1471,6 +1493,7 @@
     // ─── ANTECEDENTES DEL PACIENTE (HU-E05) ───
     let antTipos = [];
     window.abrirModalAntecedentes = async function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         document.getElementById('antHojaCitaId').value = hojaCitaId;
         document.getElementById('antSalaId').value = '';
         const container = document.getElementById('antFormContainer');
@@ -1581,6 +1604,7 @@
 
     // Abrir modal con hojaCitaId preseleccionado
     window.abrirModalArchivo = function(hojaCitaId) {
+        if (bloquearSiFinalizada(hojaCitaId)) return;
         currentUploadHojaCitaId = hojaCitaId;
         document.getElementById('archHojaCitaIdHidden').value = hojaCitaId;
         resetFileUpload();

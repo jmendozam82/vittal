@@ -29,4 +29,10 @@ public interface IHojaCitaService
 
     /// <summary>Desactiva una hoja de cita (activo = false). Nunca elimina.</summary>
     Task<ServiceResult<bool>> DeactivateAsync(Guid clinicaId, Guid id);
+
+    /// <summary>
+    /// Determina si la consulta asociada a una hoja de cita ya fue finalizada (estado 'atendida').
+    /// Las hojas finalizadas no deben admitir modificaciones (integridad clínica).
+    /// </summary>
+    Task<bool> EstaFinalizadaAsync(Guid clinicaId, Guid hojaCitaId);
 }

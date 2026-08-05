@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
+using Vittal.API.Helpers;
 using Vittal.Utility;
 using Vittal.API.Extensions;
 using Vittal.API.Models;
@@ -22,11 +23,16 @@ namespace Vittal.API.Controllers;
 public class SignosVitalesHojaController : ControllerBase
 {
     private readonly ISignosVitalesHojaService _service;
+    private readonly IHojaCitaService _hojaCitaService;
     private readonly ILogger<SignosVitalesHojaController> _logger;
 
-    public SignosVitalesHojaController(ISignosVitalesHojaService service, ILogger<SignosVitalesHojaController> logger)
+    public SignosVitalesHojaController(
+        ISignosVitalesHojaService service,
+        IHojaCitaService hojaCitaService,
+        ILogger<SignosVitalesHojaController> logger)
     {
         _service = service;
+        _hojaCitaService = hojaCitaService;
         _logger = logger;
     }
 
@@ -56,6 +62,7 @@ public class SignosVitalesHojaController : ControllerBase
 
     /// <summary>Registra un nuevo signo vital en una hoja de cita.</summary>
     [HttpPost]
+    [BloquearHojaFinalizada]
     [RequirePermission("signos_vitales_hoja", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<SignosVitalesHojaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -82,6 +89,7 @@ public class SignosVitalesHojaController : ControllerBase
 
     /// <summary>Actualiza un registro de signo vital existente.</summary>
     [HttpPut("{id:guid}")]
+    [BloquearHojaFinalizada]
     [RequirePermission("signos_vitales_hoja", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<SignosVitalesHojaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -103,6 +111,18 @@ public class SignosVitalesHojaController : ControllerBase
     public async Task<IActionResult> Desactivar(Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: obtener la hoja de cita del signo vital para bloquear consultas finalizadas.
+        var item = await _service.GetByIdAsync(clinicaId, id);
+        if (item.IsSuccess && item.Data != null)
+        {
+            var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, item.Data.HojaCitaId, _hojaCitaService);
+            if (bloqueo != null)
+            {
+                return bloqueo;
+            }
+        }
+
         var result = await _service.DeactivateAsync(clinicaId, id);
         return result.ToActionResult();
     }

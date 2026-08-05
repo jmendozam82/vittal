@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
+using Vittal.API.Helpers;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.HojaRecomendacion;
@@ -22,11 +23,16 @@ namespace Vittal.API.Controllers;
 public class HojasRecomendacionController : ControllerBase
 {
     private readonly IHojaRecomendacionService _service;
+    private readonly IHojaCitaService _hojaCitaService;
     private readonly ILogger<HojasRecomendacionController> _logger;
 
-    public HojasRecomendacionController(IHojaRecomendacionService service, ILogger<HojasRecomendacionController> logger)
+    public HojasRecomendacionController(
+        IHojaRecomendacionService service,
+        IHojaCitaService hojaCitaService,
+        ILogger<HojasRecomendacionController> logger)
     {
         _service = service;
+        _hojaCitaService = hojaCitaService;
         _logger = logger;
     }
 
@@ -56,6 +62,7 @@ public class HojasRecomendacionController : ControllerBase
 
     /// <summary>Crea una nueva recomendación en la hoja de cita.</summary>
     [HttpPost]
+    [BloquearHojaFinalizada]
     [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<HojaRecomendacionResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -81,6 +88,7 @@ public class HojasRecomendacionController : ControllerBase
 
     /// <summary>Actualiza una recomendación existente.</summary>
     [HttpPut("{id:guid}")]
+    [BloquearHojaFinalizada]
     [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<HojaRecomendacionResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -102,6 +110,18 @@ public class HojasRecomendacionController : ControllerBase
     public async Task<IActionResult> Desactivar([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: obtener la hoja de cita de la recomendación para bloquear consultas finalizadas.
+        var item = await _service.GetByIdAsync(clinicaId, id);
+        if (item.IsSuccess && item.Data != null)
+        {
+            var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, item.Data.HojaCitaId, _hojaCitaService);
+            if (bloqueo != null)
+            {
+                return bloqueo;
+            }
+        }
+
         var result = await _service.DeactivateAsync(clinicaId, id);
         return result.ToActionResult();
     }

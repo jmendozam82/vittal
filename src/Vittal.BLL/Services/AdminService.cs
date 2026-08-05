@@ -220,36 +220,40 @@ public class AdminService : IAdminService
                     await connection.OpenAsync();
 
                     // 4a. Configuración de alertas
+                    // Nota: la columna real de configuracion_alertas es tiempo_espera_maximo_minutos
+                    // (no tiempo_espera_minutos, que pertenece a clinicas).
                     const string sqlAlertas = @"
-                        INSERT INTO public.configuracion_alertas (clinica_id, tiempo_espera_minutos, activo, fecha_creacion)
-                        VALUES (@ClinicaId, @TiempoEspera, true, NOW())
+                        INSERT INTO public.configuracion_alertas (
+                            clinica_id, tiempo_espera_maximo_minutos, activo,
+                            notificacion_sonido, intervalo_revision_segundos, fecha_creacion, creado_por
+                        )
+                        VALUES (@ClinicaId, @TiempoEspera, true, false, 60, NOW(), @CreadoPor)
                         ON CONFLICT (clinica_id) DO NOTHING;";
 
                     var alertasRows = await connection.ExecuteAsync(sqlAlertas, new
                     {
                         ClinicaId = creadoClinicaId!.Value,
-                        TiempoEspera = dto.TiempoEsperaMinutos
+                        TiempoEspera = dto.TiempoEsperaMinutos,
+                        CreadoPor = superAdminUsuarioId
                     });
                     configAlertasOk = alertasRows > 0;
                     _logger.LogInformation("Config alertas seedeada para clínica {ClinicaId}", creadoClinicaId);
 
                     // 4b. Configuración de dashboard
-                    var defaultDashboardConfig = new
-                    {
-                        widgets = new[] { "citas_hoy", "pacientes_nuevos", "alertas" },
-                        layout = "grid",
-                        tema = "light"
-                    };
-
+                    // Nota: dashboard_config usa columnas booleanas mostrar_* (no columna jsonb "config").
                     const string sqlDashboard = @"
-                        INSERT INTO public.dashboard_config (clinica_id, config, activo, fecha_creacion)
-                        VALUES (@ClinicaId, @Config::jsonb, true, NOW())
+                        INSERT INTO public.dashboard_config (
+                            clinica_id, mostrar_pacientes_del_dia, mostrar_citas_pendientes,
+                            mostrar_pacientes_en_espera, mostrar_tiempo_promedio_espera,
+                            mostrar_grafico_citas_por_hora, mostrar_ultimas_alertas, layout,
+                            activo, fecha_creacion
+                        )
+                        VALUES (@ClinicaId, true, true, true, true, true, true, 'default', true, NOW())
                         ON CONFLICT (clinica_id) DO NOTHING;";
 
                     var dashboardRows = await connection.ExecuteAsync(sqlDashboard, new
                     {
-                        ClinicaId = creadoClinicaId!.Value,
-                        Config = JsonSerializer.Serialize(defaultDashboardConfig)
+                        ClinicaId = creadoClinicaId!.Value
                     });
                     dashboardConfigOk = dashboardRows > 0;
                     _logger.LogInformation("Dashboard config seedeada para clínica {ClinicaId}", creadoClinicaId);

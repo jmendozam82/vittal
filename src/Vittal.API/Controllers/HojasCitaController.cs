@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
+using Vittal.API.Helpers;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.HojaCita;
@@ -99,6 +100,14 @@ public class HojasCitaController : ControllerBase
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] HojaCitaRequestDto dto)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: no se puede editar una hoja de cita de una consulta finalizada.
+        var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, id, _service);
+        if (bloqueo != null)
+        {
+            return bloqueo;
+        }
+
         var result = await _service.UpdateAsync(id, dto, clinicaId);
         return result.ToActionResult();
     }
@@ -114,6 +123,14 @@ public class HojasCitaController : ControllerBase
     public async Task<IActionResult> Desactivar([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: no se puede desactivar una hoja de cita de una consulta finalizada.
+        var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, id, _service);
+        if (bloqueo != null)
+        {
+            return bloqueo;
+        }
+
         var result = await _service.DeactivateAsync(clinicaId, id);
         return result.ToActionResult();
     }

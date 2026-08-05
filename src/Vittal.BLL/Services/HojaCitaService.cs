@@ -167,11 +167,11 @@ public class HojaCitaService : IHojaCitaService
 
             existing.CitaId = dto.CitaId;
             existing.DoctorId = dto.DoctorId;
-            
+
             // Si el cliente proporcionó una fecha Consulta, normalizarla
             var fechaConsulta = NormalizarFechaConsulta(dto.FechaConsulta);
             existing.FechaConsulta = fechaConsulta ?? existing.FechaConsulta;
-            
+
             existing.MotivoConsulta = dto.MotivoConsulta;
             existing.NotasConsulta = dto.NotasConsulta;
             existing.FechaModificacion = DateTime.UtcNow;
@@ -280,7 +280,46 @@ public class HojaCitaService : IHojaCitaService
             FechaCreacion = entity.FechaCreacion,
             FechaModificacion = entity.FechaModificacion,
             PacienteNombre = entity.PacienteNombre,
-            DoctorNombre = entity.DoctorNombre
+            DoctorNombre = entity.DoctorNombre,
+            CitaEstado = entity.CitaEstado
         };
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Integridad clínica: consulta finalizada
+    // ────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Determina si la consulta asociada a una hoja de cita ya fue finalizada.
+    /// Una hoja finalizada (cita 'atendida') NO debe admitir modificaciones
+    /// de diagnóstico, tratamiento, cirugía, examen, recomendación, signos vitales
+    /// ni archivos. La constancia SÍ se permite (se emite después de la consulta).
+    /// </summary>
+    public async Task<bool> EstaFinalizadaAsync(Guid clinicaId, Guid hojaCitaId)
+    {
+        try
+        {
+            var hoja = await _repo.GetByIdAsync(clinicaId, hojaCitaId);
+            if (hoja == null)
+            {
+                _logger.LogWarning("EstaFinalizadaAsync: hoja de cita {HojaCitaId} no encontrada en clínica {ClinicaId}",
+                    hojaCitaId, clinicaId);
+                return false;
+            }
+
+            var finalizada = string.Equals(hoja.CitaEstado, "atendida", StringComparison.OrdinalIgnoreCase);
+            if (finalizada)
+            {
+                _logger.LogInformation("Hoja de cita {HojaCitaId} corresponde a consulta finalizada (cita {CitaId}) — bloqueada para edición",
+                    hojaCitaId, hoja.CitaId);
+            }
+
+            return finalizada;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar si la hoja de cita {HojaCitaId} está finalizada", hojaCitaId);
+            return false;
+        }
     }
 }

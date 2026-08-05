@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
+using Vittal.API.Helpers;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.HojaExamen;
@@ -22,11 +23,16 @@ namespace Vittal.API.Controllers;
 public class HojasExamenController : ControllerBase
 {
     private readonly IHojaExamenService _service;
+    private readonly IHojaCitaService _hojaCitaService;
     private readonly ILogger<HojasExamenController> _logger;
 
-    public HojasExamenController(IHojaExamenService service, ILogger<HojasExamenController> logger)
+    public HojasExamenController(
+        IHojaExamenService service,
+        IHojaCitaService hojaCitaService,
+        ILogger<HojasExamenController> logger)
     {
         _service = service;
+        _hojaCitaService = hojaCitaService;
         _logger = logger;
     }
 
@@ -56,6 +62,7 @@ public class HojasExamenController : ControllerBase
 
     /// <summary>Crea un nuevo examen en la hoja de cita.</summary>
     [HttpPost]
+    [BloquearHojaFinalizada]
     [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<HojaExamenResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -81,6 +88,7 @@ public class HojasExamenController : ControllerBase
 
     /// <summary>Actualiza un examen existente.</summary>
     [HttpPut("{id:guid}")]
+    [BloquearHojaFinalizada]
     [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<HojaExamenResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -102,6 +110,18 @@ public class HojasExamenController : ControllerBase
     public async Task<IActionResult> Desactivar([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: obtener la hoja de cita del examen para bloquear consultas finalizadas.
+        var item = await _service.GetByIdAsync(clinicaId, id);
+        if (item.IsSuccess && item.Data != null)
+        {
+            var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, item.Data.HojaCitaId, _hojaCitaService);
+            if (bloqueo != null)
+            {
+                return bloqueo;
+            }
+        }
+
         var result = await _service.DeactivateAsync(clinicaId, id);
         return result.ToActionResult();
     }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Vittal.API.Authorization;
 using Vittal.API.Extensions;
+using Vittal.API.Helpers;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.ExpedienteArchivo;
@@ -24,11 +25,16 @@ namespace Vittal.API.Controllers;
 public class ExpedientesArchivosController : ControllerBase
 {
     private readonly IExpedienteArchivoService _service;
+    private readonly IHojaCitaService _hojaCitaService;
     private readonly ILogger<ExpedientesArchivosController> _logger;
 
-    public ExpedientesArchivosController(IExpedienteArchivoService service, ILogger<ExpedientesArchivosController> logger)
+    public ExpedientesArchivosController(
+        IExpedienteArchivoService service,
+        IHojaCitaService hojaCitaService,
+        ILogger<ExpedientesArchivosController> logger)
     {
         _service = service;
+        _hojaCitaService = hojaCitaService;
         _logger = logger;
     }
 
@@ -86,6 +92,7 @@ public class ExpedientesArchivosController : ControllerBase
     /// El storagePath se genera automáticamente: {clinicaId}/{expedienteId}/{Guid}{ext}
     /// </summary>
     [HttpPost("upload")]
+    [BloquearHojaFinalizada]
     [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<ExpedienteArchivoResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -149,6 +156,18 @@ public class ExpedientesArchivosController : ControllerBase
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: obtener la hoja de cita del archivo para bloquear consultas finalizadas.
+        var item = await _service.GetByIdAsync(clinicaId, id);
+        if (item.IsSuccess && item.Data != null)
+        {
+            var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, item.Data.HojaCitaId, _hojaCitaService);
+            if (bloqueo != null)
+            {
+                return bloqueo;
+            }
+        }
+
         var result = await _service.DeleteAsync(clinicaId, id);
         return result.ToActionResult();
     }
@@ -164,6 +183,18 @@ public class ExpedientesArchivosController : ControllerBase
     public async Task<IActionResult> Desactivar([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
+
+        // Guard de integridad: obtener la hoja de cita del archivo para bloquear consultas finalizadas.
+        var item = await _service.GetByIdAsync(clinicaId, id);
+        if (item.IsSuccess && item.Data != null)
+        {
+            var bloqueo = await ConsultaFinalizadaGuard.ValidateAsync(clinicaId, item.Data.HojaCitaId, _hojaCitaService);
+            if (bloqueo != null)
+            {
+                return bloqueo;
+            }
+        }
+
         var result = await _service.DeactivateAsync(clinicaId, id);
         return result.ToActionResult();
     }

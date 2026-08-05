@@ -36,4 +36,10 @@ public class HojaCita
 
     /// <summary>Nombre completo del doctor (JOIN con usuarios).</summary>
     public string DoctorNombre { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Estado de la cita asociada (JOIN con citas).
+    /// 'atendida' indica que la consulta fue finalizada y no debe editarse.
+    /// </summary>
+    public string? CitaEstado { get; set; }
 }

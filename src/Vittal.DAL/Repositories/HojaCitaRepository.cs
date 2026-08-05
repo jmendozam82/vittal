@@ -39,13 +39,15 @@ public class HojaCitaRepository : IHojaCitaRepository
         h.fecha_creacion        AS FechaCreacion,
         h.fecha_modificacion    AS FechaModificacion,
         CONCAT(p.primer_nombre, ' ', p.primer_apellido) AS PacienteNombre,
-        CONCAT(u.nombres, ' ', u.apellidos) AS DoctorNombre";
+        CONCAT(u.nombres, ' ', u.apellidos) AS DoctorNombre,
+        c.estado                AS CitaEstado";
 
     private const string FromJoin = @"
         FROM public.hojas_cita h
         LEFT JOIN public.expedientes e ON h.expediente_id = e.id
         LEFT JOIN public.pacientes p ON e.paciente_id = p.id
-        LEFT JOIN public.usuarios u ON h.doctor_id = u.id";
+        LEFT JOIN public.usuarios u ON h.doctor_id = u.id
+        LEFT JOIN public.citas c ON c.id = h.cita_id";
 
     // ────────────────────────────────────────────────────────────────────
     // 1. GetAllAsync — Obtiene todas las hojas de cita activas de una clínica
