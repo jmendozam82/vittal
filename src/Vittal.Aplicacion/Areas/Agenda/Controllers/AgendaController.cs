@@ -299,7 +299,22 @@ public class AgendaController : Controller
         }
 
         var data = ExtractDataObject(response);
-        return Ok(new { success = true, data, message = "Cita creada exitosamente" });
+
+        // Opción D: verificar si el paciente tiene expediente para informar al usuario.
+        // No bloquea la creación de la cita — solo devuelve el flag para mostrar un aviso.
+        bool sinExpediente = false;
+        try
+        {
+            var (expCheck, _, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/paciente/{dto.PacienteId}");
+            // El GET falla (404) cuando el paciente no tiene expediente
+            sinExpediente = !expCheck;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo verificar expediente del paciente {PacienteId} al crear cita.", dto.PacienteId);
+        }
+
+        return Ok(new { success = true, data, message = "Cita creada exitosamente", sinExpediente });
     }
 
     /// <summary>

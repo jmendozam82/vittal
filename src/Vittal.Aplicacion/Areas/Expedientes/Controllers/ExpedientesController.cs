@@ -85,6 +85,46 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
     }
 
     /// <summary>
+    /// DTO interno para guardar signos vitales en una hoja de cita.
+    /// El salaId se resuelve automáticamente desde la cita de la hoja.
+    /// </summary>
+    public class SignosVitalesHojaFormDto
+    {
+        public string HojaCitaId { get; set; } = string.Empty;
+        public List<SignoVitalItemFormDto> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO interno para un registro de signo vital.
+    /// </summary>
+    public class SignoVitalItemFormDto
+    {
+        public string TipoSignoVitalId { get; set; } = string.Empty;
+        public decimal Valor { get; set; }
+        public string? Unidad { get; set; }
+    }
+
+    /// <summary>
+    /// DTO interno para guardar antecedentes del paciente por sala (upsert).
+    /// </summary>
+    public class AntecedentesFormDto
+    {
+        public string ExpedienteId { get; set; } = string.Empty;
+        public string SalaId { get; set; } = string.Empty;
+        public List<AntecedenteItemFormDto> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO interno para un antecedente del paciente.
+    /// Valor en texto: 'true'/'false' para boolean, numérico como string, o texto libre.
+    /// </summary>
+    public class AntecedenteItemFormDto
+    {
+        public string TipoAntecedenteId { get; set; } = string.Empty;
+        public string Valor { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// ViewModel para la vista de impresión de receta médica.
     /// </summary>
     public class RecetaMedicaViewModel
@@ -847,6 +887,209 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             return Ok(new { success = true, message = "Recomendación agregada exitosamente" });
+        }
+
+        // ===================== SIGNOS VITALES (HU-E06) =====================
+
+        /// <summary>Obtiene la sala de una hoja de cita (vía su cita) — para cargar catálogos por sala.</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonSalaDeHoja(Guid hojaCitaId)
+        {
+            var (ok, salaId, salaNombre) = await ObtenerSalaDeHojaAsync(hojaCitaId);
+            if (!ok)
+            {
+                return Json(new { success = false, message = "No se pudo determinar la sala de la consulta." });
+            }
+            return Json(new { success = true, salaId = salaId, salaNombre = salaNombre });
+        }
+
+        /// <summary>Catálogo de tipos de signos vitales de una sala — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonTiposSignoVital(Guid salaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/TipoSignoVital/sala/{salaId}");
+            if (!success)
+            {
+                _logger.LogWarning("JsonTiposSignoVital API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Obtiene los signos vitales registrados en una hoja de cita (histórico de la consulta).</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonSignosVitalesHoja(Guid hojaCitaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/SignosVitalesHoja/hoja/{hojaCitaId}");
+            if (!success)
+            {
+                _logger.LogWarning("JsonSignosVitalesHoja API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar signos vitales" });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Guarda signos vitales en una hoja de cita — el salaId se resuelve desde la cita de la hoja.</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonGuardarSignosVitales([FromBody] SignosVitalesHojaFormDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.HojaCitaId) || !Guid.TryParse(dto.HojaCitaId, out var hojaCitaId))
+            {
+                return BadRequest(new { success = false, message = "Hoja de cita inválida." });
+            }
+
+            var (ok, salaId, _) = await ObtenerSalaDeHojaAsync(hojaCitaId);
+            if (!ok)
+            {
+                return BadRequest(new { success = false, message = "No se pudo determinar la sala de la consulta." });
+            }
+
+            _logger.LogInformation("JsonGuardarSignosVitales: hoja={HojaCitaId}, items={Count}", hojaCitaId, dto.Items.Count);
+
+            var guardados = 0;
+            var errores = new List<string>();
+            foreach (var item in dto.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.TipoSignoVitalId) || !Guid.TryParse(item.TipoSignoVitalId, out var tipoId))
+                {
+                    continue;
+                }
+
+                var payload = new
+                {
+                    hojaCitaId = hojaCitaId,
+                    salaId = salaId,
+                    tipoSignoVitalId = tipoId,
+                    valor = item.Valor,
+                    unidad = string.IsNullOrWhiteSpace(item.Unidad) ? null : item.Unidad
+                };
+
+                var (success, _, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/SignosVitalesHoja", payload);
+                if (success)
+                {
+                    guardados++;
+                }
+                else
+                {
+                    errores.Add(errorMessage ?? "Error desconocido");
+                }
+            }
+
+            if (guardados == 0 && errores.Count > 0)
+            {
+                _logger.LogWarning("JsonGuardarSignosVitales: no se guardó ningún ítem. Errores: {Errors}", string.Join("; ", errores));
+                return BadRequest(new { success = false, message = "No se pudo guardar ningún signo vital. " + string.Join(" ", errores.Take(2)) });
+            }
+
+            return Ok(new { success = true, message = $"Signos vitales guardados ({guardados}).", guardados = guardados });
+        }
+
+        // ===================== ANTECEDENTES DEL PACIENTE (HU-E05) =====================
+
+        /// <summary>Catálogo de tipos de antecedentes de una sala — proxy con JWT</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonTiposAntecedente(Guid salaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/TipoAntecedente/sala/{salaId}");
+            if (!success)
+            {
+                _logger.LogWarning("JsonTiposAntecedente API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Obtiene los antecedentes existentes de un paciente en una sala (para pre-cargar en el modal).</summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonAntecedentes(Guid expedienteId, Guid salaId)
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/AntecedentesPaciente/expediente/{expedienteId}/sala/{salaId}");
+            if (!success)
+            {
+                _logger.LogWarning("JsonAntecedentes API call failed: {Error}", errorMessage);
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar antecedentes" });
+            }
+            return Json(new { success = true, data = ExtractDataArray(response) });
+        }
+
+        /// <summary>Guarda antecedentes del paciente por sala (upsert) — para fetch() desde Details</summary>
+        [HttpPost]
+        public async Task<IActionResult> JsonGuardarAntecedentes([FromBody] AntecedentesFormDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.ExpedienteId) || !Guid.TryParse(dto.ExpedienteId, out var expedienteId))
+            {
+                return BadRequest(new { success = false, message = "Expediente inválido." });
+            }
+            if (string.IsNullOrWhiteSpace(dto.SalaId) || !Guid.TryParse(dto.SalaId, out var salaId))
+            {
+                return BadRequest(new { success = false, message = "Sala inválida." });
+            }
+
+            _logger.LogInformation("JsonGuardarAntecedentes: expediente={ExpedienteId}, sala={SalaId}, items={Count}",
+                expedienteId, salaId, dto.Items.Count);
+
+            var guardados = 0;
+            var errores = new List<string>();
+            foreach (var item in dto.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.TipoAntecedenteId) || !Guid.TryParse(item.TipoAntecedenteId, out var tipoId))
+                {
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(item.Valor))
+                {
+                    continue;
+                }
+
+                var payload = new
+                {
+                    expedienteId = expedienteId,
+                    salaId = salaId,
+                    tipoAntecedenteId = tipoId,
+                    valor = item.Valor
+                };
+
+                var (success, _, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/AntecedentesPaciente", payload);
+                if (success)
+                {
+                    guardados++;
+                }
+                else
+                {
+                    errores.Add(errorMessage ?? "Error desconocido");
+                }
+            }
+
+            if (guardados == 0 && errores.Count > 0)
+            {
+                _logger.LogWarning("JsonGuardarAntecedentes: no se guardó ningún ítem. Errores: {Errors}", string.Join("; ", errores));
+                return BadRequest(new { success = false, message = "No se pudo guardar ningún antecedente. " + string.Join(" ", errores.Take(2)) });
+            }
+
+            return Ok(new { success = true, message = $"Antecedentes guardados ({guardados}).", guardados = guardados });
+        }
+
+        /// <summary>Resuelve la sala de una hoja de cita vía su cita asociada.</summary>
+        private async Task<(bool Ok, Guid SalaId, string? SalaNombre)> ObtenerSalaDeHojaAsync(Guid hojaCitaId)
+        {
+            var (hcSuccess, hcResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/HojasCita/{hojaCitaId}");
+            if (!hcSuccess) return (false, Guid.Empty, null);
+
+            var hc = ExtractDataObject(hcResponse) as Dictionary<string, object?>;
+            var citaId = hc?.GetValueOrDefault("citaId")?.ToString();
+            if (string.IsNullOrWhiteSpace(citaId) || !Guid.TryParse(citaId, out var citaGuid))
+                return (false, Guid.Empty, null);
+
+            var (citaSuccess, citaResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{citaGuid}");
+            if (!citaSuccess) return (false, Guid.Empty, null);
+
+            var cita = ExtractDataObject(citaResponse) as Dictionary<string, object?>;
+            var salaId = cita?.GetValueOrDefault("salaId")?.ToString();
+            if (string.IsNullOrWhiteSpace(salaId) || !Guid.TryParse(salaId, out var salaGuid))
+                return (false, Guid.Empty, null);
+
+            var salaNombre = cita?.GetValueOrDefault("salaNombre") as string;
+            return (true, salaGuid, salaNombre);
         }
 
         // ===================== IMPRIMIR RECETA MÉDICA =====================

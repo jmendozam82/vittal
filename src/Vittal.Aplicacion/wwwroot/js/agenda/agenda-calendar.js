@@ -1143,6 +1143,11 @@ const vittalAgenda = (function() {
 
             if (res.ok && json.success) {
                 showToast(json.message || (isEdit ? 'Cita actualizada' : 'Cita creada'), 'success');
+                // Opción D: aviso preventivo — el paciente no tiene expediente.
+                // Se creará automáticamente al atenderlo en la Cola de Espera.
+                if (!isEdit && json.sinExpediente) {
+                    showToast('Este paciente no tiene expediente. Se creará automáticamente cuando inicie su atención en la Cola de Espera.', 'warning');
+                }
                 modalCita.hide();
                 await refreshCitas();
             } else {

@@ -440,6 +440,68 @@
     </div>
 </div>
 
+<!-- ========== MODAL: Signos Vitales de la Consulta ========== -->
+<div class="modal fade" id="modalSignosVitales" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-activity me-2 text-danger"></i>Signos Vitales de la Consulta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="svHojaCitaId" />
+                <div id="svSalaInfo" class="alert alert-light border small py-2 mb-3"></div>
+                <div id="svFormContainer" class="row g-3">
+                    <div class="d-flex justify-content-center p-4">
+                        <div class="spinner-border text-danger" role="status">
+                            <span class="visually-hidden">Cargando tipos de signos vitales...</span>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-muted">Los signos vitales quedan guardados como histórico de esta consulta (hoja de cita). El sistema marca automáticamente los valores fuera del rango normal.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnGuardarSignosVitales">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Signos Vitales
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Antecedentes del Paciente ========== -->
+<div class="modal fade" id="modalAntecedentes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-journal-medical me-2 text-info"></i>Antecedentes del Paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="antHojaCitaId" />
+                <input type="hidden" id="antExpedienteId" />
+                <input type="hidden" id="antSalaId" />
+                <div id="antSalaInfo" class="alert alert-light border small py-2 mb-3"></div>
+                <div id="antFormContainer" class="row g-3">
+                    <div class="d-flex justify-content-center p-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Cargando antecedentes...</span>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-muted">Los antecedentes son datos estables del paciente por especialidad. Se guardan una sola vez y se actualizan cuando cambian (pre-cargados en las siguientes consultas).</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info btn-sm text-white" id="btnGuardarAntecedentes">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Antecedentes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     const EXPEDIENTE_ID = '@expedienteId';
@@ -473,6 +535,14 @@
         cirugiasCatalogo: '@Url.Action("JsonCirugiasCatalogo")',
         examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")',
         recomendacionesCatalogo: '@Url.Action("JsonRecomendacionesCatalogo")',
+        // Signos vitales y antecedentes (HU-E05 / HU-E06)
+        salaDeHoja: '@Url.Action("JsonSalaDeHoja")',
+        tiposSignoVital: '@Url.Action("JsonTiposSignoVital")',
+        signosVitalesHoja: '@Url.Action("JsonSignosVitalesHoja")',
+        guardarSignosVitales: '@Url.Action("JsonGuardarSignosVitales")',
+        tiposAntecedente: '@Url.Action("JsonTiposAntecedente")',
+        antecedentes: '@Url.Action("JsonAntecedentes")',
+        guardarAntecedentes: '@Url.Action("JsonGuardarAntecedentes")',
         // Constancias
         crearConstancia: '@Url.Action("JsonCrear", "Constancias")'
     };
@@ -763,9 +833,21 @@
                             <button class="btn btn-outline-success btn-sm" onclick="abrirModalConstancia('${h.id}', '${h.doctorId || ''}', '${h.doctorNombre || ''}')" title="Emitir constancia para esta consulta">
                                 <i class="bi bi-clipboard2-plus me-1"></i> + Constancia
                             </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="abrirModalSignosVitales('${h.id}')" title="Registrar signos vitales de esta consulta">
+                                <i class="bi bi-activity me-1"></i> + Signos Vitales
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalAntecedentes('${h.id}')" title="Registrar antecedentes del paciente para esta especialidad">
+                                <i class="bi bi-journal-medical me-1"></i> + Antecedentes
+                            </button>
                         </div>
                         <hr class="my-2">
                         <!-- Sub-contenedores de detalles -->
+                        <div id="signosVitales_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-danger"></div></div>
+                        </div>
+                        <div id="antecedentes_${h.id}">
+                            <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-info"></div></div>
+                        </div>
                         <div id="diagnosticos_${h.id}">
                             <div class="d-flex justify-content-center p-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>
                         </div>
@@ -794,8 +876,10 @@
 
     // ========== CARGAR DETALLES DE HOJA (diagnósticos, tratamientos, etc.) ==========
     async function cargarDetallesHoja(hojaCitaId, idx) {
-        // Cargar diagnósticos, tratamientos, cirugías, exámenes, recomendaciones, archivos
+        // Cargar signos vitales, antecedentes, diagnósticos, tratamientos, etc.
         await Promise.all([
+            cargarSignosVitales(hojaCitaId),
+            cargarAntecedentes(hojaCitaId),
             cargarDiagnosticos(hojaCitaId),
             cargarTratamientos(hojaCitaId),
             cargarCirugias(hojaCitaId),
@@ -803,6 +887,60 @@
             cargarRecomendaciones(hojaCitaId),
             cargarArchivosHoja(hojaCitaId)
         ]);
+    }
+
+    // ========== SIGNOS VITALES (HU-E06) ==========
+    async function cargarSignosVitales(hojaCitaId) {
+        try {
+            const res = await fetch(`${URLS.signosVitalesHoja}?hojaCitaId=${hojaCitaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('signosVitales_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin signos vitales registrados en esta consulta.</div>';
+            } else {
+                const badges = data.map(s => {
+                    const fuera = s.fueraDeRango
+                        ? ' <span class="badge bg-warning text-dark">fuera de rango</span>'
+                        : '';
+                    return `<span class="badge bg-light text-dark border me-2 mb-1">${escapeHtml(s.tipoSignoVitalNombre || '')}: <strong>${escapeHtml(s.valor)} ${escapeHtml(s.unidad || '')}</strong>${fuera}</span>`;
+                }).join('');
+                container.innerHTML = '<strong class="small text-danger">Signos Vitales:</strong><div class="ms-2 mt-1">' + badges + '</div>';
+            }
+        } catch (err) {
+            document.getElementById('signosVitales_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar signos vitales.</div>';
+        }
+    }
+
+    // ========== ANTECEDENTES (HU-E05) ==========
+    async function cargarAntecedentes(hojaCitaId) {
+        try {
+            // Resolver la sala de la hoja para cargar antecedentes por especialidad
+            const salaRes = await fetch(`${URLS.salaDeHoja}?hojaCitaId=${hojaCitaId}`);
+            const salaJson = await salaRes.json();
+            if (!salaJson.success || !salaJson.salaId) {
+                document.getElementById('antecedentes_' + hojaCitaId).innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin sala asociada — no se pueden mostrar antecedentes.</div>';
+                return;
+            }
+            const res = await fetch(`${URLS.antecedentes}?expedienteId=${EXPEDIENTE_ID}&salaId=${salaJson.salaId}`);
+            const json = await res.json();
+            const data = json.success ? (json.data || []) : [];
+            const container = document.getElementById('antecedentes_' + hojaCitaId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Sin antecedentes registrados para esta especialidad.</div>';
+            } else {
+                const items = data.map(a => {
+                    let valorTxt = a.valor;
+                    if (a.tipoAntecedenteTipoDato === 'boolean') {
+                        valorTxt = (a.valor === 'true' || a.valor === 'True') ? 'Sí' : 'No';
+                    }
+                    return `<div class="small ms-2"><i class="bi bi-dot me-1"></i><strong>${escapeHtml(a.tipoAntecedenteNombre || '')}:</strong> ${escapeHtml(valorTxt)}</div>`;
+                }).join('');
+                container.innerHTML = '<strong class="small text-info">Antecedentes:</strong>' + items;
+            }
+        } catch (err) {
+            document.getElementById('antecedentes_' + hojaCitaId).innerHTML = '<div class="text-danger small">Error al cargar antecedentes.</div>';
+        }
     }
 
     async function cargarDiagnosticos(hojaCitaId) {
@@ -1235,6 +1373,205 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar';
+        }
+    });
+
+    // ─── SIGNOS VITALES (HU-E06) ───
+    let svTipos = [];
+    window.abrirModalSignosVitales = async function(hojaCitaId) {
+        document.getElementById('svHojaCitaId').value = hojaCitaId;
+        document.getElementById('svSalaInfo').classList.add('d-none');
+        const container = document.getElementById('svFormContainer');
+        container.innerHTML = '<div class="d-flex justify-content-center p-4"><div class="spinner-border text-danger"></div></div>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSignosVitales')).show();
+
+        try {
+            // 1) Resolver la sala de la hoja (la cita asociada define la especialidad)
+            const salaRes = await fetch(`${URLS.salaDeHoja}?hojaCitaId=${hojaCitaId}`);
+            const salaJson = await salaRes.json();
+            if (!salaJson.success || !salaJson.salaId) {
+                container.innerHTML = '<div class="alert alert-warning w-100">' + (salaJson.message || 'No se pudo determinar la sala de la hoja.') + '</div>';
+                return;
+            }
+            document.getElementById('svSalaInfo').innerHTML = '<i class="bi bi-building me-1"></i>Especialidad: <strong>' + escapeHtml(salaJson.salaNombre || 'Sala') + '</strong>';
+            document.getElementById('svSalaInfo').classList.remove('d-none');
+
+            // 2) Tipos de signos vitales configurados para esa sala
+            const tipoRes = await fetch(`${URLS.tiposSignoVital}?salaId=${salaJson.salaId}`);
+            const tipoJson = await tipoRes.json();
+            svTipos = (tipoJson.success ? (tipoJson.data || []) : []);
+            if (svTipos.length === 0) {
+                container.innerHTML = '<div class="alert alert-warning w-100">Esta especialidad no tiene tipos de signos vitales configurados.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            svTipos.forEach((t, i) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                const rango = (t.valorMin != null && t.valorMax != null)
+                    ? `<small class="text-muted d-block">Normal: ${t.valorMin} – ${t.valorMax} ${t.unidad || ''}</small>`
+                    : (t.unidad ? `<small class="text-muted d-block">Unidad: ${escapeHtml(t.unidad)}</small>` : '');
+                col.innerHTML = `
+                    <label class="form-label fw-semibold" for="sv_${i}">
+                        ${escapeHtml(t.nombre)}${t.esObligatorio ? ' <span class="text-danger">*</span>' : ''}
+                    </label>
+                    <div class="input-group mb-1">
+                        <input type="number" step="any" min="0" class="form-control" id="sv_${i}" data-tipo="${t.id}" ${t.esObligatorio ? 'required' : ''} placeholder="${escapeHtml(t.unidad || 'Valor')}">
+                        ${t.unidad ? `<span class="input-group-text">${escapeHtml(t.unidad)}</span>` : ''}
+                    </div>
+                    ${rango}`;
+                container.appendChild(col);
+            });
+        } catch (err) {
+            container.innerHTML = '<div class="alert alert-danger w-100">Error de conexión al cargar tipos de signos vitales.</div>';
+        }
+    };
+
+    document.getElementById('btnGuardarSignosVitales').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('svHojaCitaId').value;
+        const items = [];
+        let completo = true;
+        svTipos.forEach((t, i) => {
+            const input = document.getElementById('sv_' + i);
+            if (!input) return;
+            const val = input.value.trim();
+            if (t.esObligatorio && val === '') { completo = false; }
+            if (val === '') return;
+            items.push({ tipoSignoVitalId: t.id, valor: parseFloat(val), unidad: t.unidad || null });
+        });
+        if (!completo) { showToast('danger', 'Complete los signos vitales obligatorios (*).'); return; }
+        if (items.length === 0) { showToast('danger', 'Ingrese al menos un signo vital.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+        try {
+            const res = await fetch(URLS.guardarSignosVitales, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hojaCitaId: hojaCitaId, items: items })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Signos vitales guardados.');
+                bootstrap.Modal.getInstance(document.getElementById('modalSignosVitales')).hide();
+                await cargarSignosVitales(hojaCitaId);
+            } else {
+                showToast('danger', json.message || 'Error al guardar signos vitales.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Signos Vitales';
+        }
+    });
+
+    // ─── ANTECEDENTES DEL PACIENTE (HU-E05) ───
+    let antTipos = [];
+    window.abrirModalAntecedentes = async function(hojaCitaId) {
+        document.getElementById('antHojaCitaId').value = hojaCitaId;
+        document.getElementById('antSalaId').value = '';
+        const container = document.getElementById('antFormContainer');
+        container.innerHTML = '<div class="d-flex justify-content-center p-4"><div class="spinner-border text-info"></div></div>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAntecedentes')).show();
+
+        try {
+            // 1) Resolver la sala de la hoja
+            const salaRes = await fetch(`${URLS.salaDeHoja}?hojaCitaId=${hojaCitaId}`);
+            const salaJson = await salaRes.json();
+            if (!salaJson.success || !salaJson.salaId) {
+                container.innerHTML = '<div class="alert alert-warning w-100">' + (salaJson.message || 'No se pudo determinar la sala de la hoja.') + '</div>';
+                return;
+            }
+            document.getElementById('antSalaId').value = salaJson.salaId;
+            document.getElementById('antSalaInfo').innerHTML = '<i class="bi bi-building me-1"></i>Especialidad: <strong>' + escapeHtml(salaJson.salaNombre || 'Sala') + '</strong>';
+
+            // 2) Tipos de antecedentes de esa especialidad
+            const tipoRes = await fetch(`${URLS.tiposAntecedente}?salaId=${salaJson.salaId}`);
+            const tipoJson = await tipoRes.json();
+            antTipos = (tipoJson.success ? (tipoJson.data || []) : []);
+            if (antTipos.length === 0) {
+                container.innerHTML = '<div class="alert alert-warning w-100">Esta especialidad no tiene tipos de antecedentes configurados.</div>';
+                return;
+            }
+
+            // 3) Valores ya registrados del paciente en esa especialidad (pre-carga)
+            let existentes = {};
+            try {
+                const antRes = await fetch(`${URLS.antecedentes}?expedienteId=${EXPEDIENTE_ID}&salaId=${salaJson.salaId}`);
+                const antJson = await antRes.json();
+                (antJson.success ? (antJson.data || []) : []).forEach(a => { existentes[a.tipoAntecedenteId] = a.valor; });
+            } catch (e) { /* la pre-carga es opcional */ }
+
+            container.innerHTML = '';
+            antTipos.forEach((t, i) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                const idInput = 'ant_' + i;
+                const valorPrev = existentes[t.id];
+                if (t.tipoDato === 'boolean') {
+                    const selVal = (valorPrev === 'true' || valorPrev === 'True') ? 'true'
+                        : ((valorPrev === 'false' || valorPrev === 'False') ? 'false' : '');
+                    col.innerHTML = `
+                        <label class="form-label fw-semibold d-block">${escapeHtml(t.nombre)}</label>
+                        <select class="form-select" id="${idInput}" data-tipo="${t.id}">
+                            <option value="">-- Sin definir --</option>
+                            <option value="true" ${selVal === 'true' ? 'selected' : ''}>Sí</option>
+                            <option value="false" ${selVal === 'false' ? 'selected' : ''}>No</option>
+                        </select>`;
+                } else {
+                    const inputType = t.tipoDato === 'numero' ? 'number' : 'text';
+                    col.innerHTML = `
+                        <label class="form-label fw-semibold" for="${idInput}">${escapeHtml(t.nombre)}</label>
+                        <input type="${inputType}" step="any" class="form-control" id="${idInput}" data-tipo="${t.id}" value="${escapeHtml(valorPrev || '')}" placeholder="${t.tipoDato === 'numero' ? 'Valor numérico' : 'Texto'}">`;
+                }
+                container.appendChild(col);
+            });
+        } catch (err) {
+            container.innerHTML = '<div class="alert alert-danger w-100">Error de conexión al cargar antecedentes.</div>';
+        }
+    };
+
+    document.getElementById('btnGuardarAntecedentes').addEventListener('click', async function() {
+        const hojaCitaId = document.getElementById('antHojaCitaId').value;
+        const expedienteId = EXPEDIENTE_ID;
+        const salaId = document.getElementById('antSalaId').value;
+        if (!salaId) { showToast('danger', 'Sala no definida.'); return; }
+
+        const items = [];
+        antTipos.forEach((t, i) => {
+            const input = document.getElementById('ant_' + i);
+            if (!input) return;
+            const val = input.value.trim();
+            if (val === '') return;
+            items.push({ tipoAntecedenteId: t.id, valor: val });
+        });
+        if (items.length === 0) { showToast('danger', 'Ingrese al menos un antecedente.'); return; }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+        try {
+            const res = await fetch(URLS.guardarAntecedentes, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ expedienteId: expedienteId, salaId: salaId, items: items })
+            });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('success', json.message || 'Antecedentes guardados.');
+                bootstrap.Modal.getInstance(document.getElementById('modalAntecedentes')).hide();
+                await cargarAntecedentes(hojaCitaId);
+            } else {
+                showToast('danger', json.message || 'Error al guardar antecedentes.');
+            }
+        } catch (err) {
+            showToast('danger', 'Error de conexión al guardar.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Antecedentes';
         }
     });
 

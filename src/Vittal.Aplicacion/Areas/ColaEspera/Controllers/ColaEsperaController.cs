@@ -255,7 +255,10 @@ public class ColaEsperaController : Controller
         await FinalizarPasoTimelineAsync(id, "Llegada");
         await IniciarPasoTimelineAsync(id, "Consulta");
 
-        // Buscar el expediente del paciente para redirigir a la hoja de cita
+        // Buscar el expediente del paciente para redirigir a la hoja de cita.
+        // Si el paciente NO tiene expediente, se crea automáticamente (Opción D):
+        // se crea con los datos mínimos de la cita (pacienteId + doctorId) para que
+        // la hoja de cita pueda generarse y la cita NUNCA quede huérfana.
         Guid? expedienteId = null;
         var pacienteId = GetNullableGuidValue(dict, "pacienteId");
         if (pacienteId.HasValue)
@@ -269,6 +272,53 @@ public class ColaEsperaController : Controller
                     var expId = GetNullableGuidValue(expDict, "id");
                     if (expId.HasValue)
                         expedienteId = expId.Value;
+                }
+            }
+
+            // No existe expediente → crearlo automáticamente con los datos de la cita
+            if (!expedienteId.HasValue)
+            {
+                _logger.LogInformation("Paciente {PacienteId} sin expediente. Creando expediente automático al atender.",
+                    pacienteId.Value);
+
+                var doctorId = GetGuidValue(dict, "doctorId");
+
+                if (doctorId != Guid.Empty)
+                {
+                    var expPayload = new
+                    {
+                        pacienteId = pacienteId.Value,
+                        doctorId = doctorId,
+                        notasGenerales = (string?)null
+                    };
+
+                    var (expCreateSuccess, expCreateResponse, expCreateError) =
+                        await _apiClient.PostAsync<JsonElement>("api/Expedientes", expPayload);
+
+                    if (expCreateSuccess)
+                    {
+                        var expCreado = ExtractDataObject(expCreateResponse);
+                        if (expCreado is Dictionary<string, object?> expCreadoDict)
+                        {
+                            var newExpId = GetNullableGuidValue(expCreadoDict, "id");
+                            if (newExpId.HasValue)
+                            {
+                                expedienteId = newExpId.Value;
+                                _logger.LogInformation("Expediente automático {ExpedienteId} creado para paciente {PacienteId}.",
+                                    newExpId.Value, pacienteId.Value);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No se pudo crear expediente automático para paciente {PacienteId}: {Error}",
+                            pacienteId.Value, expCreateError);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No se pudo crear expediente automático para paciente {PacienteId}: cita sin doctorId.",
+                        pacienteId.Value);
                 }
             }
         }
