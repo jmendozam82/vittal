@@ -6,6 +6,24 @@
         : Model.FechaConsulta;
     var dxPrincipal = Model.Diagnosticos.FirstOrDefault(d => d.EsPrincipal);
     var dxSecundarios = Model.Diagnosticos.Where(d => !d.EsPrincipal).ToList();
+    var nombrePdf = "Epicrisis_" + System.Text.RegularExpressions.Regex.Replace(Model.PacienteNombre ?? "paciente", "[^A-Za-z0-9 ]", "").Replace(" ", "_");
+    var hayContacto = !string.IsNullOrWhiteSpace(Model.ClinicaDireccion)
+        || !string.IsNullOrWhiteSpace(Model.ClinicaTelefono)
+        || !string.IsNullOrWhiteSpace(Model.ClinicaEmail);
+    var hayAntecedentes = Model.Antecedentes.Count > 0;
+    var haySignosVitales = Model.SignosVitales.Count > 0;
+    var hayProcedimientos = Model.Cirugias.Count > 0 || Model.Examenes.Count > 0;
+    var tipoDocLabel = Model.PacienteTipoDocumento switch
+    {
+        "CC" => "Cédula de Ciudadanía",
+        "CR" => "Cédula de Residencia",
+        "PA" => "Pasaporte",
+        var t when !string.IsNullOrWhiteSpace(t) => t,
+        _ => ""
+    };
+    var docPaciente = string.IsNullOrWhiteSpace(tipoDocLabel)
+        ? (Model.PacienteDocumento ?? "")
+        : $"{tipoDocLabel} {Model.PacienteDocumento}".Trim();
 }
 
 <!DOCTYPE html>
@@ -15,96 +33,337 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Epicrisis - @Model.PacienteNombre</title>
     <style>
+        /* ── Reset y configuración general ─────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; color: #222; padding: 30px; line-height: 1.6; }
-        .documento { max-width: 800px; margin: 0 auto; border: 2px solid #1a365d; padding: 30px; min-height: 1000px; position: relative; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            color: #222;
+            padding: 75px 30px 30px;
+            line-height: 1.6;
+            background: #f4f6f8;
+        }
+        .documento {
+            max-width: 850px;
+            margin: 0 auto;
+            border: 1.5px solid #1a365d;
+            border-radius: 4px;
+            background: #fff;
+            padding: 28px 34px;
+            min-height: 1000px;
+            position: relative;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
 
-        .header { text-align: center; border-bottom: 3px double #1a365d; padding-bottom: 12px; margin-bottom: 20px; }
-        .header .clinica { font-size: 20px; font-weight: bold; color: #1a365d; letter-spacing: 2px; }
-        .header h1 { font-size: 22px; font-weight: bold; text-transform: uppercase; margin-top: 6px; color: #1a365d; }
-        .header .subtitle { font-size: 11px; color: #666; margin-top: 3px; }
-        .header .numero { font-size: 10px; color: #999; margin-top: 4px; }
+        /* ── Encabezado homogéneo (logo + clínica + título + meta) ─── */
+        .header {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 18px;
+            border-bottom: 3px double #1a365d;
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+        }
+        .header .logo {
+            max-height: 72px;
+            max-width: 130px;
+            object-fit: contain;
+        }
+        .header .titulo-area { text-align: center; }
+        .header .titulo-area .clinica {
+            font-size: 17px;
+            font-weight: bold;
+            color: #1a365d;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .header .titulo-area h1 {
+            font-size: 21px;
+            font-weight: bold;
+            color: #1a365d;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+        .header .titulo-area .subtitle { font-size: 11px; color: #666; margin-top: 2px; }
+        .header .meta-area {
+            text-align: right;
+            font-size: 10.5px;
+            color: #555;
+            line-height: 1.7;
+        }
+        .header .meta-area .numero {
+            font-weight: bold;
+            color: #1a365d;
+            font-size: 11.5px;
+        }
+        .header-contacto {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            padding: 5px 0 10px;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
 
-        .datos-paciente { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 18px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
+        /* ── Datos del paciente ────────────────────────────────────── */
+        .datos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
         .campo { display: flex; gap: 6px; }
-        .campo label { font-weight: bold; font-size: 11px; text-transform: uppercase; color: #666; white-space: nowrap; }
+        .campo label {
+            font-weight: bold;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            color: #6c757d;
+            white-space: nowrap;
+            padding-top: 1px;
+        }
         .campo .valor { font-size: 13px; }
 
+        /* ── Secciones ─────────────────────────────────────────────── */
         .seccion { margin-bottom: 18px; }
-        .seccion h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 4px; margin-bottom: 10px; letter-spacing: 1px; }
+        .seccion h2 {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #1a365d;
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
         .seccion .texto { font-size: 13px; text-align: justify; line-height: 1.7; }
         .seccion ul { list-style: none; padding-left: 0; }
-        .seccion ul li { padding: 3px 0; padding-left: 18px; position: relative; }
-        .seccion ul li::before { content: "•"; position: absolute; left: 4px; color: #1a365d; font-weight: bold; }
+        .seccion ul li { padding: 3px 0 3px 18px; position: relative; }
+        .seccion ul li::before {
+            content: "•";
+            position: absolute;
+            left: 4px;
+            color: #1a365d;
+            font-weight: bold;
+        }
 
-        .dx-principal { padding: 10px; background: #ebf5ff; border-left: 4px solid #1a365d; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
+        /* ── Diagnósticos ──────────────────────────────────────────── */
+        .dx-principal {
+            padding: 10px 12px;
+            background: #ebf5ff;
+            border-left: 4px solid #1a365d;
+            margin-bottom: 8px;
+            border-radius: 0 4px 4px 0;
+        }
         .dx-principal strong { color: #1a365d; }
+        .dx-secundario {
+            padding: 6px 10px;
+            background: #f8f9fa;
+            border-left: 3px solid #6c757d;
+            margin-bottom: 6px;
+            border-radius: 0 4px 4px 0;
+            font-size: 12.5px;
+        }
 
-        .dx-secundario { padding: 6px 10px; background: #f8f9fa; border-left: 3px solid #6c757d; margin-bottom: 6px; border-radius: 0 4px 4px 0; font-size: 12px; }
+        /* ── Signos vitales ────────────────────────────────────────── */
+        .grid-signos {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px 16px;
+            margin-bottom: 4px;
+        }
+        .signo {
+            display: flex;
+            gap: 6px;
+            padding: 7px 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 12.5px;
+        }
+        .signo label {
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #6c757d;
+            white-space: nowrap;
+            padding-top: 1px;
+        }
+        .signo .valor strong { color: #1a365d; }
+        .signo.fuera { background: #fff3cd; border-color: #ffc107; }
+        .signo.fuera .alerta { color: #856404; font-size: 10.5px; }
 
-        .firma { margin-top: 50px; padding-top: 15px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; align-items: end; }
+        /* ── Antecedentes ──────────────────────────────────────────── */
+        .antecedentes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+        .antecedentes .campo { display: flex; gap: 6px; }
+        .antecedentes .campo label {
+            font-weight: bold;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            color: #6c757d;
+            white-space: nowrap;
+            padding-top: 1px;
+        }
+        .antecedentes .campo .valor { font-size: 12.5px; }
+
+        .sin-items {
+            text-align: center;
+            padding: 12px;
+            color: #999;
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        /* ── Firma ─────────────────────────────────────────────────── */
+        .firma {
+            margin-top: 55px;
+            padding-top: 18px;
+            border-top: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+        }
         .firma .doctor-info { text-align: center; }
-        .firma .linea-firma { width: 250px; border-top: 1px solid #000; margin: 5px auto; padding-top: 3px; }
+        .firma .linea-firma {
+            width: 250px;
+            border-top: 1px solid #000;
+            margin: 5px auto;
+            padding-top: 3px;
+        }
         .firma .sello { font-size: 11px; color: #666; text-align: right; }
 
-        .footer { position: absolute; bottom: 15px; left: 30px; right: 30px; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #ccc; padding-top: 6px; }
+        /* ── Pie de página ─────────────────────────────────────────── */
+        .footer {
+            position: absolute;
+            bottom: 18px;
+            left: 34px;
+            right: 34px;
+            text-align: center;
+            font-size: 10px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 8px;
+            line-height: 1.6;
+        }
+        .footer .importante { font-size: 9px; color: #adb5bd; }
 
-        .sin-items { text-align: center; padding: 10px; color: #999; font-style: italic; font-size: 12px; }
+        /* ── Barra de acciones (solo pantalla, se oculta al imprimir) ── */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #dee2e6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+        .toolbar .toolbar-title { font-size: 14px; font-weight: bold; color: #1a365d; }
+        .toolbar button {
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            margin-left: 8px;
+        }
+        .toolbar .btn-pdf { background: #198754; color: #fff; }
+        .toolbar .btn-pdf:hover { background: #157347; }
+        .toolbar .btn-imprimir { background: #1a365d; color: #fff; }
+        .toolbar .btn-imprimir:hover { background: #0f2440; }
 
-        .no-print { text-align: center; margin: 15px 0; }
-        .no-print button { padding: 12px 40px; font-size: 16px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px; }
-        .no-print button:hover { background: #0f2440; }
-
+        /* ── Estilos de impresión ──────────────────────────────────── */
         @@media print {
-            body { padding: 0; font-size: 12px; }
-            .documento { border: none; padding: 15px; max-width: 100%; min-height: auto; }
+            body { padding: 0; font-size: 12px; background: #fff; }
+            .documento {
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 18px 22px;
+                max-width: 100%;
+                min-height: auto;
+            }
             .no-print { display: none; }
-            .header .clinica { font-size: 16px; }
-            .header h1 { font-size: 18px; }
-            .datos-paciente { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .datos { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .dx-principal { background: #ebf5ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .footer { position: fixed; bottom: 8px; left: 15px; right: 15px; }
-            @@page { margin: 12mm 10mm; }
+            .signo { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .signo.fuera { background: #fff3cd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .footer { position: fixed; bottom: 10px; left: 22px; right: 22px; }
+            @@page { margin: 15mm 10mm; }
         }
     </style>
 </head>
 <body>
 
-    <div class="no-print">
-        <button onclick="window.print()">🖨️ Imprimir Epicrisis</button>
-        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
+    <!-- Barra de acciones (solo en pantalla) -->
+    <div class="toolbar no-print">
+        <span class="toolbar-title">Epicrisis — @Model.PacienteNombre</span>
+        <div>
+            <button class="btn-pdf" id="btnPdf" onclick="descargarPdf()">⬇️ Descargar PDF</button>
+            <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+        </div>
     </div>
 
     <div class="documento">
 
-        <!-- ENCABEZADO -->
+        <!-- ═══ ENCABEZADO ═══ -->
         <div class="header">
-            <div class="clinica">@Model.ClinicaNombre</div>
-            <h1>Epicrisis</h1>
-            <div class="subtitle">Resumen de Atención Médica</div>
-            <div class="numero">No. @Guid.NewGuid().ToString("N").Substring(0,10).ToUpperInvariant()</div>
+            <div class="logo-area">
+                @if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+                {
+                    <img class="logo" src="@Model.LogoUrl" alt="Logo de @Model.ClinicaNombre" onerror="this.style.display='none'" />
+                }
+            </div>
+            <div class="titulo-area">
+                <div class="clinica">@Model.ClinicaNombre</div>
+                <h1>Epicrisis</h1>
+                <div class="subtitle">Resumen Clínico de Atención Médica</div>
+            </div>
+            <div class="meta-area">
+                <div class="numero">No. @Model.NumeroDocumento</div>
+                <div>Fecha de consulta: @fechaFormateada</div>
+            </div>
         </div>
+        @if (hayContacto)
+        {
+            <div class="header-contacto">
+                @Model.ClinicaDireccion
+                @if (!string.IsNullOrWhiteSpace(Model.ClinicaTelefono)) { <span> · Tel: @Model.ClinicaTelefono</span> }
+                @if (!string.IsNullOrWhiteSpace(Model.ClinicaEmail)) { <span> · @Model.ClinicaEmail</span> }
+            </div>
+        }
 
-        <!-- DATOS DEL PACIENTE -->
-        <div class="datos-paciente">
+        <!-- ═══ DATOS DEL PACIENTE ═══ -->
+        <div class="datos">
             <div class="campo"><label>Paciente:</label><div class="valor">@Model.PacienteNombre</div></div>
-            <div class="campo"><label>Fecha:</label><div class="valor">@fechaFormateada</div></div>
-            @if (!string.IsNullOrWhiteSpace(Model.PacienteDocumento))
-            {
-                <div class="campo"><label>Documento:</label><div class="valor">@Model.PacienteDocumento</div></div>
-            }
-            @if (!string.IsNullOrWhiteSpace(Model.PacienteEdad))
-            {
-                <div class="campo"><label>Edad:</label><div class="valor">@Model.PacienteEdad</div></div>
-            }
-            @if (!string.IsNullOrWhiteSpace(Model.PacienteSexo))
-            {
-                <div class="campo"><label>Sexo:</label><div class="valor">@Model.PacienteSexo</div></div>
-            }
             <div class="campo"><label>Médico:</label><div class="valor">@Model.DoctorNombre</div></div>
+            @if (!string.IsNullOrWhiteSpace(docPaciente))
+            {
+                <div class="campo"><label>Documento:</label><div class="valor">@docPaciente</div></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteEdad) || !string.IsNullOrWhiteSpace(Model.PacienteSexo))
+            {
+                <div class="campo">
+                    <label>Edad / Sexo:</label>
+                    <div class="valor">
+                        @Model.PacienteEdad@(!string.IsNullOrWhiteSpace(Model.PacienteEdad) && !string.IsNullOrWhiteSpace(Model.PacienteSexo) ? " · " : "")@Model.PacienteSexo
+                    </div>
+                </div>
+            }
         </div>
 
-        <!-- MOTIVO DE CONSULTA -->
+        <!-- ═══ MOTIVO DE CONSULTA ═══ -->
         @if (!string.IsNullOrWhiteSpace(Model.MotivoConsulta))
         {
             <div class="seccion">
@@ -113,13 +372,53 @@
             </div>
         }
 
-        <!-- DIAGNÓSTICOS -->
+        <!-- ═══ SIGNOS VITALES ═══ -->
+        @if (haySignosVitales)
+        {
+            <div class="seccion">
+                <h2>Signos Vitales</h2>
+                <div class="grid-signos">
+                    @foreach (var sv in Model.SignosVitales)
+                    {
+                        <div class="signo @(sv.FueraDeRango ? "fuera" : "")">
+                            <label>@sv.Nombre:</label>
+                            <div class="valor">
+                                <strong>@sv.Valor</strong> @sv.Unidad
+                                @if (sv.FueraDeRango)
+                                {
+                                    <div class="alerta">⚠ Fuera de rango</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- ═══ ANTECEDENTES DEL PACIENTE ═══ -->
+        @if (hayAntecedentes)
+        {
+            <div class="seccion">
+                <h2>Antecedentes del Paciente</h2>
+                <div class="antecedentes">
+                    @foreach (var a in Model.Antecedentes)
+                    {
+                        <div class="campo">
+                            <label>@a.Nombre:</label>
+                            <div class="valor">@a.Valor</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- ═══ DIAGNÓSTICOS ═══ -->
         <div class="seccion">
             <h2>Diagnósticos</h2>
             @if (dxPrincipal != null)
             {
                 <div class="dx-principal">
-                    <strong>Principal:</strong> @dxPrincipal.TipoNombre
+                    <strong>Diagnóstico principal:</strong> @dxPrincipal.TipoNombre
                     @if (!string.IsNullOrWhiteSpace(dxPrincipal.DiagnosticoNombre)) { <span> — @dxPrincipal.DiagnosticoNombre</span> }
                     @if (!string.IsNullOrWhiteSpace(dxPrincipal.Observaciones)) { <div style="font-size:12px;color:#555;margin-top:4px;">@dxPrincipal.Observaciones</div> }
                 </div>
@@ -131,19 +430,19 @@
                     <div class="dx-secundario">
                         <strong>Secundario:</strong> @dx.TipoNombre
                         @if (!string.IsNullOrWhiteSpace(dx.DiagnosticoNombre)) { <span> — @dx.DiagnosticoNombre</span> }
-                        @if (!string.IsNullOrWhiteSpace(dx.Observaciones)) { <div style="font-size:11px;color:#666;">@dx.Observaciones</div> }
+                        @if (!string.IsNullOrWhiteSpace(dx.Observaciones)) { <div style="font-size:11.5px;color:#666;">@dx.Observaciones</div> }
                     </div>
                 }
             }
             @if (Model.Diagnosticos.Count == 0)
             {
-                <div class="sin-items">No se registraron diagnósticos.</div>
+                <div class="sin-items">No se registraron diagnósticos en la consulta.</div>
             }
         </div>
 
-        <!-- TRATAMIENTOS -->
+        <!-- ═══ TRATAMIENTOS ═══ -->
         <div class="seccion">
-            <h2>Tratamientos</h2>
+            <h2>Tratamiento Indicado</h2>
             @if (Model.Tratamientos.Count > 0)
             {
                 <ul>
@@ -159,39 +458,39 @@
             }
         </div>
 
-        <!-- CIRUGÍAS -->
-        @if (Model.Cirugias.Count > 0)
+        <!-- ═══ PROCEDIMIENTOS (CIRUGÍAS / EXÁMENES) ═══ -->
+        @if (hayProcedimientos)
         {
             <div class="seccion">
-                <h2>Cirugías / Procedimientos</h2>
-                <ul>
-                    @foreach (var c in Model.Cirugias)
-                    {
-                        <li>@c</li>
-                    }
-                </ul>
+                <h2>Procedimientos y Exámenes Realizados</h2>
+                @if (Model.Cirugias.Count > 0)
+                {
+                    <h3 style="font-size:12px;text-transform:uppercase;color:#6c757d;margin:6px 0 4px;">Cirugías / Procedimientos</h3>
+                    <ul>
+                        @foreach (var c in Model.Cirugias)
+                        {
+                            <li>@c</li>
+                        }
+                    </ul>
+                }
+                @if (Model.Examenes.Count > 0)
+                {
+                    <h3 style="font-size:12px;text-transform:uppercase;color:#6c757d;margin:8px 0 4px;">Exámenes</h3>
+                    <ul>
+                        @foreach (var e in Model.Examenes)
+                        {
+                            <li>@e</li>
+                        }
+                    </ul>
+                }
             </div>
         }
 
-        <!-- EXÁMENES -->
-        @if (Model.Examenes.Count > 0)
-        {
-            <div class="seccion">
-                <h2>Exámenes</h2>
-                <ul>
-                    @foreach (var e in Model.Examenes)
-                    {
-                        <li>@e</li>
-                    }
-                </ul>
-            </div>
-        }
-
-        <!-- RECOMENDACIONES -->
+        <!-- ═══ RECOMENDACIONES ═══ -->
         @if (Model.Recomendaciones.Count > 0)
         {
             <div class="seccion">
-                <h2>Recomendaciones</h2>
+                <h2>Recomendaciones de Egreso</h2>
                 <ul>
                     @foreach (var r in Model.Recomendaciones)
                     {
@@ -201,7 +500,7 @@
             </div>
         }
 
-        <!-- NOTAS DE CONSULTA -->
+        <!-- ═══ NOTAS DE CONSULTA ═══ -->
         @if (!string.IsNullOrWhiteSpace(Model.NotasConsulta))
         {
             <div class="seccion">
@@ -210,29 +509,81 @@
             </div>
         }
 
-        <!-- FIRMA -->
+        <div class="seccion texto" style="font-size:11.5px;color:#6c757d;">
+            El presente documento resume la atención médica brindada al paciente en la fecha indicada.
+            Los datos clínicos aquí consignados son responsabilidad del profesional tratante y forman
+            parte del expediente clínico institucional. Se recomienda al paciente conservar este
+            resumen y presentarlo en futuras consultas.
+        </div>
+
+        <!-- ═══ FIRMA ═══ -->
         <div class="firma">
             <div class="sello">
                 Documento válido como<br/>epicrisis médica oficial
             </div>
             <div class="doctor-info">
-                <div style="margin-bottom:5px;font-size:12px;">Firma del Médico</div>
+                <div style="margin-bottom:5px;font-size:12px;">Firma y sello del médico tratante</div>
                 <div class="linea-firma"></div>
                 <div style="font-size:13px;font-weight:bold;">@Model.DoctorNombre</div>
             </div>
         </div>
 
-        <!-- PIE -->
+        <!-- ═══ PIE ═══ -->
         <div class="footer">
-            <div>@Model.ClinicaNombre — Sistema Médico Vittal</div>
+            <div>
+                @Model.ClinicaNombre
+                @if (!string.IsNullOrWhiteSpace(Model.ClinicaDireccion)) { <span> — @Model.ClinicaDireccion</span> }
+                @if (!string.IsNullOrWhiteSpace(Model.ClinicaTelefono)) { <span> · Tel: @Model.ClinicaTelefono</span> }
+                @if (!string.IsNullOrWhiteSpace(Model.ClinicaEmail)) { <span> · @Model.ClinicaEmail</span> }
+            </div>
+            <div class="importante">Documento generado por Sistema Médico Vittal · Válido únicamente con firma y sello del médico tratante.</div>
         </div>
 
     </div>
 
-    <div class="no-print" style="margin-top:10px;">
-        <button onclick="window.print()">🖨️ Imprimir Epicrisis</button>
-        <button onclick="window.close()" style="margin-left:10px;background:#6c757d;">✕ Cerrar</button>
-    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Descarga el documento como PDF (A4, multipágina) usando html2canvas + jsPDF.
+        // Si las librerías CDN no cargan (sin internet), cae al diálogo "Guardar como PDF" del navegador.
+        function descargarPdf() {
+            const btn = document.getElementById('btnPdf');
+            if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+                window.print();
+                return;
+            }
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = '⏳ Generando PDF...';
+            const elemento = document.querySelector('.documento');
+            html2canvas(elemento, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                .then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    const pageW = pdf.internal.pageSize.getWidth();
+                    const pageH = pdf.internal.pageSize.getHeight();
+                    const imgH = (canvas.height * pageW) / canvas.width;
+                    let heightLeft = imgH;
+                    let position = 0;
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, pageW, imgH);
+                    heightLeft -= pageH;
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgH;
+                        pdf.addPage();
+                        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, pageW, imgH);
+                        heightLeft -= pageH;
+                    }
+                    pdf.save('@nombrePdf' + '.pdf');
+                    btn.disabled = false;
+                    btn.textContent = textoOriginal;
+                })
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.textContent = textoOriginal;
+                    window.print();
+                });
+        }
+    </script>
 
 </body>
 </html>

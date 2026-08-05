@@ -93,6 +93,43 @@ public class ClinicasController : ControllerBase
     }
 
     /// <summary>
+    /// Devuelve los datos completos de la clínica actual del usuario (encabezados/pies de documentos).
+    /// Endpoint ligero — solo requiere autenticación, sin permiso de módulo.
+    /// Usa el clinica_id del JWT directamente (no depende de PostgreSQL session variable).
+    /// </summary>
+    [HttpGet("current-info")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<ClinicaResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCurrentInfo()
+    {
+        var clinicaId = User.GetClinicaId();
+        if (clinicaId == Guid.Empty)
+        {
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = null
+            });
+        }
+
+        var result = await _service.GetByIdAsync(clinicaId);
+        if (result.IsSuccess && result.Data != null)
+        {
+            return Ok(new ApiResponse<ClinicaResponseDto>
+            {
+                Success = true,
+                Data = result.Data
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = null
+        });
+    }
+
+    /// <summary>
     /// Devuelve el horario de atención de la clínica actual del usuario.
     /// Endpoint ligero para agenda — solo requiere autenticación, sin permiso de módulo.
     /// </summary>

@@ -26,8 +26,15 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
     public class ConstanciaPrintViewModel
     {
         public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string ClinicaDireccion { get; set; } = string.Empty;
+        public string ClinicaTelefono { get; set; } = string.Empty;
+        public string ClinicaEmail { get; set; } = string.Empty;
+        public string? LogoUrl { get; set; }
+        public string NumeroDocumento { get; set; } = string.Empty;
         public string DoctorNombre { get; set; } = string.Empty;
         public string PacienteNombre { get; set; } = string.Empty;
+        public string? PacienteTipoDocumento { get; set; }
+        public string? PacienteDocumento { get; set; }
         public string TipoConstancia { get; set; } = string.Empty;
         public string Contenido { get; set; } = string.Empty;
         public string FechaEmision { get; set; } = string.Empty;
@@ -115,7 +122,8 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                 TipoConstancia = data.GetValueOrDefault("tipoConstancia") as string ?? "",
                 Contenido = data.GetValueOrDefault("contenido") as string ?? "",
                 DiasReposo = data.GetValueOrDefault("diasReposo") is double dr ? (int?)dr : null,
-                EspecialistaReferido = data.GetValueOrDefault("especialistaReferido") as string
+                EspecialistaReferido = data.GetValueOrDefault("especialistaReferido") as string,
+                NumeroDocumento = "CON-" + id.ToString("N").Substring(0, 8).ToUpperInvariant()
             };
 
             // Formatear fecha de emision
@@ -125,17 +133,40 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             else
                 model.FechaEmision = fechaRaw ?? DateTime.UtcNow.ToString("dd/MM/yyyy");
 
-            // 2. Obtener nombre de la clinica
-            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
+            // 2. Obtener tipo y número de documento del paciente (vía expediente → paciente)
+            var expedienteId = data.GetValueOrDefault("expedienteId")?.ToString();
+            if (!string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var constExpId))
+            {
+                var (expSuccess, expResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{constExpId}");
+                if (expSuccess)
+                {
+                    var exp = ExtractDataObject(expResponse) as Dictionary<string, object?>;
+                    var pacienteId = exp?.GetValueOrDefault("pacienteId")?.ToString();
+                    if (!string.IsNullOrWhiteSpace(pacienteId) && Guid.TryParse(pacienteId, out var constPacId))
+                    {
+                        var (pacSuccess, pacResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/{constPacId}");
+                        if (pacSuccess)
+                        {
+                            var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
+                            model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
+                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
+                        }
+                    }
+                }
+            }
+
+            // 3. Obtener datos de la clínica actual (multi-tenant) para encabezado/pie del documento
+            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/current-info");
             if (cliSuccess)
             {
-                var clinicas = ExtractDataArray(cliResponse);
-                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
-                if (primera != null)
+                var clinica = ExtractDataObject(cliResponse) as Dictionary<string, object?>;
+                if (clinica != null)
                 {
-                    var nombre = primera.GetValueOrDefault("nombre") as string;
-                    if (!string.IsNullOrWhiteSpace(nombre))
-                        model.ClinicaNombre = nombre;
+                    model.ClinicaNombre = clinica.GetValueOrDefault("nombre") as string ?? model.ClinicaNombre;
+                    model.ClinicaDireccion = clinica.GetValueOrDefault("direccion") as string ?? "";
+                    model.ClinicaTelefono = clinica.GetValueOrDefault("telefono") as string ?? "";
+                    model.ClinicaEmail = clinica.GetValueOrDefault("email") as string ?? "";
+                    model.LogoUrl = clinica.GetValueOrDefault("logoUrl") as string;
                 }
             }
 

@@ -130,8 +130,15 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
     public class RecetaMedicaViewModel
     {
         public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string ClinicaDireccion { get; set; } = string.Empty;
+        public string ClinicaTelefono { get; set; } = string.Empty;
+        public string ClinicaEmail { get; set; } = string.Empty;
+        public string? LogoUrl { get; set; }
+        public string NumeroDocumento { get; set; } = string.Empty;
         public string DoctorNombre { get; set; } = string.Empty;
         public string PacienteNombre { get; set; } = string.Empty;
+        public string? PacienteTipoDocumento { get; set; }
+        public string? PacienteDocumento { get; set; }
         public string? PacienteEmail { get; set; }
         public string? PacienteCelular { get; set; }
         public string? PacienteDireccion { get; set; }
@@ -161,8 +168,14 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
     public class EpicrisisViewModel
     {
         public string ClinicaNombre { get; set; } = "Clínica Vittal";
+        public string ClinicaDireccion { get; set; } = string.Empty;
+        public string ClinicaTelefono { get; set; } = string.Empty;
+        public string ClinicaEmail { get; set; } = string.Empty;
+        public string? LogoUrl { get; set; }
+        public string NumeroDocumento { get; set; } = string.Empty;
         public string DoctorNombre { get; set; } = string.Empty;
         public string PacienteNombre { get; set; } = string.Empty;
+        public string? PacienteTipoDocumento { get; set; }
         public string? PacienteDocumento { get; set; }
         public string? PacienteEdad { get; set; }
         public string? PacienteSexo { get; set; }
@@ -170,10 +183,27 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? MotivoConsulta { get; set; }
         public string? NotasConsulta { get; set; }
         public List<DiagnosticoEpicrisis> Diagnosticos { get; set; } = new();
+        public List<AntecedenteEpicrisis> Antecedentes { get; set; } = new();
+        public List<SignoVitalEpicrisis> SignosVitales { get; set; } = new();
         public List<string> Tratamientos { get; set; } = new();
         public List<string> Cirugias { get; set; } = new();
         public List<string> Examenes { get; set; } = new();
         public List<string> Recomendaciones { get; set; } = new();
+    }
+
+    public class AntecedenteEpicrisis
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Valor { get; set; } = string.Empty;
+        public string Categoria { get; set; } = string.Empty;
+    }
+
+    public class SignoVitalEpicrisis
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Valor { get; set; } = string.Empty;
+        public string Unidad { get; set; } = string.Empty;
+        public bool FueraDeRango { get; set; }
     }
 
     public class DiagnosticoEpicrisis
@@ -1122,6 +1152,7 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             model.PacienteNombre = hc.GetValueOrDefault("pacienteNombre") as string ?? "";
             model.Fecha = hc.GetValueOrDefault("fechaConsulta") as string ?? "";
             model.Motivo = hc.GetValueOrDefault("motivoConsulta") as string;
+            model.NumeroDocumento = "REC-" + hojaCitaId.ToString("N").Substring(0, 8).ToUpperInvariant();
 
             var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
 
@@ -1141,6 +1172,8 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                         if (pacSuccess)
                         {
                             var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
+                            model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
+                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
                             model.PacienteEmail = pac?.GetValueOrDefault("email") as string;
                             model.PacienteCelular = pac?.GetValueOrDefault("celular") as string;
                             model.PacienteDireccion = pac?.GetValueOrDefault("direccion") as string;
@@ -1184,21 +1217,40 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                 }
             }
 
-            // 5. Intentar obtener el nombre de la clínica
-            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
-            if (cliSuccess)
-            {
-                var clinicas = ExtractDataArray(cliResponse);
-                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
-                if (primera != null)
-                {
-                    var nombre = primera.GetValueOrDefault("nombre") as string;
-                    if (!string.IsNullOrWhiteSpace(nombre))
-                        model.ClinicaNombre = nombre;
-                }
-            }
+            // 5. Obtener datos de la clínica actual (multi-tenant) para encabezado/pie del documento
+            await CargarClinicaEnViewModelAsync(model);
 
             return View(model);
+        }
+
+        /// <summary>Carga los datos de la clínica actual del JWT (nombre, logo, dirección, contacto) en un ViewModel de impresión.</summary>
+        private async Task CargarClinicaEnViewModelAsync<T>(T model) where T : class
+        {
+            var (success, response, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/current-info");
+            if (!success) return;
+
+            var data = ExtractDataObject(response) as Dictionary<string, object?>;
+            if (data == null) return;
+
+            // Mapeo: propiedad del ViewModel → campo JSON de ClinicaResponseDto
+            var mapeo = new Dictionary<string, string>
+            {
+                [nameof(RecetaMedicaViewModel.ClinicaNombre)] = "nombre",
+                [nameof(RecetaMedicaViewModel.ClinicaDireccion)] = "direccion",
+                [nameof(RecetaMedicaViewModel.ClinicaTelefono)] = "telefono",
+                [nameof(RecetaMedicaViewModel.ClinicaEmail)] = "email",
+                [nameof(RecetaMedicaViewModel.LogoUrl)] = "logoUrl"
+            };
+
+            foreach (var (propiedad, campoJson) in mapeo)
+            {
+                var pi = model.GetType().GetProperty(propiedad);
+                if (pi == null || !pi.CanWrite) continue;
+
+                var raw = data.GetValueOrDefault(campoJson) as string;
+                if (!string.IsNullOrWhiteSpace(raw))
+                    pi.SetValue(model, raw);
+            }
         }
 
         // ===================== IMPRIMIR EPICRISIS =====================
@@ -1232,6 +1284,7 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             model.FechaConsulta = hc.GetValueOrDefault("fechaConsulta") as string ?? "";
             model.MotivoConsulta = hc.GetValueOrDefault("motivoConsulta") as string;
             model.NotasConsulta = hc.GetValueOrDefault("notasConsulta") as string;
+            model.NumeroDocumento = "EPI-" + hojaCitaId.ToString("N").Substring(0, 8).ToUpperInvariant();
 
             var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
 
@@ -1251,7 +1304,8 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                         if (pacSuccess)
                         {
                             var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
-                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumento") as string;
+                            model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
+                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
                             model.PacienteSexo = pac?.GetValueOrDefault("sexo") as string;
 
                             // Calcular edad
@@ -1343,19 +1397,62 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                 }
             }
 
-            // 9. Obtener nombre de la clínica
-            var (cliSuccess, cliResponse, _) = await _apiClient.GetAsync<JsonElement>("api/Clinicas");
-            if (cliSuccess)
+            // 9. Obtener signos vitales de la hoja de cita
+            var (svSuccess, svResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/SignosVitalesHoja/hoja/{hojaCitaId}");
+            if (svSuccess)
             {
-                var clinicas = ExtractDataArray(cliResponse);
-                var primera = clinicas.FirstOrDefault() as Dictionary<string, object?>;
-                if (primera != null)
+                foreach (var item in ExtractDataArray(svResponse))
                 {
-                    var nombre = primera.GetValueOrDefault("nombre") as string;
-                    if (!string.IsNullOrWhiteSpace(nombre))
-                        model.ClinicaNombre = nombre;
+                    var dict = item as Dictionary<string, object?>;
+                    if (dict == null) continue;
+                    var nombre = dict.GetValueOrDefault("tipoSignoVitalNombre") as string ?? "";
+                    if (string.IsNullOrWhiteSpace(nombre)) continue;
+
+                    var valor = dict.GetValueOrDefault("valor") is double dv ? dv.ToString("0.##") : "—";
+                    model.SignosVitales.Add(new SignoVitalEpicrisis
+                    {
+                        Nombre = nombre,
+                        Valor = valor,
+                        Unidad = dict.GetValueOrDefault("unidad") as string ?? "",
+                        FueraDeRango = dict.GetValueOrDefault("fueraDeRango") is bool fdr && fdr
+                    });
                 }
             }
+
+            // 10. Obtener antecedentes del paciente (expediente × sala de la hoja)
+            var (salaOk, salaId, _) = await ObtenerSalaDeHojaAsync(hojaCitaId);
+            if (salaOk && !string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var antExpId))
+            {
+                var (antSuccess, antResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/AntecedentesPaciente/expediente/{antExpId}/sala/{salaId}");
+                if (antSuccess)
+                {
+                    foreach (var item in ExtractDataArray(antResponse))
+                    {
+                        var dict = item as Dictionary<string, object?>;
+                        if (dict == null) continue;
+                        var nombre = dict.GetValueOrDefault("tipoAntecedenteNombre") as string ?? "";
+                        if (string.IsNullOrWhiteSpace(nombre)) continue;
+
+                        var tipoDato = dict.GetValueOrDefault("tipoAntecedenteTipoDato") as string ?? "texto";
+                        var valorRaw = dict.GetValueOrDefault("valor") as string ?? "";
+                        var valor = tipoDato switch
+                        {
+                            "boolean" => valorRaw.Equals("true", StringComparison.OrdinalIgnoreCase) ? "Sí" : "No",
+                            _ => valorRaw
+                        };
+
+                        model.Antecedentes.Add(new AntecedenteEpicrisis
+                        {
+                            Nombre = nombre,
+                            Valor = valor,
+                            Categoria = dict.GetValueOrDefault("tipoAntecedenteCategoria") as string ?? ""
+                        });
+                    }
+                }
+            }
+
+            // 11. Obtener datos de la clínica actual (multi-tenant) para encabezado/pie del documento
+            await CargarClinicaEnViewModelAsync(model);
 
             return View(model);
         }
