@@ -16,7 +16,7 @@ public class SidebarViewComponent : ViewComponent
     // Mapa de secciones del sidebar a sus claves de módulo en BD
     private static readonly string[] ModulosDashboard = { "dashboard" };
     private static readonly string[] ModulosLineaTiempo = { "linea_tiempo" };
-    private static readonly string[] ModulosColaEspera = { "agenda" };
+    private static readonly string[] ModulosColaEspera = { "cola_espera" };
     private static readonly string[] ModulosAdministracion = { "perfiles", "usuarios", "permisos", "salas", "plantillas_especialidad", "usuarios_salas" };
     private static readonly string[] ModulosCatalogos =
     {
@@ -219,7 +219,7 @@ public class SidebarViewComponent : ViewComponent
         // ── Navegación ──
         model.PuedeVerDashboard = modulos.Contains("dashboard");
         model.PuedeVerLineaTiempo = modulos.Contains("linea_tiempo");
-        model.PuedeVerColaEspera = modulos.Contains("agenda");
+        model.PuedeVerColaEspera = modulos.Contains("cola_espera");
 
         // ── Administración ──
         model.PuedeVerPerfiles = modulos.Contains("perfiles");

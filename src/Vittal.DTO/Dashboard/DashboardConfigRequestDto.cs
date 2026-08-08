@@ -11,6 +11,7 @@ public class DashboardConfigRequestDto
     public bool MostrarPacientesEnEspera { get; set; } = true;
     public bool MostrarTiempoPromedioEspera { get; set; } = true;
     public bool MostrarGraficoCitasPorHora { get; set; } = true;
+    public bool MostrarCitasPorMedico { get; set; } = true;
     public bool MostrarUltimasAlertas { get; set; } = true;
 
     /// <summary>Layout del dashboard en formato JSON.</summary>

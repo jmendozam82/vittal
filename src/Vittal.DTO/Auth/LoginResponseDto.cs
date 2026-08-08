@@ -18,5 +18,6 @@ public class LoginResponseDto
     public Guid PerfilId { get; set; }
     public bool EsAdmin { get; set; }
     public bool EsSuperAdmin { get; set; }
+    public bool EsDoctor { get; set; }
     public string ClinicaNombre { get; set; } = string.Empty;
 }

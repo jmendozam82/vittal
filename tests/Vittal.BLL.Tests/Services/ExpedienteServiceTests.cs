@@ -37,7 +37,7 @@ public class ExpedienteServiceTests
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, Activo = true, FechaCreacion = DateTime.UtcNow },
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = Guid.NewGuid(), DoctorId = _doctorId, Activo = true, FechaCreacion = DateTime.UtcNow }
         };
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(expedientes);
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(expedientes);
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);
@@ -51,7 +51,7 @@ public class ExpedienteServiceTests
     public async Task GetAllAsync_ShouldReturnEmptyList_WhenNoExpedientes()
     {
         // Arrange
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(new List<Expediente>());
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(new List<Expediente>());
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);
@@ -75,7 +75,7 @@ public class ExpedienteServiceTests
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(expediente);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(expediente);
 
         // Act
         var result = await _service.GetByIdAsync(_clinicaId, expedienteId);
@@ -91,7 +91,7 @@ public class ExpedienteServiceTests
     {
         // Arrange
         var expedienteId = Guid.NewGuid();
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync((Expediente?)null);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync((Expediente?)null);
 
         // Act
         var result = await _service.GetByIdAsync(_clinicaId, expedienteId);
@@ -164,7 +164,7 @@ public class ExpedienteServiceTests
 
         _repoMock.Setup(r => r.GetByPacienteIdAsync(_clinicaId, _pacienteId)).ReturnsAsync((Expediente?)null);
         _repoMock.Setup(r => r.CreateAsync(It.IsAny<Expediente>())).ReturnsAsync(newId);
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, newId)).ReturnsAsync(createdExp);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, newId, It.IsAny<Guid?>())).ReturnsAsync(createdExp);
 
         // Act
         var result = await _service.CreateAsync(request, _clinicaId, _userId);
@@ -228,9 +228,9 @@ public class ExpedienteServiceTests
             NotasGenerales = "Notas actualizadas"
         };
 
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(existingExp);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(existingExp);
         _repoMock.Setup(r => r.UpdateAsync(It.IsAny<Expediente>())).ReturnsAsync(true);
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(existingExp);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(existingExp);
 
         // Act
         var result = await _service.UpdateAsync(expedienteId, request, _clinicaId);
@@ -249,7 +249,7 @@ public class ExpedienteServiceTests
             PacienteId = _pacienteId,
             DoctorId = _doctorId
         };
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync((Expediente?)null);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync((Expediente?)null);
 
         // Act
         var result = await _service.UpdateAsync(expedienteId, request, _clinicaId);
@@ -273,7 +273,7 @@ public class ExpedienteServiceTests
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(expediente);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(expediente);
         _repoMock.Setup(r => r.DeactivateAsync(_clinicaId, expedienteId)).ReturnsAsync(true);
 
         // Act
@@ -289,7 +289,7 @@ public class ExpedienteServiceTests
     {
         // Arrange
         var expedienteId = Guid.NewGuid();
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync((Expediente?)null);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync((Expediente?)null);
 
         // Act
         var result = await _service.DeactivateAsync(_clinicaId, expedienteId);
@@ -313,7 +313,7 @@ public class ExpedienteServiceTests
             Activo = false,
             FechaCreacion = DateTime.UtcNow
         };
-        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(expediente);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(expediente);
 
         // Act
         var result = await _service.DeactivateAsync(_clinicaId, expedienteId);
@@ -328,7 +328,7 @@ public class ExpedienteServiceTests
     public async Task GetAllAsync_ShouldReturnFailure_WhenExceptionThrown()
     {
         // Arrange
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ThrowsAsync(new Exception("DB error"));
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ThrowsAsync(new Exception("DB error"));
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);

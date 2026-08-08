@@ -194,33 +194,39 @@ public class DashboardRepository : IDashboardRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 6. GetUltimasAlertasAsync — Últimas N alertas no resueltas de una fecha
+    // 6. GetCitasPorMedicoAsync — Citas por médico segmentadas por estado
+    //    (atendidas / pendientes) para el gráfico apilado del dashboard.
+    //    Se cuenta cada cita según su estado actual:
+    //      - Atendidas: estado = 'atendida'
+    //      - Pendientes: agendada, en_espera, en_atencion
+    //    Las citas canceladas no se cuentan en ninguna segmento.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<DashboardGraficoDto>> GetUltimasAlertasAsync(
-        Guid clinicaId, DateTime fecha, int limit = 5)
+    public async Task<IEnumerable<DashboardCitaPorMedicoDto>> GetCitasPorMedicoAsync(
+        Guid clinicaId, DateTime fecha)
     {
         const string sql = @"
             SELECT
-                p.primer_nombre || ' ' || p.primer_apellido AS Etiqueta,
-                ae.minutos_espera::int AS Valor
-            FROM public.alertas_espera ae
-            INNER JOIN public.pacientes p ON p.id = ae.paciente_id
-            WHERE ae.clinica_id = @ClinicaId
-              AND ae.fecha_alerta::date = @Fecha::date
-              AND ae.resuelta = false
-            ORDER BY ae.fecha_alerta DESC
-            LIMIT @Limit";
+                u.nombres || ' ' || u.apellidos AS DoctorNombre,
+                COUNT(*) FILTER (WHERE c.estado = 'atendida')::int AS Atendidas,
+                COUNT(*) FILTER (WHERE c.estado IN ('agendada', 'en_espera', 'en_atencion'))::int AS Pendientes
+            FROM public.citas c
+            INNER JOIN public.usuarios u ON u.id = c.doctor_id
+            WHERE c.clinica_id = @ClinicaId
+              AND c.fecha_cita = @Fecha
+              AND c.activo = true
+            GROUP BY u.nombres, u.apellidos
+            ORDER BY u.nombres, u.apellidos ASC";
 
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
-            return await connection.QueryAsync<DashboardGraficoDto>(sql,
-                new { ClinicaId = clinicaId, Fecha = fecha, Limit = limit });
+            return await connection.QueryAsync<DashboardCitaPorMedicoDto>(sql,
+                new { ClinicaId = clinicaId, Fecha = fecha.Date });
         }
-        catch (Exception ex)
+catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error al obtener últimas alertas de clínica {ClinicaId}", clinicaId);
+                "Error al obtener citas por médico de clínica {ClinicaId}", clinicaId);
             throw;
         }
     }

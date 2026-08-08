@@ -35,7 +35,7 @@ public class AntecedentesPacienteController : ControllerBase
     /// Obtiene todos los antecedentes activos de un paciente en una sala específica.
     /// </summary>
     [HttpGet("expediente/{expedienteId:guid}/sala/{salaId:guid}")]
-    [RequirePermission("antecedentes_paciente", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<AntecedentePacienteDTOs.Response>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(Guid expedienteId, Guid salaId)
@@ -47,7 +47,7 @@ public class AntecedentesPacienteController : ControllerBase
 
     /// <summary>Obtiene un antecedente por su ID.</summary>
     [HttpGet("{id:guid}")]
-    [RequirePermission("antecedentes_paciente", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<AntecedentePacienteDTOs.Response>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -63,7 +63,7 @@ public class AntecedentesPacienteController : ControllerBase
     /// se actualiza el valor. Si no existe, se crea uno nuevo.
     /// </summary>
     [HttpPost]
-    [RequirePermission("antecedentes_paciente", PermissionType.Create)]
+    [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<AntecedentePacienteDTOs.Response>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Upsert([FromBody] AntecedentePacienteDTOs.Request request)
@@ -91,7 +91,7 @@ public class AntecedentesPacienteController : ControllerBase
     /// Desactiva un antecedente del paciente (activo = false). NUNCA elimina.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("antecedentes_paciente", PermissionType.Update)]
+    [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Desactivar(Guid id)

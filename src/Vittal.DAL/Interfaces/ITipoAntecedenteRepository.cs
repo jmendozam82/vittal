@@ -4,7 +4,8 @@ namespace Vittal.DAL.Interfaces;
 
 public interface ITipoAntecedenteRepository
 {
-    Task<IEnumerable<TipoAntecedente>> GetAllAsync(Guid clinicaId, Guid salaId);
+    /// <summary>Lista tipos de antecedente. Si salaId es null o Guid.Empty, devuelve todos los de la clínica.</summary>
+    Task<IEnumerable<TipoAntecedente>> GetAllAsync(Guid clinicaId, Guid? salaId);
     Task<TipoAntecedente?> GetByIdAsync(Guid clinicaId, Guid id);
     Task<TipoAntecedente?> GetBySalaAndNameAsync(Guid clinicaId, Guid salaId, string nombre);
     Task<Guid> CreateAsync(TipoAntecedente entity);

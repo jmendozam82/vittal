@@ -529,6 +529,9 @@
         doctores: '@Url.Action("JsonDoctores")',
         cita: '@Url.Action("JsonCita")',
         // Catálogos para dropdowns (proxy MVC con JWT)
+        // El endpoint unificado api/expedientes/catalogos (hallazgo #26) exige solo
+        // expedientes:Read y alimenta todos los selects de la hoja de cita en una llamada.
+        expedientesCatalogos: '@Url.Action("JsonExpedientesCatalogos")',
         diagnosticosCatalogo: '@Url.Action("JsonDiagnosticosCatalogo")',
         medicamentosCatalogo: '@Url.Action("JsonMedicamentosCatalogo")',
         tratamientosCatalogo: '@Url.Action("JsonTratamientosCatalogo")',
@@ -555,14 +558,9 @@
         ]);
 
         // Cargar catálogos para dropdowns de los modales
-        await Promise.all([
-            cargarCatalogo(URLS.diagnosticosCatalogo, 'diagDiagnosticoId', 'nombre', 'id'),
-            cargarCatalogo(URLS.medicamentosCatalogo, 'tratMedicamentoId', 'nombre', 'id'),
-            cargarCatalogo(URLS.tratamientosCatalogo, 'tratTratamientoId', 'nombre', 'id'),
-            cargarCatalogo(URLS.cirugiasCatalogo, 'cirCirugiaId', 'nombre', 'id'),
-            cargarCatalogo(URLS.examenesCatalogo, 'exaExamenId', 'nombre', 'id'),
-            cargarCatalogo(URLS.recomendacionesCatalogo, 'recRecomendacionId', 'nombre', 'id')
-        ]);
+        // Opción A (hallazgo #38): una sola llamada al endpoint unificado
+        // api/expedientes/catalogos (permiso expedientes:Read, que el Doctor conserva).
+        await cargarCatalogosUnificados();
 
         // Detectar citaId desde query params y auto-poblar modal
         const params = new URLSearchParams(window.location.search);
@@ -708,7 +706,60 @@
         }
     }
 
-    // ========== CARGAR CATÁLOGO GENÉRICO ==========
+    // ========== CARGAR CATÁLOGOS DE LA HOJA DE CITA ==========
+
+    // Catálogos unificados de la hoja de cita (hallazgo #38).
+    // Se cargan en UNA sola llamada a api/expedientes/catalogos (permiso expedientes:Read),
+    // que el Doctor conserva aunque no tenga permisos de los catálogos individuales.
+    // Contiene: diagnosticos, medicamentos, tratamientos, cirugias, examenes,
+    // recomendaciones, tiposSignoVital y tiposAntecedente.
+    let catalogosUnificados = null;
+
+    // Rellena un <select> con items normalizados (conserva el placeholder inicial).
+    function poblarSelect(selectId, items, labelField, valueField) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        // Limpiar opciones existentes (excepto la primera "placeholder")
+        while (sel.options.length > 1) {
+            sel.remove(1);
+        }
+        (items || []).forEach(item => {
+            const op = document.createElement('option');
+            op.value = item[valueField] || '';
+            op.textContent = item[labelField] || 'Sin nombre';
+            sel.appendChild(op);
+        });
+    }
+
+    // Carga en una sola llamada todos los catálogos del modal de hoja de cita.
+    async function cargarCatalogosUnificados() {
+        try {
+            const res = await fetch(URLS.expedientesCatalogos, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                console.warn(`Error al cargar catálogos unificados: ${res.status}`);
+                return;
+            }
+            const json = await res.json();
+            if (!json.success || !json.data) {
+                console.warn('Catálogos unificados: success=false', json.message || '');
+                return;
+            }
+            catalogosUnificados = json.data;
+            const data = catalogosUnificados || {};
+            poblarSelect('diagDiagnosticoId', data.diagnosticos, 'nombre', 'id');
+            poblarSelect('tratMedicamentoId', data.medicamentos, 'nombre', 'id');
+            poblarSelect('tratTratamientoId', data.tratamientos, 'nombre', 'id');
+            poblarSelect('cirCirugiaId', data.cirugias, 'nombre', 'id');
+            poblarSelect('exaExamenId', data.examenes, 'nombre', 'id');
+            poblarSelect('recRecomendacionId', data.recomendaciones, 'nombre', 'id');
+        } catch (err) {
+            console.error('Error al cargar catálogos unificados:', err);
+        }
+    }
+
+    // Mantenida por compatibilidad con flujos existentes que pasan una URL individual.
     async function cargarCatalogo(url, selectId, labelField, valueField) {
         try {
             const res = await fetch(url, {
@@ -722,18 +773,7 @@
             // Puede venir como { success: true, data: [...] } o como array directo
             let items = json.data || json;
             if (!Array.isArray(items)) items = [];
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-            // Limpiar opciones existentes (excepto la primera "placeholder")
-            while (sel.options.length > 1) {
-                sel.remove(1);
-            }
-            items.forEach(item => {
-                const op = document.createElement('option');
-                op.value = item[valueField] || '';
-                op.textContent = item[labelField] || 'Sin nombre';
-                sel.appendChild(op);
-            });
+            poblarSelect(selectId, items, labelField, valueField);
         } catch (err) {
             console.error(`Error al cargar catálogo ${url}:`, err);
         }
@@ -811,6 +851,12 @@
                         </div>
                         <hr class="my-2">
                         <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-danger btn-sm" onclick="abrirModalSignosVitales('${h.id}')" title="Registrar signos vitales de esta consulta" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
+                                <i class="bi bi-activity me-1"></i> + Signos Vitales
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalAntecedentes('${h.id}')" title="Registrar antecedentes del paciente para esta especialidad" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
+                                <i class="bi bi-journal-medical me-1"></i> + Antecedentes
+                            </button>
                             <button class="btn btn-outline-primary btn-sm" onclick="abrirModalDiagnostico('${h.id}')" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
                                 <i class="bi bi-heart-pulse me-1"></i> + Diagnóstico
                             </button>
@@ -837,12 +883,6 @@
                             </a>
                             <button class="btn btn-outline-success btn-sm" onclick="abrirModalConstancia('${h.id}', '${h.doctorId || ''}', '${h.doctorNombre || ''}')" title="Emitir constancia para esta consulta">
                                 <i class="bi bi-clipboard2-plus me-1"></i> + Constancia
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="abrirModalSignosVitales('${h.id}')" title="Registrar signos vitales de esta consulta" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
-                                <i class="bi bi-activity me-1"></i> + Signos Vitales
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="abrirModalAntecedentes('${h.id}')" title="Registrar antecedentes del paciente para esta especialidad" ${finalizada ? 'disabled title="' + bloqueoTitle + '"' : ''}>
-                                <i class="bi bi-journal-medical me-1"></i> + Antecedentes
                             </button>
                         </div>
                         <hr class="my-2">
@@ -1419,9 +1459,9 @@
             document.getElementById('svSalaInfo').classList.remove('d-none');
 
             // 2) Tipos de signos vitales configurados para esa sala
-            const tipoRes = await fetch(`${URLS.tiposSignoVital}?salaId=${salaJson.salaId}`);
-            const tipoJson = await tipoRes.json();
-            svTipos = (tipoJson.success ? (tipoJson.data || []) : []);
+            // (hallazgo #38 — Opción A: se filtran por salaId desde el catálogo unificado)
+            const tiposSV = (catalogosUnificados && catalogosUnificados.tiposSignoVital) || [];
+            svTipos = tiposSV.filter(t => String(t.salaId) === String(salaJson.salaId));
             if (svTipos.length === 0) {
                 container.innerHTML = '<div class="alert alert-warning w-100">Esta especialidad no tiene tipos de signos vitales configurados.</div>';
                 return;
@@ -1512,9 +1552,9 @@
             document.getElementById('antSalaInfo').innerHTML = '<i class="bi bi-building me-1"></i>Especialidad: <strong>' + escapeHtml(salaJson.salaNombre || 'Sala') + '</strong>';
 
             // 2) Tipos de antecedentes de esa especialidad
-            const tipoRes = await fetch(`${URLS.tiposAntecedente}?salaId=${salaJson.salaId}`);
-            const tipoJson = await tipoRes.json();
-            antTipos = (tipoJson.success ? (tipoJson.data || []) : []);
+            // (hallazgo #38 — Opción A: se filtran por salaId desde el catálogo unificado)
+            const tiposAnt = (catalogosUnificados && catalogosUnificados.tiposAntecedente) || [];
+            antTipos = tiposAnt.filter(t => String(t.salaId) === String(salaJson.salaId));
             if (antTipos.length === 0) {
                 container.innerHTML = '<div class="alert alert-warning w-100">Esta especialidad no tiene tipos de antecedentes configurados.</div>';
                 return;

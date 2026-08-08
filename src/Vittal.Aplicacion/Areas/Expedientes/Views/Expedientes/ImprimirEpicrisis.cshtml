@@ -361,6 +361,15 @@
                     </div>
                 </div>
             }
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteEmail) || !string.IsNullOrWhiteSpace(Model.PacienteCelular))
+            {
+                <div class="campo">
+                    <label>Contacto:</label>
+                    <div class="valor">
+                        @Model.PacienteEmail@(!string.IsNullOrWhiteSpace(Model.PacienteEmail) && !string.IsNullOrWhiteSpace(Model.PacienteCelular) ? " · " : "")@Model.PacienteCelular
+                    </div>
+                </div>
+            }
         </div>
 
         <!-- ═══ MOTIVO DE CONSULTA ═══ -->

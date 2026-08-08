@@ -251,4 +251,42 @@ public class CitaRepository : ICitaRepository
             throw;
         }
     }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 7. ExisteCitaSolapadaAsync — Conflicto de horario por doctor
+    //    Regla: un doctor NO puede tener dos citas que se solapen en la
+    //    misma fecha. PERO doctores distintos SÍ pueden agendar en la misma
+    //    hora (la clínica tiene varias salas atendiendo simultáneamente).
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<bool> ExisteCitaSolapadaAsync(
+        Guid clinicaId, Guid doctorId, DateOnly fechaCita,
+        TimeOnly horaCita, TimeOnly? horaFin, Guid? excluirId = null)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        // Solapamiento: nueva cita [horaCita, horaFin) vs existente [hora_cita, COALESCE(hora_fin, hora_cita+30m))
+        // A < B AND C < D donde nueva=[A,B) y existente=[C,D)
+        var sql = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM public.citas
+                WHERE clinica_id = @ClinicaId
+                  AND doctor_id = @DoctorId
+                  AND fecha_cita = @FechaCita
+                  AND activo = true
+                  AND estado IN ('agendada', 'en_espera', 'en_atencion')
+                  AND (@ExcluirId IS NULL OR id <> @ExcluirId)
+                  AND hora_cita < COALESCE(@HoraFin, @HoraCita + INTERVAL '30 minutes')
+                  AND COALESCE(hora_fin, hora_cita + INTERVAL '30 minutes') > @HoraCita
+            )";
+
+        return await connection.ExecuteScalarAsync<bool>(sql, new
+        {
+            ClinicaId = clinicaId,
+            DoctorId = doctorId,
+            FechaCita = fechaCita,
+            HoraCita = horaCita,
+            HoraFin = (TimeOnly?)horaFin,
+            ExcluirId = excluirId
+        });
+    }
 }

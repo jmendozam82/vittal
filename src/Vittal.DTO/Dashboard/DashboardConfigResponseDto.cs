@@ -18,6 +18,7 @@ public class DashboardConfigResponseDto
     public bool MostrarPacientesEnEspera { get; set; }
     public bool MostrarTiempoPromedioEspera { get; set; }
     public bool MostrarGraficoCitasPorHora { get; set; }
+    public bool MostrarCitasPorMedico { get; set; }
     public bool MostrarUltimasAlertas { get; set; }
     public string? Layout { get; set; }
 
@@ -36,6 +37,9 @@ public class DashboardConfigResponseDto
 
     /// <summary>Distribución de citas por hora para gráficos.</summary>
     public List<DashboardGraficoDto> CitasPorHora { get; set; } = new();
+
+    /// <summary>Citas por médico, segmentadas por estado (atendidas / pendientes) para el gráfico apilado.</summary>
+    public List<DashboardCitaPorMedicoDto> CitasPorMedico { get; set; } = new();
 
     /// <summary>Últimas alertas de tiempo de espera.</summary>
     public List<NotificacionResponseDto> UltimasAlertas { get; set; } = new();

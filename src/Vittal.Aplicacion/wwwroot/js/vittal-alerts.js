@@ -65,6 +65,9 @@
      * Inicializa la conexión SignalR para notificaciones en tiempo real.
      */
     async function initSignalR() {
+        // Mostrar el contador de no leídas de inmediato (sin esperar a SignalR)
+        actualizarBadge();
+
         if (typeof signalR === 'undefined') {
             console.warn('[VittalAlertas] SignalR no está disponible. Fallback a polling.');
             iniciarPollingFallback();

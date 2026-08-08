@@ -4,7 +4,8 @@ namespace Vittal.DAL.Interfaces;
 
 public interface ITipoSignoVitalRepository
 {
-    Task<IEnumerable<TipoSignoVital>> GetAllAsync(Guid clinicaId, Guid salaId);
+    /// <summary>Lista tipos de signo vital. Si salaId es null o Guid.Empty, devuelve todos los de la clínica.</summary>
+    Task<IEnumerable<TipoSignoVital>> GetAllAsync(Guid clinicaId, Guid? salaId);
     Task<TipoSignoVital?> GetByIdAsync(Guid clinicaId, Guid id);
     Task<TipoSignoVital?> GetBySalaAndNameAsync(Guid clinicaId, Guid salaId, string nombre);
     Task<Guid> CreateAsync(TipoSignoVital entity);

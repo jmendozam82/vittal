@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 using Vittal.Aplicacion.Helpers;
 
@@ -25,6 +26,20 @@ public class AgendaController : Controller
     }
 
     // ──────────────────────────────────────────────────────────────
+    //  HELPERS DE IDENTIDAD (perfil doctor)
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>Indica si el usuario autenticado tiene perfil de doctor.</summary>
+    private bool EsDoctor() => User.FindFirstValue("app_es_doctor") == "true";
+
+    /// <summary>Obtiene el usuario interno (NameIdentifier) del usuario autenticado.</summary>
+    private Guid UsuarioId()
+    {
+        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(v, out var id) ? id : Guid.Empty;
+    }
+
+    // ──────────────────────────────────────────────────────────────
     //  VISTAS PRINCIPALES
     // ──────────────────────────────────────────────────────────────
 
@@ -34,6 +49,17 @@ public class AgendaController : Controller
     /// </summary>
     [HttpGet]
     public IActionResult Index()
+    {
+        return View();
+    }
+
+    /// <summary>
+    /// Vista de grid general de citas: lista de todas las citas con resumen
+    /// consolidado por estado. Permite filtrar por estado, buscar por
+    /// paciente/doctor y seleccionar período (hoy, 7 días, 30 días, todas).
+    /// </summary>
+    [HttpGet]
+    public IActionResult Grid()
     {
         return View();
     }
@@ -87,6 +113,15 @@ public class AgendaController : Controller
             }
         }
 
+        // Los doctores solo ven sus propias citas
+        if (EsDoctor())
+        {
+            var uid = UsuarioId();
+            data = data.Where(c => c is Dictionary<string, object?> dict &&
+                dict.TryGetValue("doctorId", out var dId) &&
+                dId != null && Guid.TryParse(dId.ToString(), out var dGuid) && dGuid == uid).ToList();
+        }
+
         return Json(new { success = true, data });
     }
 
@@ -124,23 +159,33 @@ public class AgendaController : Controller
             }
         }
 
+        // Los doctores solo ven sus propias citas
+        if (EsDoctor())
+        {
+            var uid = UsuarioId();
+            data = data.Where(c => c is Dictionary<string, object?> dict &&
+                dict.TryGetValue("doctorId", out var dId) &&
+                dId != null && Guid.TryParse(dId.ToString(), out var dGuid) && dGuid == uid).ToList();
+        }
+
         return Json(new { success = true, data });
     }
 
     /// <summary>
     /// Obtiene los pacientes para el autocompletado/buscador de la agenda.
+    /// Los doctores reciben solo sus pacientes (el endpoint los filtra).
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> JsonPacientes()
     {
-        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Pacientes");
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/agenda/catalogos");
 
         if (!success)
         {
             return Json(new { success = false, message = errorMessage ?? "Error al cargar pacientes" });
         }
 
-        var data = ExtractDataArray(response);
+        var data = ExtractCatalogosDataArray(response, "pacientes");
         return Json(new { success = true, data });
     }
 
@@ -163,25 +208,36 @@ public class AgendaController : Controller
         }
 
         var data = ExtractDataArray(response);
+
+        // Los doctores solo ven sus pacientes asignados
+        if (EsDoctor())
+        {
+            var uid = UsuarioId();
+            data = data.Where(c => c is Dictionary<string, object?> dict &&
+                dict.TryGetValue("doctorId", out var dId) &&
+                dId != null && Guid.TryParse(dId.ToString(), out var dGuid) && dGuid == uid).ToList();
+        }
+
         return Json(new { success = true, data });
     }
 
     /// <summary>
     /// Obtiene los doctores para los filtros y creación de citas.
+    /// El endpoint ya filtra por es_doctor; se conserva el filtro local por seguridad.
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> JsonDoctores()
     {
-        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Usuarios");
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/agenda/catalogos");
 
         if (!success)
         {
             return Json(new { success = false, message = errorMessage ?? "Error al cargar doctores" });
         }
 
-        var data = ExtractDataArray(response);
+        var data = ExtractCatalogosDataArray(response, "doctores");
 
-        // Filtrar solo doctores
+        // Filtrar solo doctores (defensa en profundidad: el endpoint ya filtra)
         var doctores = new List<object>();
         foreach (var item in data)
         {
@@ -204,14 +260,14 @@ public class AgendaController : Controller
     [HttpGet]
     public async Task<IActionResult> JsonSalas()
     {
-        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Salas");
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/agenda/catalogos");
 
         if (!success)
         {
             return Json(new { success = false, message = errorMessage ?? "Error al cargar salas" });
         }
 
-        var data = ExtractDataArray(response);
+        var data = ExtractCatalogosDataArray(response, "salas");
         return Json(new { success = true, data });
     }
 
@@ -361,55 +417,6 @@ public class AgendaController : Controller
     }
 
     /// <summary>
-    /// Cambia el estado de una cita (agendada → en_espera → en_atencion → atendida).
-    /// </summary>
-    [HttpPatch]
-    public async Task<IActionResult> JsonCambiarEstado(Guid id, [FromQuery] string estado)
-    {
-        _logger.LogInformation("JsonCambiarEstado: id={Id}, nuevoEstado={Estado}", id, estado);
-
-        // Primero obtenemos la cita actual para tener sus datos
-        var (getSuccess, getResponse, getError) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{id}");
-        if (!getSuccess)
-        {
-            return BadRequest(new { success = false, message = "Cita no encontrada." });
-        }
-
-        var citaActual = ExtractDataObject(getResponse);
-        if (citaActual == null)
-        {
-            return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
-        }
-
-        // Construimos payload con el nuevo estado
-        var dict = citaActual as Dictionary<string, object?>;
-
-        var payload = new
-        {
-            pacienteId = dict?.TryGetValue("pacienteId", out var pId) == true && Guid.TryParse(pId?.ToString(), out var parsedPId) ? parsedPId : Guid.Empty,
-            doctorId = dict?.TryGetValue("doctorId", out var dId) == true && Guid.TryParse(dId?.ToString(), out var parsedDId) ? parsedDId : Guid.Empty,
-            salaId = dict?.TryGetValue("salaId", out var sId) == true && sId != null && Guid.TryParse(sId.ToString(), out var parsedSId) ? parsedSId : (Guid?)null,
-            fechaCita = dict?.TryGetValue("fechaCita", out var fc) == true ? fc?.ToString() : null,
-            horaCita = dict?.TryGetValue("horaCita", out var hc) == true ? hc?.ToString() : null,
-            horaFin = dict?.TryGetValue("horaFin", out var hf) == true ? hf?.ToString() : null,
-            lugar = dict?.TryGetValue("lugar", out var l) == true ? l?.ToString() : null,
-            motivo = dict?.TryGetValue("motivo", out var m) == true ? m?.ToString() : null,
-            estado = estado,
-            notas = dict?.TryGetValue("notas", out var n) == true ? n?.ToString() : null
-        };
-
-        var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Citas/{id}", payload);
-
-        if (!success)
-        {
-            return BadRequest(new { success = false, message = errorMessage ?? "Error al cambiar estado" });
-        }
-
-        var data = ExtractDataObject(response);
-        return Ok(new { success = true, data, message = $"Cita marcada como '{estado}'" });
-    }
-
-    /// <summary>
     /// Desactiva una cita (activo = false). Nunca elimina.
     /// </summary>
     [HttpPatch]
@@ -464,6 +471,29 @@ public class AgendaController : Controller
             return JsonElementToDictionary(response.Value);
         }
         catch { return null; }
+    }
+
+    /// <summary>
+    /// Extrae un arreglo de una propiedad interna del objeto "data" de la respuesta.
+    /// Se usa para los catálogos agregados (ej: api/agenda/catalogos → data.pacientes).
+    /// </summary>
+    private static List<object> ExtractCatalogosDataArray(JsonElement? response, string property)
+    {
+        if (!response.HasValue) return new List<object>();
+
+        try
+        {
+            if (response.Value.TryGetProperty("data", out var dataProp) &&
+                dataProp.ValueKind == JsonValueKind.Object &&
+                dataProp.TryGetProperty(property, out var arr) &&
+                arr.ValueKind == JsonValueKind.Array)
+            {
+                return EnumerateJsonArray(arr);
+            }
+        }
+        catch { }
+
+        return new List<object>();
     }
 
     private static List<object> EnumerateJsonArray(JsonElement array)

@@ -38,7 +38,7 @@ public class SignosVitalesHojaController : ControllerBase
 
     /// <summary>Obtiene todos los signos vitales activos de una hoja de cita.</summary>
     [HttpGet("hoja/{hojaCitaId:guid}")]
-    [RequirePermission("signos_vitales_hoja", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<SignosVitalesHojaResponseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(Guid hojaCitaId)
@@ -50,7 +50,7 @@ public class SignosVitalesHojaController : ControllerBase
 
     /// <summary>Obtiene un signo vital por su ID.</summary>
     [HttpGet("{id:guid}")]
-    [RequirePermission("signos_vitales_hoja", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<SignosVitalesHojaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -63,7 +63,7 @@ public class SignosVitalesHojaController : ControllerBase
     /// <summary>Registra un nuevo signo vital en una hoja de cita.</summary>
     [HttpPost]
     [BloquearHojaFinalizada]
-    [RequirePermission("signos_vitales_hoja", PermissionType.Create)]
+    [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<SignosVitalesHojaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] SignosVitalesHojaRequestDto dto)
@@ -90,7 +90,7 @@ public class SignosVitalesHojaController : ControllerBase
     /// <summary>Actualiza un registro de signo vital existente.</summary>
     [HttpPut("{id:guid}")]
     [BloquearHojaFinalizada]
-    [RequirePermission("signos_vitales_hoja", PermissionType.Update)]
+    [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<SignosVitalesHojaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -105,7 +105,7 @@ public class SignosVitalesHojaController : ControllerBase
     /// Desactiva un signo vital (activo = false). NUNCA elimina.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("signos_vitales_hoja", PermissionType.Update)]
+    [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Desactivar(Guid id)

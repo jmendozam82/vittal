@@ -44,32 +44,36 @@ public class ExpedienteRepository : IExpedienteRepository
         LEFT JOIN public.usuarios u ON e.doctor_id = u.id";
 
     // ────────────────────────────────────────────────────────────────────
-    // 1. GetAllAsync — Obtiene todos los expedientes activos de una clínica
+    // 1. GetAllAsync — Obtiene todos los expedientes activos de una clínica.
+    //    Si doctorId no es null, filtra por doctor (regla 6: doctor solo ve sus pacientes).
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<Expediente>> GetAllAsync(Guid clinicaId)
+    public async Task<IEnumerable<Expediente>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @$"
             SELECT {SelectColumns}
             {FromJoin}
             WHERE e.clinica_id = @ClinicaId AND e.activo = true
+              AND (@DoctorId IS NULL OR e.doctor_id = @DoctorId)
             ORDER BY e.fecha_creacion DESC";
 
-        return await connection.QueryAsync<Expediente>(sql, new { ClinicaId = clinicaId });
+        return await connection.QueryAsync<Expediente>(sql, new { ClinicaId = clinicaId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 2. GetByIdAsync — Obtiene un expediente por ID validando clínica
+    // 2. GetByIdAsync — Obtiene un expediente por ID validando clínica.
+    //    Si doctorId no es null, valida que el expediente sea del doctor.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<Expediente?> GetByIdAsync(Guid clinicaId, Guid id)
+    public async Task<Expediente?> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @$"
             SELECT {SelectColumns}
             {FromJoin}
-            WHERE e.id = @Id AND e.clinica_id = @ClinicaId AND e.activo = true";
+            WHERE e.id = @Id AND e.clinica_id = @ClinicaId AND e.activo = true
+              AND (@DoctorId IS NULL OR e.doctor_id = @DoctorId)";
 
-        return await connection.QuerySingleOrDefaultAsync<Expediente>(sql, new { Id = id, ClinicaId = clinicaId });
+        return await connection.QuerySingleOrDefaultAsync<Expediente>(sql, new { Id = id, ClinicaId = clinicaId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────

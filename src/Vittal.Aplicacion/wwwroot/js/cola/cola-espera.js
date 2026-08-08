@@ -28,6 +28,38 @@ window.vittalColaEspera = (function() {
     // ── Inicialización ─────────────────────────────────────────
     function init(cfg) {
         config = cfg;
+
+        // Opción A — modo recepción: quien no es doctor/admin/superadmin
+        // (recepcionista) SOLO registra llegada y cancela; NO inicia/completa atención.
+        state.esRecepcion = !config.esDoctor && !config.esAdmin && !config.esSuperAdmin;
+
+        // Regla 6: un doctor SOLO ve y opera su propia cola.
+        // Se fija el filtro a su usuarioId y se oculta el selector de doctores.
+        if (config.esDoctor) {
+            state.filterDoctor = config.usuarioId || 'todos';
+            const filterDoctor = document.getElementById('filterDoctor');
+            if (filterDoctor) {
+                const wrapper = filterDoctor.closest('.cola-doctor-filter');
+                if (wrapper) wrapper.style.display = 'none';
+                else filterDoctor.style.display = 'none';
+            }
+            bindEvents();
+            loadCola().then(() => {
+                startAutoRefresh();
+            });
+            return;
+        }
+
+        // En modo recepción se oculta el selector de doctores (ve toda la cola del día)
+        if (state.esRecepcion) {
+            const filterDoctor = document.getElementById('filterDoctor');
+            if (filterDoctor) {
+                const wrapper = filterDoctor.closest('.cola-doctor-filter');
+                if (wrapper) wrapper.style.display = 'none';
+                else filterDoctor.style.display = 'none';
+            }
+        }
+
         bindEvents();
         loadDoctores();
         loadCola().then(() => {
@@ -302,6 +334,35 @@ window.vittalColaEspera = (function() {
     function buildActions(id, estado, pacienteNombre) {
         var html = '';
         var nombreEnc = encodeURIComponent(pacienteNombre || 'Paciente');
+
+        // Opción A — modo recepción: SOLO "Llegó" (agendada) y "Cancelar".
+        // El avance clínico (Atender/Completar) queda exclusivamente para el médico.
+        if (state.esRecepcion) {
+            switch (estado) {
+                case 'agendada':
+                    html += '<button class="cola-btn-action cola-btn-llegada" onclick="vittalColaEspera.promptLlegada(\'' + id + '\')">'
+                        + '<i class="bi bi-box-arrow-in-right"></i> Llegó</button>';
+                    html += '<button class="cola-btn-action cola-btn-cancelar" onclick="vittalColaEspera.promptCancelar(\'' + id + '\')" title="Cancelar cita">'
+                        + '<i class="bi bi-x-lg"></i></button>';
+                    break;
+
+                case 'en_espera':
+                    html += '<span class="text-muted small"><i class="bi bi-clock me-1"></i>En espera</span>';
+                    html += '<button class="cola-btn-action cola-btn-cancelar" onclick="vittalColaEspera.promptCancelar(\'' + id + '\')" title="Cancelar cita">'
+                        + '<i class="bi bi-x-lg"></i></button>';
+                    break;
+
+                case 'en_atencion':
+                    html += '<span class="text-muted small"><i class="bi bi-play-circle me-1"></i>En atención</span>';
+                    break;
+
+                case 'atendida':
+                    html += '<span class="text-muted small"><i class="bi bi-check2-all me-1"></i>Atendida</span>';
+                    break;
+            }
+
+            return html;
+        }
 
         switch (estado) {
             case 'agendada':

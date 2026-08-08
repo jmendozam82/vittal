@@ -1,0 +1,354 @@
+@{
+    ViewData["Title"] = "Vista General de Citas";
+    ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
+                             "<li class='breadcrumb-item'><a href='" + Url.Action("Index", "Agenda") + "'>Agenda</a></li>" +
+                             "<li class='breadcrumb-item active'>Vista General</li>";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var jsonCitasUrl = Url.Action("JsonCitas");
+    var volverUrl = Url.Action("Index", "Agenda");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/vittal-agenda.css" asp-append-version="true" />
+}
+
+<div class="agenda-toolbar mb-3">
+    <div class="agenda-toolbar-left">
+        <a href="@volverUrl" class="btn btn-outline-secondary btn-sm" title="Volver al calendario">
+            <i class="bi bi-arrow-left me-1"></i>Calendario
+        </a>
+        <h5 class="ms-3 mb-0 fw-semibold">
+            <i class="bi bi-table text-primary me-1"></i>Vista General de Citas
+        </h5>
+    </div>
+    <div class="agenda-toolbar-right">
+        <select id="filtroPeriodo" class="form-select form-select-sm me-2" style="width:auto;">
+            <option value="hoy">Hoy</option>
+            <option value="7" selected>Últimos 7 días</option>
+            <option value="30">Últimos 30 días</option>
+            <option value="todas">Todas</option>
+        </select>
+        <div class="input-group input-group-sm" style="width:280px;">
+            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="buscarCita" class="form-control" placeholder="Buscar por paciente o doctor..."
+                   autocomplete="off" />
+        </div>
+    </div>
+</div>
+
+@{/* ── Resumen consolidado por estado (clicable) ─────────────── */}
+<div class="row g-2 mb-3" id="resumenEstados">
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="todos">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">Total</span>
+                    <i class="bi bi-calendar3 text-primary"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="todos">—</div>
+            </div>
+        </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="agendada">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">Agendadas</span>
+                    <i class="bi bi-calendar-plus" style="color:var(--agenda-card-agendada-border)"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="agendada">—</div>
+            </div>
+        </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="en_espera">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">En Espera</span>
+                    <i class="bi bi-clock" style="color:var(--agenda-card-en-espera-border)"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="en_espera">—</div>
+            </div>
+        </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="en_atencion">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">En Atención</span>
+                    <i class="bi bi-play-circle" style="color:var(--agenda-card-en-atencion-border)"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="en_atencion">—</div>
+            </div>
+        </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="atendida">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">Atendidas</span>
+                    <i class="bi bi-check-circle" style="color:var(--agenda-card-atendida-border)"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="atendida">—</div>
+            </div>
+        </button>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <button type="button" class="card resumen-card w-100 text-start border-0 shadow-sm h-100" data-estado="cancelada">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-muted small">Canceladas</span>
+                    <i class="bi bi-x-circle" style="color:var(--agenda-card-cancelada-border)"></i>
+                </div>
+                <div class="resumen-numero fs-4 fw-bold text-dark" data-count="cancelada">—</div>
+            </div>
+        </button>
+    </div>
+</div>
+
+@{/* ── Grid de citas ─────────────────────────────────────────── */}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted" id="contadorResultados"></small>
+            <span class="badge bg-primary-subtle text-primary" id="filtroActivoBadge" style="display:none;">Todos los estados</span>
+        </div>
+        <div id="tablaContainer">
+            <div class="d-flex justify-content-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const URLS = {
+        listar: '@jsonCitasUrl'
+    };
+
+    const ESTADOS = {
+        'agendada':    { label: 'Agendada',    icon: 'bi-calendar-plus' },
+        'en_espera':   { label: 'En Espera',   icon: 'bi-clock' },
+        'en_atencion': { label: 'En Atención', icon: 'bi-play-circle' },
+        'atendida':    { label: 'Atendida',    icon: 'bi-check-circle' },
+        'cancelada':   { label: 'Cancelada',   icon: 'bi-x-circle' }
+    };
+
+    let citas = [];
+    let estadoFiltro = 'todos';
+    let terminoBusqueda = '';
+    let debounceTimer = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarCitas();
+        inicializarResumen();
+        inicializarBuscador();
+        document.getElementById('filtroPeriodo').addEventListener('change', cargarCitas);
+    });
+
+    function inicializarResumen() {
+        document.querySelectorAll('.resumen-card').forEach(card => {
+            card.addEventListener('click', function() {
+                estadoFiltro = this.dataset.estado;
+                document.querySelectorAll('.resumen-card').forEach(c => c.classList.remove('resumen-activo'));
+                this.classList.add('resumen-activo');
+                actualizarBadge();
+                renderGrid();
+            });
+        });
+    }
+
+    function inicializarBuscador() {
+        const input = document.getElementById('buscarCita');
+        if (!input) return;
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                terminoBusqueda = this.value.trim().toLowerCase();
+                renderGrid();
+            }, 300);
+        });
+    }
+
+    function fmtLocalDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
+    async function cargarCitas() {
+        try {
+            const periodo = document.getElementById('filtroPeriodo').value;
+            let url = URLS.listar;
+
+            if (periodo === 'hoy') {
+                const hoy = fmtLocalDate(new Date());
+                url += '?desde=' + hoy + '&hasta=' + hoy;
+            } else if (periodo !== 'todas') {
+                const hasta = new Date();
+                const desde = new Date();
+                desde.setDate(hasta.getDate() - parseInt(periodo));
+                url += '?desde=' + fmtLocalDate(desde) + '&hasta=' + fmtLocalDate(hasta);
+            }
+
+            const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+            if (!res.ok) {
+                mostrarError('No se pudo conectar con el servidor.');
+                return;
+            }
+            const json = await res.json();
+            if (!json.success) {
+                mostrarError(json.message || 'Error al cargar las citas.');
+                return;
+            }
+            citas = json.data || [];
+            renderResumen();
+            renderGrid();
+        } catch (err) {
+            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+        }
+    }
+
+    function renderResumen() {
+        const conteos = {
+            todos: citas.length,
+            agendada: 0, en_espera: 0, en_atencion: 0, atendida: 0, cancelada: 0
+        };
+        citas.forEach(c => {
+            const est = c.estado || 'agendada';
+            if (conteos[est] !== undefined) conteos[est]++;
+        });
+        Object.keys(conteos).forEach(k => {
+            const el = document.querySelector(`[data-count="${k}"]`);
+            if (el) el.textContent = conteos[k];
+        });
+    }
+
+    function renderGrid() {
+        const filtradas = citas.filter(c => {
+            if (estadoFiltro !== 'todos' && (c.estado || 'agendada') !== estadoFiltro) return false;
+            if (terminoBusqueda) {
+                const paciente = (c.pacienteNombre || '').toLowerCase();
+                const doctor = (c.doctorNombre || '').toLowerCase();
+                if (!paciente.includes(terminoBusqueda) && !doctor.includes(terminoBusqueda)) return false;
+            }
+            return true;
+        });
+
+        actualizarContador(filtradas.length, citas.length);
+
+        if (filtradas.length === 0) {
+            document.getElementById('tablaContainer').innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No se encontraron citas con los filtros seleccionados.
+                </div>`;
+            return;
+        }
+
+        const filas = filtradas.map(c => {
+            const est = c.estado || 'agendada';
+            const estInfo = ESTADOS[est] || { label: est, icon: 'bi-question-circle' };
+            const fecha = c.fechaCita ? c.fechaCita.substring(0,10) : '';
+            const fechaDisplay = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            const hora = c.horaCita ? String(c.horaCita).substring(0,5) : '';
+            const horaFin = c.horaFin ? String(c.horaFin).substring(0,5) : '';
+            const paciente = c.pacienteNombre || 'Sin nombre';
+            const doctor = c.doctorNombre || 'Sin asignar';
+            const sala = c.salaNombre || '—';
+
+            return `
+            <tr>
+                <td><strong>${escapeHtml(paciente)}</strong></td>
+                <td class="text-muted">${escapeHtml(doctor)}</td>
+                <td class="text-muted">${fechaDisplay}</td>
+                <td class="text-muted">${hora}${horaFin ? ' — ' + horaFin : ''}</td>
+                <td class="text-muted">${escapeHtml(sala)}</td>
+                <td>
+                    <span class="badge estado-badge estado-${est}">
+                        <i class="bi ${estInfo.icon} me-1"></i>${estInfo.label}
+                    </span>
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('tablaContainer').innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Doctor</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Sala</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function actualizarBadge() {
+        const badge = document.getElementById('filtroActivoBadge');
+        if (!badge) return;
+        if (estadoFiltro === 'todos') {
+            badge.style.display = 'none';
+        } else {
+            badge.textContent = 'Filtro: ' + (ESTADOS[estadoFiltro]?.label || estadoFiltro);
+            badge.style.display = 'inline-block';
+        }
+    }
+
+    function actualizarContador(mostrados, total) {
+        const el = document.getElementById('contadorResultados');
+        if (!el) return;
+        if (estadoFiltro !== 'todos' || terminoBusqueda) {
+            el.textContent = mostrados + ' de ' + total + ' citas';
+        } else {
+            el.textContent = total > 0 ? total + ' citas en el período' : '';
+        }
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('tablaContainer').innerHTML = `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(mensaje)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarCitas()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+                </button>
+            </div>`;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+}
+
+<style>
+    .resumen-card { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+    .resumen-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important; }
+    .resumen-card.resumen-activo {
+        outline: 3px solid var(--bs-primary, #0d6efd);
+        outline-offset: -1px;
+        border-radius: .5rem;
+    }
+    .estado-badge.estado-agendada    { background: var(--agenda-card-agendada);    color: var(--agenda-card-agendada-border); }
+    .estado-badge.estado-en_espera   { background: var(--agenda-card-en-espera);   color: var(--agenda-card-en-espera-border); }
+    .estado-badge.estado-en_atencion { background: var(--agenda-card-en-atencion); color: var(--agenda-card-en-atencion-border); }
+    .estado-badge.estado-atendida    { background: var(--agenda-card-atendida);    color: var(--agenda-card-atendida-border); }
+    .estado-badge.estado-cancelada   { background: var(--agenda-card-cancelada);   color: var(--agenda-card-cancelada-border); }
+</style>

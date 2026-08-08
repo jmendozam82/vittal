@@ -142,6 +142,8 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? PacienteEmail { get; set; }
         public string? PacienteCelular { get; set; }
         public string? PacienteDireccion { get; set; }
+        public string? PacienteEdad { get; set; }
+        public string? PacienteSexo { get; set; }
         public string Fecha { get; set; } = string.Empty;
         public string? Motivo { get; set; }
         public List<MedicamentoReceta> Medicamentos { get; set; } = new();
@@ -179,6 +181,8 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         public string? PacienteDocumento { get; set; }
         public string? PacienteEdad { get; set; }
         public string? PacienteSexo { get; set; }
+        public string? PacienteEmail { get; set; }
+        public string? PacienteCelular { get; set; }
         public string FechaConsulta { get; set; } = string.Empty;
         public string? MotivoConsulta { get; set; }
         public string? NotasConsulta { get; set; }
@@ -572,6 +576,26 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             }
 
             return Json(new { success = true, data = doctores });
+        }
+
+        /// <summary>
+        /// Catálogo unificado de expedientes — proxy con JWT.
+        /// Llama a api/expedientes/catalogos (requiere solo permiso expedientes:Read,
+        /// que el Doctor conserva) y devuelve en una sola respuesta los catálogos
+        /// de la hoja de cita: diagnosticos, medicamentos, tratamientos, cirugias,
+        /// examenes, recomendaciones, tiposSignoVital y tiposAntecedente.
+        /// Patrón establecido en el hallazgo #26.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> JsonExpedientesCatalogos()
+        {
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/expedientes/catalogos");
+            if (!success)
+            {
+                _logger.LogWarning("JsonExpedientesCatalogos API call failed: {Error}", errorMessage);
+                return Json(new { success = false, data = Array.Empty<object>() });
+            }
+            return Json(new { success = true, data = ExtractDataObject(response) });
         }
 
         /// <summary>Catálogo de diagnósticos — proxy con JWT</summary>
@@ -1156,28 +1180,26 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
 
             var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
 
-            // 2. Obtener expediente para obtener el pacienteId
+            // 2. Obtener datos del paciente vía el expediente (módulo 'expedientes' — accesible para el Doctor)
             if (!string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var expId))
             {
-                (bool expSuccess, JsonElement? expResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}");
-                if (expSuccess)
+                var (pacInfoSuccess, pacInfoResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}/paciente-info");
+                if (pacInfoSuccess)
                 {
-                    var exp = ExtractDataObject(expResponse) as Dictionary<string, object?>;
-                    var pacienteId = exp?.GetValueOrDefault("pacienteId")?.ToString();
+                    var pac = ExtractDataObject(pacInfoResponse) as Dictionary<string, object?>;
+                    model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
+                    model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
+                    model.PacienteEmail = pac?.GetValueOrDefault("email") as string;
+                    model.PacienteCelular = pac?.GetValueOrDefault("celular") as string;
+                    model.PacienteDireccion = pac?.GetValueOrDefault("direccion") as string;
+                    model.PacienteSexo = pac?.GetValueOrDefault("sexo") as string;
 
-                    // 3. Obtener datos del paciente (email, celular, dirección)
-                    if (!string.IsNullOrWhiteSpace(pacienteId) && Guid.TryParse(pacienteId, out var pacId))
+                    var fechaNacRaw = pac?.GetValueOrDefault("fechaNacimiento") as string;
+                    if (!string.IsNullOrWhiteSpace(fechaNacRaw) && DateTime.TryParse(fechaNacRaw, out var fechaNac))
                     {
-                        (bool pacSuccess, JsonElement? pacResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/{pacId}");
-                        if (pacSuccess)
-                        {
-                            var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
-                            model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
-                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
-                            model.PacienteEmail = pac?.GetValueOrDefault("email") as string;
-                            model.PacienteCelular = pac?.GetValueOrDefault("celular") as string;
-                            model.PacienteDireccion = pac?.GetValueOrDefault("direccion") as string;
-                        }
+                        var edad = DateTime.Today.Year - fechaNac.Year;
+                        if (DateTime.Today < fechaNac.AddYears(edad)) edad--;
+                        model.PacienteEdad = $"{edad} años";
                     }
                 }
             }
@@ -1288,35 +1310,25 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
 
             var expedienteId = hc.GetValueOrDefault("expedienteId")?.ToString();
 
-            // 2. Obtener expediente → pacienteId
+            // 2. Obtener datos del paciente vía el expediente (módulo 'expedientes' — accesible para el Doctor)
             if (!string.IsNullOrWhiteSpace(expedienteId) && Guid.TryParse(expedienteId, out var expId))
             {
-                (bool expSuccess, JsonElement? expResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}");
-                if (expSuccess)
+                var (pacInfoSuccess, pacInfoResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{expId}/paciente-info");
+                if (pacInfoSuccess)
                 {
-                    var exp = ExtractDataObject(expResponse) as Dictionary<string, object?>;
-                    var pacienteId = exp?.GetValueOrDefault("pacienteId")?.ToString();
+                    var pac = ExtractDataObject(pacInfoResponse) as Dictionary<string, object?>;
+                    model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
+                    model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
+                    model.PacienteSexo = pac?.GetValueOrDefault("sexo") as string;
+                    model.PacienteEmail = pac?.GetValueOrDefault("email") as string;
+                    model.PacienteCelular = pac?.GetValueOrDefault("celular") as string;
 
-                    // 3. Obtener datos del paciente
-                    if (!string.IsNullOrWhiteSpace(pacienteId) && Guid.TryParse(pacienteId, out var pacId))
+                    var fechaNacRaw = pac?.GetValueOrDefault("fechaNacimiento") as string;
+                    if (!string.IsNullOrWhiteSpace(fechaNacRaw) && DateTime.TryParse(fechaNacRaw, out var fechaNac))
                     {
-                        (bool pacSuccess, JsonElement? pacResponse, string? _) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/{pacId}");
-                        if (pacSuccess)
-                        {
-                            var pac = ExtractDataObject(pacResponse) as Dictionary<string, object?>;
-                            model.PacienteTipoDocumento = pac?.GetValueOrDefault("tipoDocumentoIdentificacion") as string;
-                            model.PacienteDocumento = pac?.GetValueOrDefault("numeroDocumentoIdentificacion") as string;
-                            model.PacienteSexo = pac?.GetValueOrDefault("sexo") as string;
-
-                            // Calcular edad
-                            var fechaNacRaw = pac?.GetValueOrDefault("fechaNacimiento") as string;
-                            if (!string.IsNullOrWhiteSpace(fechaNacRaw) && DateTime.TryParse(fechaNacRaw, out var fechaNac))
-                            {
-                                var edad = DateTime.Today.Year - fechaNac.Year;
-                                if (DateTime.Today < fechaNac.AddYears(edad)) edad--;
-                                model.PacienteEdad = $"{edad} años";
-                            }
-                        }
+                        var edad = DateTime.Today.Year - fechaNac.Year;
+                        if (DateTime.Today < fechaNac.AddYears(edad)) edad--;
+                        model.PacienteEdad = $"{edad} años";
                     }
                 }
             }

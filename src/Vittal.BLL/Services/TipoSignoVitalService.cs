@@ -19,7 +19,13 @@ public class TipoSignoVitalService : ITipoSignoVitalService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId)
+    public Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId)
+        => GetAllAsync(clinicaId, (Guid?)salaId);
+
+    /// <summary>
+    /// Lista tipos de signo vital. Si salaId es null o Guid.Empty, devuelve todos los de la clínica.
+    /// </summary>
+    public async Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid? salaId)
     {
         try
         {

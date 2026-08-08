@@ -15,7 +15,6 @@ public class DashboardServiceTests
 {
     private readonly Mock<IDashboardConfigRepository> _configRepoMock;
     private readonly Mock<IDashboardRepository> _dashboardRepoMock;
-    private readonly Mock<INotificacionRepository> _notificacionRepoMock;
     private readonly Mock<ILogger<DashboardService>> _loggerMock;
     private readonly DashboardService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
@@ -25,12 +24,10 @@ public class DashboardServiceTests
     {
         _configRepoMock = new Mock<IDashboardConfigRepository>();
         _dashboardRepoMock = new Mock<IDashboardRepository>();
-        _notificacionRepoMock = new Mock<INotificacionRepository>();
         _loggerMock = new Mock<ILogger<DashboardService>>();
         _service = new DashboardService(
             _configRepoMock.Object,
             _dashboardRepoMock.Object,
-            _notificacionRepoMock.Object,
             _loggerMock.Object
         );
     }
@@ -48,6 +45,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = true,
             MostrarGraficoCitasPorHora = false,
+            MostrarCitasPorMedico = false,
             MostrarUltimasAlertas = true,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -92,6 +90,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = false,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true
         };
         var configId = Guid.NewGuid();
@@ -108,6 +107,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = false,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -138,6 +138,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = false,
             MostrarTiempoPromedioEspera = false,
             MostrarGraficoCitasPorHora = false,
+            MostrarCitasPorMedico = false,
             MostrarUltimasAlertas = false,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -149,6 +150,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = true,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true
         };
 
@@ -164,6 +166,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = true,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true,
             Activo = true,
             FechaCreacion = DateTime.UtcNow,
@@ -192,6 +195,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = true,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -208,10 +212,11 @@ public class DashboardServiceTests
                 new() { Etiqueta = "09:00", Valor = 5, Color = "#4F46E5" },
                 new() { Etiqueta = "10:00", Valor = 8, Color = "#4F46E5" }
             });
-        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, _fecha, 5))
-            .ReturnsAsync(new List<DashboardGraficoDto>
+        _dashboardRepoMock.Setup(r => r.GetCitasPorMedicoAsync(_clinicaId, _fecha))
+            .ReturnsAsync(new List<DashboardCitaPorMedicoDto>
             {
-                new() { Etiqueta = "Alta espera", Valor = 25, Color = "#EF4444" }
+                new() { DoctorNombre = "Dr. Jose Reyes", Atendidas = 6, Pendientes = 2 },
+                new() { DoctorNombre = "Dra. Maria Lopez", Atendidas = 4, Pendientes = 3 }
             });
 
         // Act
@@ -225,7 +230,11 @@ public class DashboardServiceTests
         result.Data.PacientesEnEspera.Should().Be(3);
         result.Data.TiempoPromedioEspera.Should().Be(12.5);
         result.Data.CitasPorHora.Should().HaveCount(2);
-        result.Data.UltimasAlertas.Should().HaveCount(1);
+        result.Data.CitasPorMedico.Should().HaveCount(2);
+        result.Data.CitasPorMedico[0].Atendidas.Should().Be(6);
+        result.Data.CitasPorMedico[0].Pendientes.Should().Be(2);
+        // El dashboard ya no consulta notificaciones (panel eliminado)
+        result.Data.UltimasAlertas.Should().BeEmpty();
     }
 
     [Fact]
@@ -241,6 +250,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = false,
             MostrarTiempoPromedioEspera = false,
             MostrarGraficoCitasPorHora = false,
+            MostrarCitasPorMedico = false,
             MostrarUltimasAlertas = false,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -261,6 +271,7 @@ public class DashboardServiceTests
         result.Data.PacientesEnEspera.Should().Be(0);
         result.Data.TiempoPromedioEspera.Should().Be(0);
         result.Data.CitasPorHora.Should().BeEmpty();
+        result.Data.CitasPorMedico.Should().BeEmpty();
         result.Data.UltimasAlertas.Should().BeEmpty();
     }
 
@@ -277,6 +288,7 @@ public class DashboardServiceTests
             MostrarPacientesEnEspera = true,
             MostrarTiempoPromedioEspera = true,
             MostrarGraficoCitasPorHora = true,
+            MostrarCitasPorMedico = true,
             MostrarUltimasAlertas = true,
             Activo = true,
             FechaCreacion = DateTime.UtcNow
@@ -289,8 +301,8 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(0.0);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardGraficoDto>());
-        _dashboardRepoMock.Setup(r => r.GetUltimasAlertasAsync(_clinicaId, _fecha, 5))
-            .ReturnsAsync(new List<DashboardGraficoDto>());
+        _dashboardRepoMock.Setup(r => r.GetCitasPorMedicoAsync(_clinicaId, _fecha))
+            .ReturnsAsync(new List<DashboardCitaPorMedicoDto>());
 
         // Act
         var result = await _service.GetDashboardDataAsync(_clinicaId, _fecha);
@@ -303,6 +315,7 @@ public class DashboardServiceTests
         result.Data.PacientesEnEspera.Should().Be(0);
         result.Data.TiempoPromedioEspera.Should().Be(0);
         result.Data.CitasPorHora.Should().BeEmpty();
+        result.Data.CitasPorMedico.Should().BeEmpty();
         result.Data.UltimasAlertas.Should().BeEmpty();
     }
 

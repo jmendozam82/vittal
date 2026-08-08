@@ -12,11 +12,17 @@ namespace Vittal.BLL.Interfaces;
 /// </summary>
 public interface IExpedienteService
 {
-    /// <summary>Lista todos los expedientes activos de la clínica.</summary>
-    Task<ServiceResult<IEnumerable<ExpedienteResponseDto>>> GetAllAsync(Guid clinicaId);
+    /// <summary>
+    /// Lista todos los expedientes activos de la clínica.
+    /// Si doctorId no es null, filtra solo los expedientes del doctor (regla 6).
+    /// </summary>
+    Task<ServiceResult<IEnumerable<ExpedienteResponseDto>>> GetAllAsync(Guid clinicaId, Guid? doctorId = null);
 
-    /// <summary>Obtiene detalle de un expediente por ID.</summary>
-    Task<ServiceResult<ExpedienteResponseDto>> GetByIdAsync(Guid clinicaId, Guid id);
+    /// <summary>
+    /// Obtiene detalle de un expediente por ID.
+    /// Si doctorId no es null, valida que el expediente sea del doctor (regla 6).
+    /// </summary>
+    Task<ServiceResult<ExpedienteResponseDto>> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null);
 
     /// <summary>Obtiene el expediente activo de un paciente.</summary>
     Task<ServiceResult<ExpedienteResponseDto>> GetByPacienteIdAsync(Guid clinicaId, Guid pacienteId);

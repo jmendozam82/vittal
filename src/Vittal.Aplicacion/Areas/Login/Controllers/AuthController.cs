@@ -81,7 +81,8 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         new Claim("app_clinica_id", user.ClinicaId.ToString()),
                         new Claim("app_clinica_nombre", user.ClinicaNombre),
                         new Claim("app_es_admin", user.EsAdmin.ToString().ToLower()),
-                        new Claim("app_es_super_admin", user.EsSuperAdmin.ToString().ToLower())
+                        new Claim("app_es_super_admin", user.EsSuperAdmin.ToString().ToLower()),
+                        new Claim("app_es_doctor", user.EsDoctor.ToString().ToLower())
                     };
 
                     if (user.EsAdmin)

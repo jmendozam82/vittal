@@ -52,9 +52,9 @@
     </div>
 </div>
 
-<!-- ── Gráfico y Alertas ────────────────────────────────────────── -->
+<!-- ── Gráficos centrales: Citas por Hora + Citas por Médico ─────── -->
 <div class="row g-3 mb-4">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <div class="vittal-card">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="mb-0 fw-semibold">
@@ -67,19 +67,16 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="vittal-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="mb-0 fw-semibold">
-                    <i class="bi bi-bell-fill text-warning me-2"></i>Últimas Alertas
+                    <i class="bi bi-clipboard2-pulse-fill text-primary me-2"></i>Citas por Médico
                 </h5>
-                <span class="badge bg-danger rounded-pill d-none" id="badgeAlertas">0</span>
+                <span class="badge bg-primary-light text-primary" id="totalCitasMedico">0 médicos</span>
             </div>
-            <div id="alertasContainer" class="overflow-auto" style="max-height:350px;">
-                <div class="empty-state">
-                    <i class="bi bi-bell-slash"></i>
-                    <p class="small">No hay alertas recientes</p>
-                </div>
+            <div class="chart-container">
+                <canvas id="chartCitasPorMedico"></canvas>
             </div>
         </div>
     </div>
@@ -107,15 +104,15 @@
             'use strict';
 
             let chartInstance = null;
+            let chartMedicoInstance = null;
             let pollingInterval = null;
             let fechaFiltro = '';
 
             const DOM = {
                 kpiContainer: document.getElementById('kpiContainer'),
-                alertasContainer: document.getElementById('alertasContainer'),
-                badgeAlertas: document.getElementById('badgeAlertas'),
                 resumenContainer: document.getElementById('resumenContainer'),
                 totalCitasDia: document.getElementById('totalCitasDia'),
+                totalCitasMedico: document.getElementById('totalCitasMedico'),
                 btnRefrescar: document.getElementById('btnRefrescar'),
                 kpiPacientesCount: document.getElementById('kpiPacientesCount'),
                 filtroFecha: document.getElementById('filtroFecha'),
@@ -215,8 +212,8 @@
                 } catch (e) { console.error('Dashboard: error en renderizarGrafico:', e); }
 
                 try {
-                    renderizarAlertas(data.ultimasAlertas || []);
-                } catch (e) { console.error('Dashboard: error en renderizarAlertas:', e); }
+                    renderizarGraficoCitasPorMedico(data.citasPorMedico || []);
+                } catch (e) { console.error('Dashboard: error en renderizarGraficoCitasPorMedico:', e); }
 
                 // El resumen del día (inferior) SIEMPRE muestra el día actual, sin aplicar el filtro.
                 // Si hay filtro con otra fecha, se hace una segunda carga dedicada a HOY.
@@ -395,35 +392,80 @@
                 });
             }
 
-            function renderizarAlertas(alertas) {
-                if (!alertas || alertas.length === 0) {
-                    DOM.alertasContainer.innerHTML =
-                        '<div class="empty-state"><i class="bi bi-bell-slash"></i><p class="small">No hay alertas recientes</p></div>';
-                    DOM.badgeAlertas.classList.add('d-none');
+            function renderizarGraficoCitasPorMedico(datos) {
+                if (!datos || datos.length === 0) {
+                    if (chartMedicoInstance) { chartMedicoInstance.destroy(); chartMedicoInstance = null; }
+                    if (DOM.totalCitasMedico) DOM.totalCitasMedico.textContent = '0 médicos';
                     return;
                 }
 
-                DOM.badgeAlertas.textContent = alertas.length;
-                DOM.badgeAlertas.classList.remove('d-none');
+                if (DOM.totalCitasMedico) {
+                    DOM.totalCitasMedico.textContent = datos.length + ' médico' + (datos.length !== 1 ? 's' : '');
+                }
 
-                DOM.alertasContainer.innerHTML = alertas.map(function(a) {
-                    const titulo = a.titulo || 'Notificación';
-                    const mensaje = a.mensaje || '';
-                    const tiempo = a.tiempoRelativo || '';
-                    const icono = a.icono || 'bi-bell';
-                    const leida = a.leida ? 'opacity-50' : '';
-                    return `
-                        <div class="alerta-item ${leida}">
-                            <div class="d-flex align-items-start gap-2">
-                                <i class="bi ${icono} alerta-icon mt-1"></i>
-                                <div class="flex-grow-1">
-                                    <div class="fw-semibold small">${escapeHtml(titulo)}</div>
-                                    <div class="alerta-tiempo">${escapeHtml(mensaje)}</div>
-                                    ${tiempo ? `<div class="alerta-tiempo mt-1"><i class="bi bi-clock me-1"></i>${escapeHtml(tiempo)}</div>` : ''}
-                                </div>
-                            </div>
-                        </div>`;
-                }).join('');
+                var canvas = document.getElementById('chartCitasPorMedico');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+
+                if (chartMedicoInstance) {
+                    chartMedicoInstance.destroy();
+                }
+
+                // Barras apiladas por médico: segmento "Atendidas" + segmento "Pendientes"
+                const labels = datos.map(function(d) { return d.doctorNombre || '—'; });
+
+                chartMedicoInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Atendidas',
+                                data: datos.map(function(d) { return d.atendidas || 0; }),
+                                backgroundColor: '#059669',
+                                borderRadius: 4,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'Pendientes',
+                                data: datos.map(function(d) { return d.pendientes || 0; }),
+                                backgroundColor: '#F59E0B',
+                                borderRadius: 4,
+                                borderSkipped: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { usePointStyle: true, font: { size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctxItem) {
+                                        return ctxItem.dataset.label + ': ' + ctxItem.parsed.y + ' cita(s)';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 },
+                                grid: { display: false }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { size: 11 } },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        }
+                    }
+                });
             }
 
             function renderizarResumen(data) {

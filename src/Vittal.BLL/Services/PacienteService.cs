@@ -381,6 +381,34 @@ public class PacienteService : IPacienteService
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // 8. GetByDoctorAsync — Lista pacientes activos asignados a un doctor
+    // ────────────────────────────────────────────────────────────────────────
+    public async Task<ServiceResult<IEnumerable<PacienteResponseDto>>> GetByDoctorAsync(
+        Guid clinicaId, Guid doctorId)
+    {
+        try
+        {
+            _logger.LogInformation("Obteniendo pacientes del doctor {DoctorId} en clínica {ClinicaId}",
+                doctorId, clinicaId);
+
+            var entities = await _repo.GetAllAsync(clinicaId);
+
+            var dtos = entities
+                .Where(p => p.DoctorId == doctorId)
+                .Select(MapPacienteToDto)
+                .ToList();
+
+            return ServiceResult<IEnumerable<PacienteResponseDto>>.Success(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener pacientes del doctor {DoctorId} en clínica {ClinicaId}",
+                doctorId, clinicaId);
+            return ServiceResult<IEnumerable<PacienteResponseDto>>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Mapping: Entity → DTO
     // ────────────────────────────────────────────────────────────────────────
     private static PacienteResponseDto MapPacienteToDto(Paciente p)

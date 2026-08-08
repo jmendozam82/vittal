@@ -32,4 +32,7 @@ public interface IPacienteService
 
     /// <summary>Búsqueda de pacientes por término (nombre, email, celular).</summary>
     Task<ServiceResult<IEnumerable<PacienteResponseDto>>> SearchAsync(Guid clinicaId, string term);
+
+    /// <summary>Lista pacientes activos asignados a un doctor de la clínica.</summary>
+    Task<ServiceResult<IEnumerable<PacienteResponseDto>>> GetByDoctorAsync(Guid clinicaId, Guid doctorId);
 }

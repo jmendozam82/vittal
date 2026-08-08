@@ -33,8 +33,8 @@ public class TiposDiagnosticoController : ControllerBase
     }
 
     /// <summary>Obtiene todos los tipos de diagnóstico de la clínica. Por defecto solo activos.</summary>
-    [HttpGet]
-    [RequirePermission("tipos_diagnostico", PermissionType.Read)]
+[HttpGet]
+    [RequirePermission("tipos_dx", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<TipoDiagnosticoResponseDto[]>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] bool inactivos = false)
@@ -45,8 +45,8 @@ public class TiposDiagnosticoController : ControllerBase
     }
 
     /// <summary>Obtiene un tipo de diagnóstico por su ID.</summary>
-    [HttpGet("{id:guid}")]
-    [RequirePermission("tipos_diagnostico", PermissionType.Read)]
+[HttpGet("{id:guid}")]
+    [RequirePermission("tipos_dx", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<TipoDiagnosticoResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid id)
@@ -57,8 +57,8 @@ public class TiposDiagnosticoController : ControllerBase
     }
 
     /// <summary>Crea un nuevo tipo de diagnóstico.</summary>
-    [HttpPost]
-    [RequirePermission("tipos_diagnostico", PermissionType.Create)]
+[HttpPost]
+    [RequirePermission("tipos_dx", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<TipoDiagnosticoResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -83,8 +83,8 @@ public class TiposDiagnosticoController : ControllerBase
     }
 
     /// <summary>Actualiza un tipo de diagnóstico existente.</summary>
-    [HttpPut("{id:guid}")]
-    [RequirePermission("tipos_diagnostico", PermissionType.Update)]
+[HttpPut("{id:guid}")]
+    [RequirePermission("tipos_dx", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<TipoDiagnosticoResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -100,8 +100,8 @@ public class TiposDiagnosticoController : ControllerBase
     /// <summary>
     /// Desactiva un tipo de diagnóstico (activo = false). NUNCA elimina.
     /// </summary>
-    [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("tipos_diagnostico", PermissionType.Update)]
+[HttpPatch("{id:guid}/desactivar")]
+    [RequirePermission("tipos_dx", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -115,8 +115,8 @@ public class TiposDiagnosticoController : ControllerBase
     /// <summary>
     /// Reactiva un tipo de diagnóstico desactivado (activo = true).
     /// </summary>
-    [HttpPatch("{id:guid}/reactivar")]
-    [RequirePermission("tipos_diagnostico", PermissionType.Update)]
+[HttpPatch("{id:guid}/reactivar")]
+    [RequirePermission("tipos_dx", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -130,8 +130,8 @@ public class TiposDiagnosticoController : ControllerBase
     /// <summary>
     /// Busca tipos de diagnóstico por término (nombre o descripción).
     /// </summary>
-    [HttpGet("buscar")]
-    [RequirePermission("tipos_diagnostico", PermissionType.Read)]
+[HttpGet("buscar")]
+    [RequirePermission("tipos_dx", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<TipoDiagnosticoResponseDto[]>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Search([FromQuery] string q)

@@ -31,7 +31,7 @@ public class ConfiguracionAlertasController : ControllerBase
 
     /// <summary>Obtiene la configuración de alertas de la clínica actual.</summary>
     [HttpGet]
-    [RequirePermission("clinicas", PermissionType.Read)]
+    [RequirePermission("alertas", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<ConfiguracionAlertaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Get()
@@ -43,7 +43,7 @@ public class ConfiguracionAlertasController : ControllerBase
 
     /// <summary>Guarda (crea o actualiza) la configuración de alertas de la clínica.</summary>
     [HttpPut]
-    [RequirePermission("clinicas", PermissionType.Update)]
+    [RequirePermission("alertas", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<ConfiguracionAlertaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Save([FromBody] ConfiguracionAlertaRequestDto dto)

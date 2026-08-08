@@ -7,6 +7,10 @@ namespace Vittal.BLL.Interfaces;
 public interface ITipoSignoVitalService
 {
     Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId);
+
+    /// <summary>Lista tipos de signo vital. Si salaId es null o Guid.Empty, devuelve todos los de la clínica.</summary>
+    Task<ServiceResult<IEnumerable<TipoSignoVitalDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid? salaId);
+
     Task<ServiceResult<TipoSignoVitalDTOs.Response>> GetByIdAsync(Guid clinicaId, Guid id);
     Task<ServiceResult<Guid>> CreateAsync(Guid clinicaId, Guid usuarioId, TipoSignoVitalDTOs.Request request);
     Task<ServiceResult<bool>> UpdateAsync(Guid clinicaId, Guid id, TipoSignoVitalDTOs.Request request);

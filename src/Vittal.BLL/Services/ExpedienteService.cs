@@ -26,15 +26,17 @@ public class ExpedienteService : IExpedienteService
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 1. GetAllAsync — Lista expedientes activos de la clínica
+    // 1. GetAllAsync — Lista expedientes activos de la clínica.
+    //    Si doctorId no es null, filtra por doctor (regla 6).
     // ────────────────────────────────────────────────────────────────────────
-    public async Task<ServiceResult<IEnumerable<ExpedienteResponseDto>>> GetAllAsync(Guid clinicaId)
+    public async Task<ServiceResult<IEnumerable<ExpedienteResponseDto>>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
     {
         try
         {
-            _logger.LogInformation("Obteniendo expedientes de la clínica {ClinicaId}", clinicaId);
+            _logger.LogInformation("Obteniendo expedientes de la clínica {ClinicaId} (doctor: {DoctorId})",
+                clinicaId, doctorId?.ToString() ?? "todos");
 
-            var entities = await _repo.GetAllAsync(clinicaId);
+            var entities = await _repo.GetAllAsync(clinicaId, doctorId);
             var dtos = new List<ExpedienteResponseDto>();
             foreach (var entity in entities)
             {
@@ -51,15 +53,17 @@ public class ExpedienteService : IExpedienteService
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // 2. GetByIdAsync — Detalle de un expediente por ID
+    // 2. GetByIdAsync — Detalle de un expediente por ID.
+    //    Si doctorId no es null, valida que el expediente sea del doctor.
     // ────────────────────────────────────────────────────────────────────────
-    public async Task<ServiceResult<ExpedienteResponseDto>> GetByIdAsync(Guid clinicaId, Guid id)
+    public async Task<ServiceResult<ExpedienteResponseDto>> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null)
     {
         try
         {
-            _logger.LogInformation("Buscando expediente {Id} en clínica {ClinicaId}", id, clinicaId);
+            _logger.LogInformation("Buscando expediente {Id} en clínica {ClinicaId} (doctor: {DoctorId})",
+                id, clinicaId, doctorId?.ToString() ?? "todos");
 
-            var entity = await _repo.GetByIdAsync(clinicaId, id);
+            var entity = await _repo.GetByIdAsync(clinicaId, id, doctorId);
             if (entity == null)
             {
                 return ServiceResult<ExpedienteResponseDto>.Failure(

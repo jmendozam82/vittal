@@ -36,7 +36,7 @@ public class ConstanciasController : ControllerBase
     /// Opcionalmente filtra por expediente de un paciente específico.
     /// </summary>
     [HttpGet]
-    [RequirePermission("constancias", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ConstanciaResponseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll([FromQuery] Guid? expedienteId)
@@ -48,7 +48,7 @@ public class ConstanciasController : ControllerBase
 
     /// <summary>Obtiene una constancia por su ID.</summary>
     [HttpGet("{id:guid}")]
-    [RequirePermission("constancias", PermissionType.Read)]
+    [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<ConstanciaResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -60,7 +60,7 @@ public class ConstanciasController : ControllerBase
 
     /// <summary>Emite una nueva constancia médica.</summary>
     [HttpPost]
-    [RequirePermission("constancias", PermissionType.Create)]
+    [RequirePermission("expedientes", PermissionType.Create)]
     [ProducesResponseType(typeof(ApiResponse<ConstanciaResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] ConstanciaRequestDto dto)
@@ -89,7 +89,7 @@ public class ConstanciasController : ControllerBase
     /// Las constancias son documentos legales: no se editan, solo se anulan.
     /// </summary>
     [HttpPatch("{id:guid}/desactivar")]
-    [RequirePermission("constancias", PermissionType.Update)]
+    [RequirePermission("expedientes", PermissionType.Update)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Desactivar(Guid id)

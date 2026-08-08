@@ -18,7 +18,6 @@
     var jsonSalasUrl = Url.Action("JsonSalas");
     var jsonCrearUrl = Url.Action("JsonCrear");
     var jsonActualizarUrl = Url.Action("JsonActualizar");
-    var jsonCambiarEstadoUrl = Url.Action("JsonCambiarEstado");
     var jsonDesactivarUrl = Url.Action("JsonDesactivar");
     var jsonBuscarPacientesUrl = Url.Action("JsonBuscarPacientes");
     var jsonHorarioClinicaUrl = Url.Action("JsonHorarioClinica");
@@ -65,6 +64,10 @@
                 <option value="todos">Todos los doctores</option>
             </select>
         </div>
+        <a href="@Url.Action("Grid")" class="btn btn-outline-secondary btn-sm me-2" title="Vista general de citas">
+            <i class="bi bi-table me-1"></i>
+            <span class="d-none d-md-inline">Vista General</span>
+        </a>
         <button type="button" class="btn-agenda-nueva" id="btnNuevaCita">
             <i class="bi bi-plus-lg"></i>
             <span class="d-none d-md-inline">Nueva Cita</span>
@@ -271,18 +274,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <div class="d-flex gap-2 w-100 justify-content-between">
-                    <div class="d-flex gap-1" id="detalleAccionesEstado">
-                        <button type="button" class="btn-estado" data-estado="en_espera" title="Marcar en espera">
-                            <i class="bi bi-clock me-1"></i>Espera
-                        </button>
-                        <button type="button" class="btn-estado" data-estado="en_atencion" title="Iniciar atención">
-                            <i class="bi bi-play-circle me-1"></i>Atención
-                        </button>
-                        <button type="button" class="btn-estado" data-estado="atendida" title="Marcar atendida">
-                            <i class="bi bi-check-circle me-1"></i>Atendida
-                        </button>
-                    </div>
+                <div class="d-flex gap-2 w-100 justify-content-end">
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnEditarDesdeDetalle">
                         <i class="bi bi-pencil me-1"></i> Editar
                     </button>
@@ -325,6 +317,8 @@
     <script>
         // ── Configuración global para el JS del calendario ──
         const AGENDA_CONFIG = {
+            esDoctor: '@(User.FindFirst("app_es_doctor")?.Value == "true" ? "true" : "false")' === 'true',
+            usuarioId: '@User.FindFirstValue(ClaimTypes.NameIdentifier)',
             urls: {
                 citas: '@jsonCitasUrl',
                 citasRango: '@jsonCitasRangoUrl',
@@ -333,7 +327,6 @@
                 salas: '@jsonSalasUrl',
                 crear: '@jsonCrearUrl',
                 actualizar: '@jsonActualizarUrl',
-                cambiarEstado: '@jsonCambiarEstadoUrl',
                 desactivar: '@jsonDesactivarUrl',
                 buscarPacientes: '@jsonBuscarPacientesUrl',
                 horarioClinica: '@jsonHorarioClinicaUrl'

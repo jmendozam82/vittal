@@ -173,6 +173,12 @@
                 completar: '@jsonCompletarUrl',
                 cancelar: '@jsonCancelarUrl'
             },
+            // Regla 6: si el usuario es doctor, la cola se fija SOLO a sus propios pacientes
+            esDoctor: '@(User.FindFirst("app_es_doctor")?.Value == "true" ? "true" : "false")' === 'true',
+            // Opción A: admin/superadmin identificados por claims → modo recepción cuando ninguno aplica
+            esAdmin: '@(User.FindFirst("app_es_admin")?.Value == "true" ? "true" : "false")' === 'true',
+            esSuperAdmin: '@(User.FindFirst("app_es_super_admin")?.Value == "true" ? "true" : "false")' === 'true',
+            usuarioId: '@User.FindFirstValue(ClaimTypes.NameIdentifier)',
             refreshInterval: 10000  // 10 segundos
         };
 

@@ -7,6 +7,7 @@ using Vittal.API.Extensions;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.Expediente;
+using Vittal.DTO.Paciente;
 using Vittal.Utility;
 
 namespace Vittal.API.Controllers;
@@ -22,15 +23,24 @@ namespace Vittal.API.Controllers;
 public class ExpedientesController : ControllerBase
 {
     private readonly IExpedienteService _service;
+    private readonly IPacienteService _pacienteService;
     private readonly ILogger<ExpedientesController> _logger;
 
-    public ExpedientesController(IExpedienteService service, ILogger<ExpedientesController> logger)
+    public ExpedientesController(
+        IExpedienteService service,
+        IPacienteService pacienteService,
+        ILogger<ExpedientesController> logger)
     {
         _service = service;
+        _pacienteService = pacienteService;
         _logger = logger;
     }
 
-    /// <summary>Obtiene todos los expedientes activos de la clínica.</summary>
+    /// <summary>
+    /// Obtiene todos los expedientes activos de la clínica.
+    /// Regla 6: si el usuario es doctor, solo ve los expedientes asignados a él.
+    /// Admin/SuperAdmin y demás perfiles ven todos los de la clínica.
+    /// </summary>
     [HttpGet]
     [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<ExpedienteResponseDto[]>), StatusCodes.Status200OK)]
@@ -38,11 +48,15 @@ public class ExpedientesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetAllAsync(clinicaId);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetAllAsync(clinicaId, doctorId);
         return result.ToActionResult();
     }
 
-    /// <summary>Obtiene un expediente por su ID.</summary>
+    /// <summary>
+    /// Obtiene un expediente por su ID.
+    /// Regla 6: si el usuario es doctor, solo puede ver expedientes asignados a él.
+    /// </summary>
     [HttpGet("{id:guid}")]
     [RequirePermission("expedientes", PermissionType.Read)]
     [ProducesResponseType(typeof(ApiResponse<ExpedienteResponseDto>), StatusCodes.Status200OK)]
@@ -50,8 +64,34 @@ public class ExpedientesController : ControllerBase
     public async Task<IActionResult> GetById([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetByIdAsync(clinicaId, id);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetByIdAsync(clinicaId, id, doctorId);
         return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Obtiene los datos del paciente asociado a un expediente.
+    /// Se rige por el permiso del módulo 'expedientes' (el Doctor tiene acceso),
+    /// de modo que la impresión de Receta/Epicrisis/Constancia obtenga los datos
+    /// del paciente sin requerir el módulo externo 'pacientes'.
+    /// </summary>
+    [HttpGet("{id:guid}/paciente-info")]
+    [RequirePermission("expedientes", PermissionType.Read)]
+    [ProducesResponseType(typeof(ApiResponse<PacienteResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPatientInfo([FromRoute] Guid id)
+    {
+        var clinicaId = User.GetClinicaId();
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+
+        var expediente = await _service.GetByIdAsync(clinicaId, id, doctorId);
+        if (!expediente.IsSuccess || expediente.Data == null)
+        {
+            return expediente.ToActionResult();
+        }
+
+        var paciente = await _pacienteService.GetByIdAsync(expediente.Data.PacienteId, clinicaId);
+        return paciente.ToActionResult();
     }
 
     /// <summary>Obtiene el expediente activo de un paciente.</summary>

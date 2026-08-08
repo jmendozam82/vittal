@@ -343,6 +343,15 @@
             {
                 <div class="campo"><label>Documento:</label><div class="valor">@docPaciente</div></div>
             }
+            @if (!string.IsNullOrWhiteSpace(Model.PacienteEdad) || !string.IsNullOrWhiteSpace(Model.PacienteSexo))
+            {
+                <div class="campo">
+                    <label>Edad / Sexo:</label>
+                    <div class="valor">
+                        @Model.PacienteEdad@(!string.IsNullOrWhiteSpace(Model.PacienteEdad) && !string.IsNullOrWhiteSpace(Model.PacienteSexo) ? " · " : "")@Model.PacienteSexo
+                    </div>
+                </div>
+            }
             @if (!string.IsNullOrWhiteSpace(Model.PacienteEmail) || !string.IsNullOrWhiteSpace(Model.PacienteCelular))
             {
                 <div class="campo">

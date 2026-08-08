@@ -10,6 +10,8 @@ namespace Vittal.DAL.Repositories;
 
 /// <summary>
 /// Repositorio para la tabla public.notificaciones.
+/// Modelo estándar: la notificación es un mensaje compartido por clínica y el
+/// estado de lectura es individual por usuario en notificaciones_usuario.
 /// Implementa INotificacionRepository con Dapper y PostgreSQL.
 /// Historia de Usuario: HU23 — Alertas Configurables
 /// </summary>
@@ -35,6 +37,22 @@ public class NotificacionRepository : INotificacionRepository
         n.mensaje               AS Mensaje,
         n.icono                 AS Icono,
         n.color                 AS Color,
+        nu.leida                AS Leida,
+        n.usuario_destino_id    AS UsuarioDestinoId,
+        nu.fecha_lectura        AS FechaLectura,
+        n.activo                AS Activo,
+        n.fecha_creacion        AS FechaCreacion";
+
+    // Columnas para consultas paginadas (a nivel notificación, sin estado por usuario)
+    private const string SelectColumnsLegacy = @"
+        n.id                    AS Id,
+        n.clinica_id            AS ClinicaId,
+        n.alerta_id             AS AlertaId,
+        n.tipo                  AS Tipo,
+        n.titulo                AS Titulo,
+        n.mensaje               AS Mensaje,
+        n.icono                 AS Icono,
+        n.color                 AS Color,
         n.leida                 AS Leida,
         n.usuario_destino_id    AS UsuarioDestinoId,
         n.fecha_lectura         AS FechaLectura,
@@ -42,14 +60,16 @@ public class NotificacionRepository : INotificacionRepository
         n.fecha_creacion        AS FechaCreacion";
 
     // ────────────────────────────────────────────────────────────────────
-    // 1. GetByClinicaIdAsync — Notificaciones filtradas por clínica
+    // 1. GetByClinicaIdAsync — Notificaciones del usuario (vía asignación)
     // ────────────────────────────────────────────────────────────────────
     public async Task<IEnumerable<Notificacion>> GetByClinicaIdAsync(
-        Guid clinicaId, bool? leida = null, int? limit = null)
+        Guid clinicaId, Guid usuarioId, bool? leida = null, int? limit = null)
     {
         var sql = $@"
             SELECT {SelectColumns}
             FROM public.notificaciones n
+            JOIN public.notificaciones_usuario nu ON nu.notificacion_id = n.id
+                 AND nu.usuario_id = @UsuarioId
             WHERE n.clinica_id = @ClinicaId
               AND n.activo = true
               {BuildLeidaFilter(leida)}
@@ -60,22 +80,24 @@ public class NotificacionRepository : INotificacionRepository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             return await connection.QueryAsync<Notificacion>(sql,
-                new { ClinicaId = clinicaId });
+                new { ClinicaId = clinicaId, UsuarioId = usuarioId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error al obtener notificaciones de clínica {ClinicaId}", clinicaId);
+                "Error al obtener notificaciones de usuario {UsuarioId} en clínica {ClinicaId}",
+                usuarioId, clinicaId);
             throw;
         }
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 2. CreateAsync — Crea una nueva notificación. Retorna el ID.
+    // 2. CreateAsync — Crea la notificación y la asigna a los destinos.
+    //    Retorna el ID. Es transaccional (creación + asignación).
     // ────────────────────────────────────────────────────────────────────
     public async Task<Guid> CreateAsync(Notificacion entity)
     {
-        const string sql = @"
+        const string insertSql = @"
             INSERT INTO public.notificaciones (
                 clinica_id, alerta_id,
                 tipo, titulo, mensaje, icono, color,
@@ -90,10 +112,49 @@ public class NotificacionRepository : INotificacionRepository
             )
             RETURNING id";
 
+        const string assignUsuarioSql = @"
+            INSERT INTO public.notificaciones_usuario (notificacion_id, usuario_id, leida, fecha_lectura, fecha_creacion)
+            VALUES (@NotificacionId, @UsuarioId, false, NULL, NOW())
+            ON CONFLICT (notificacion_id, usuario_id) DO NOTHING";
+
+        const string assignClinicaSql = @"
+            INSERT INTO public.notificaciones_usuario (notificacion_id, usuario_id, leida, fecha_lectura, fecha_creacion)
+            SELECT @NotificacionId, u.id, false, NULL, NOW()
+            FROM public.usuarios u
+            WHERE u.clinica_id = @ClinicaId
+              AND u.activo = true
+            ON CONFLICT (notificacion_id, usuario_id) DO NOTHING";
+
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
-            return await connection.ExecuteScalarAsync<Guid>(sql, entity);
+            connection.Open();
+            using var tx = connection.BeginTransaction();
+            try
+            {
+                var id = await connection.ExecuteScalarAsync<Guid>(insertSql, entity, tx);
+
+                if (entity.UsuarioDestinoId.HasValue)
+                {
+                    await connection.ExecuteAsync(assignUsuarioSql,
+                        new { NotificacionId = id, UsuarioId = entity.UsuarioDestinoId.Value },
+                        tx);
+                }
+                else
+                {
+                    await connection.ExecuteAsync(assignClinicaSql,
+                        new { NotificacionId = id, ClinicaId = entity.ClinicaId },
+                        tx);
+                }
+
+                tx.Commit();
+                return id;
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
         }
         catch (Exception ex)
         {
@@ -104,23 +165,26 @@ public class NotificacionRepository : INotificacionRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 3. MarcarLeidaAsync — Marca una notificación como leída
+    // 3. MarcarLeidaAsync — Marca una notificación como leída SOLO para el usuario
     // ────────────────────────────────────────────────────────────────────
-    public async Task<bool> MarcarLeidaAsync(Guid clinicaId, Guid id)
+    public async Task<bool> MarcarLeidaAsync(Guid clinicaId, Guid usuarioId, Guid id)
     {
         const string sql = @"
-            UPDATE public.notificaciones
+            UPDATE public.notificaciones_usuario nu
             SET leida = true,
                 fecha_lectura = NOW()
-            WHERE id = @Id
-              AND clinica_id = @ClinicaId
-              AND activo = true";
+            FROM public.notificaciones n
+            WHERE n.id = nu.notificacion_id
+              AND n.clinica_id = @ClinicaId
+              AND n.activo = true
+              AND nu.notificacion_id = @Id
+              AND nu.usuario_id = @UsuarioId";
 
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(sql,
-                new { Id = id, ClinicaId = clinicaId });
+                new { Id = id, ClinicaId = clinicaId, UsuarioId = usuarioId });
             return rowsAffected > 0;
         }
         catch (Exception ex)
@@ -131,63 +195,69 @@ public class NotificacionRepository : INotificacionRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 4. MarcarTodasLeidasAsync — Marca todas las no leídas como leídas
+    // 4. MarcarTodasLeidasAsync — Marca todas las del usuario como leídas
     // ────────────────────────────────────────────────────────────────────
-    public async Task<bool> MarcarTodasLeidasAsync(Guid clinicaId)
+    public async Task<bool> MarcarTodasLeidasAsync(Guid clinicaId, Guid usuarioId)
     {
         const string sql = @"
-            UPDATE public.notificaciones
+            UPDATE public.notificaciones_usuario nu
             SET leida = true,
                 fecha_lectura = NOW()
-            WHERE clinica_id = @ClinicaId
-              AND leida = false
-              AND activo = true";
+            FROM public.notificaciones n
+            WHERE n.id = nu.notificacion_id
+              AND n.clinica_id = @ClinicaId
+              AND n.activo = true
+              AND nu.usuario_id = @UsuarioId
+              AND nu.leida = false";
 
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(sql,
-                new { ClinicaId = clinicaId });
+                new { ClinicaId = clinicaId, UsuarioId = usuarioId });
             return rowsAffected > 0;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error al marcar todas las notificaciones como leídas en clínica {ClinicaId}",
-                clinicaId);
+                "Error al marcar todas las notificaciones como leídas para usuario {UsuarioId} en clínica {ClinicaId}",
+                usuarioId, clinicaId);
             throw;
         }
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 5. GetNoLeidasCountAsync — Conteo de notificaciones no leídas
+    // 5. GetNoLeidasCountAsync — Conteo no leídas del usuario
     // ────────────────────────────────────────────────────────────────────
-    public async Task<int> GetNoLeidasCountAsync(Guid clinicaId)
+    public async Task<int> GetNoLeidasCountAsync(Guid clinicaId, Guid usuarioId)
     {
         const string sql = @"
             SELECT COUNT(1)
-            FROM public.notificaciones
-            WHERE clinica_id = @ClinicaId
-              AND leida = false
-              AND activo = true";
+            FROM public.notificaciones_usuario nu
+            JOIN public.notificaciones n ON n.id = nu.notificacion_id
+            WHERE n.clinica_id = @ClinicaId
+              AND n.activo = true
+              AND nu.usuario_id = @UsuarioId
+              AND nu.leida = false";
 
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
             return await connection.ExecuteScalarAsync<int>(sql,
-                new { ClinicaId = clinicaId });
+                new { ClinicaId = clinicaId, UsuarioId = usuarioId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error al contar notificaciones no leídas de clínica {ClinicaId}",
-                clinicaId);
+                "Error al contar notificaciones no leídas de usuario {UsuarioId} en clínica {ClinicaId}",
+                usuarioId, clinicaId);
             throw;
         }
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 6. GetAllPaginatedAsync — Página de notificaciones con búsqueda ILIKE
+    // 6. GetAllPaginatedAsync — Página de notificaciones (por notificación,
+    //    no por usuario). Se conserva como parte del contrato IPaginatedRepository.
     // ────────────────────────────────────────────────────────────────────
     public async Task<PaginatedResultDto<Notificacion>> GetAllPaginatedAsync(
         Guid clinicaId, PaginationFilterDto filter)
@@ -215,7 +285,7 @@ public class NotificacionRepository : INotificacionRepository
             )
             SELECT COUNT(1) FROM filtered;
 
-            SELECT {SelectColumns}
+            SELECT {SelectColumnsLegacy}
             FROM public.notificaciones n
             {baseWhere}
             ORDER BY n.fecha_creacion DESC
@@ -255,7 +325,7 @@ public class NotificacionRepository : INotificacionRepository
     private static string BuildLeidaFilter(bool? leida)
     {
         if (!leida.HasValue) return string.Empty;
-        return leida.Value ? "AND n.leida = true" : "AND n.leida = false";
+        return leida.Value ? "AND nu.leida = true" : "AND nu.leida = false";
     }
 
     private static string BuildLimitClause(int? limit)

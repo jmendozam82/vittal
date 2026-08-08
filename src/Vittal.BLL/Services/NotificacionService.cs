@@ -29,53 +29,53 @@ public class NotificacionService : INotificacionService
     }
 
     /// <summary>
-    /// Obtiene notificaciones de la clínica, opcionalmente filtradas por no leídas.
+    /// Obtiene notificaciones del usuario, opcionalmente filtradas por no leídas.
     /// </summary>
-    public async Task<ServiceResult<List<NotificacionResponseDto>>> GetAllAsync(Guid clinicaId, bool? soloNoLeidas = null, int? limit = null)
+    public async Task<ServiceResult<List<NotificacionResponseDto>>> GetAllAsync(Guid clinicaId, Guid usuarioId, bool? soloNoLeidas = null, int? limit = null)
     {
         try
         {
-            _logger.LogInformation("Obteniendo notificaciones para clínica {ClinicaId}", clinicaId);
+            _logger.LogInformation("Obteniendo notificaciones para usuario {UsuarioId} de clínica {ClinicaId}", usuarioId, clinicaId);
 
-            var entities = await _repository.GetByClinicaIdAsync(clinicaId, soloNoLeidas, limit);
+            var entities = await _repository.GetByClinicaIdAsync(clinicaId, usuarioId, soloNoLeidas, limit);
             var dtos = entities.Select(MapToDto).ToList();
 
             return ServiceResult<List<NotificacionResponseDto>>.Success(dtos);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener notificaciones para clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al obtener notificaciones para usuario {UsuarioId} de clínica {ClinicaId}", usuarioId, clinicaId);
             return ServiceResult<List<NotificacionResponseDto>>.Failure($"Error al obtener notificaciones: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Obtiene la cantidad de notificaciones no leídas.
+    /// Obtiene la cantidad de notificaciones no leídas del usuario.
     /// </summary>
-    public async Task<ServiceResult<int>> GetNoLeidasCountAsync(Guid clinicaId)
+    public async Task<ServiceResult<int>> GetNoLeidasCountAsync(Guid clinicaId, Guid usuarioId)
     {
         try
         {
-            var count = await _repository.GetNoLeidasCountAsync(clinicaId);
+            var count = await _repository.GetNoLeidasCountAsync(clinicaId, usuarioId);
             return ServiceResult<int>.Success(count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al contar notificaciones no leídas para clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al contar notificaciones no leídas para usuario {UsuarioId} de clínica {ClinicaId}", usuarioId, clinicaId);
             return ServiceResult<int>.Failure($"Error al contar notificaciones: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Marca una notificación específica como leída.
+    /// Marca una notificación específica como leída para el usuario.
     /// </summary>
-    public async Task<ServiceResult<bool>> MarcarLeidaAsync(Guid clinicaId, Guid notificacionId)
+    public async Task<ServiceResult<bool>> MarcarLeidaAsync(Guid clinicaId, Guid usuarioId, Guid notificacionId)
     {
         try
         {
-            _logger.LogInformation("Marcando notificación {NotificacionId} como leída", notificacionId);
+            _logger.LogInformation("Marcando notificación {NotificacionId} como leída para usuario {UsuarioId}", notificacionId, usuarioId);
 
-            var result = await _repository.MarcarLeidaAsync(clinicaId, notificacionId);
+            var result = await _repository.MarcarLeidaAsync(clinicaId, usuarioId, notificacionId);
             if (!result)
             {
                 return ServiceResult<bool>.Failure("Notificación no encontrada.", ServiceErrorType.NotFound);
@@ -91,20 +91,20 @@ public class NotificacionService : INotificacionService
     }
 
     /// <summary>
-    /// Marca todas las notificaciones de la clínica como leídas.
+    /// Marca todas las notificaciones del usuario como leídas.
     /// </summary>
-    public async Task<ServiceResult<bool>> MarcarTodasLeidasAsync(Guid clinicaId)
+    public async Task<ServiceResult<bool>> MarcarTodasLeidasAsync(Guid clinicaId, Guid usuarioId)
     {
         try
         {
-            _logger.LogInformation("Marcando todas las notificaciones como leídas para clínica {ClinicaId}", clinicaId);
+            _logger.LogInformation("Marcando todas las notificaciones como leídas para usuario {UsuarioId}", usuarioId);
 
-            var result = await _repository.MarcarTodasLeidasAsync(clinicaId);
+            var result = await _repository.MarcarTodasLeidasAsync(clinicaId, usuarioId);
             return ServiceResult<bool>.Success(result, "Todas las notificaciones fueron marcadas como leídas.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al marcar todas las notificaciones como leídas para clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al marcar todas las notificaciones como leídas para usuario {UsuarioId}", usuarioId);
             return ServiceResult<bool>.Failure($"Error al marcar notificaciones: {ex.Message}");
         }
     }

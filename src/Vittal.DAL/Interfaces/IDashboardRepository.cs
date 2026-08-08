@@ -27,6 +27,6 @@ public interface IDashboardRepository
     /// <summary>Obtiene la distribución de citas por hora para el día.</summary>
     Task<IEnumerable<DashboardGraficoDto>> GetCitasPorHoraAsync(Guid clinicaId, DateTime fecha);
 
-    /// <summary>Obtiene las últimas N alertas no resueltas de una fecha específica.</summary>
-    Task<IEnumerable<DashboardGraficoDto>> GetUltimasAlertasAsync(Guid clinicaId, DateTime fecha, int limit = 5);
+    /// <summary>Obtiene las citas por médico segmentadas por estado (atendidas / pendientes) para el gráfico apilado.</summary>
+    Task<IEnumerable<DashboardCitaPorMedicoDto>> GetCitasPorMedicoAsync(Guid clinicaId, DateTime fecha);
 }

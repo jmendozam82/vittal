@@ -27,15 +27,20 @@ public class TipoAntecedenteRepository : ITipoAntecedenteRepository
         fecha_modificacion  AS FechaModificacion,
         creado_por          AS CreadoPor";
 
-    public async Task<IEnumerable<TipoAntecedente>> GetAllAsync(Guid clinicaId, Guid salaId)
+    public async Task<IEnumerable<TipoAntecedente>> GetAllAsync(Guid clinicaId, Guid? salaId)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = $@"
-            SELECT {SelectColumns} FROM tipos_antecedente 
-            WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
-            ORDER BY orden, nombre";
+        var sql = $"SELECT {SelectColumns} FROM tipos_antecedente WHERE clinica_id = @ClinicaId AND activo = true";
+        object param = new { ClinicaId = clinicaId };
 
-        return await connection.QueryAsync<TipoAntecedente>(sql, new { ClinicaId = clinicaId, SalaId = salaId });
+        if (salaId.HasValue && salaId.Value != Guid.Empty)
+        {
+            sql += " AND sala_id = @SalaId";
+            param = new { ClinicaId = clinicaId, SalaId = salaId.Value };
+        }
+
+        sql += " ORDER BY orden, nombre";
+        return await connection.QueryAsync<TipoAntecedente>(sql, param);
     }
 
     public async Task<TipoAntecedente?> GetByIdAsync(Guid clinicaId, Guid id)

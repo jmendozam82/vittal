@@ -39,7 +39,8 @@ public class NotificacionesController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] bool? leida = null, [FromQuery] int? limit = null)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetAllAsync(clinicaId, leida, limit);
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.GetAllAsync(clinicaId, usuarioId, leida, limit);
         return result.ToActionResult();
     }
 
@@ -50,7 +51,8 @@ public class NotificacionesController : ControllerBase
     public async Task<IActionResult> GetNoLeidasCount()
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetNoLeidasCountAsync(clinicaId);
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.GetNoLeidasCountAsync(clinicaId, usuarioId);
         return result.ToActionResult();
     }
 
@@ -63,7 +65,8 @@ public class NotificacionesController : ControllerBase
     public async Task<IActionResult> MarcarLeida(Guid id)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.MarcarLeidaAsync(clinicaId, id);
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.MarcarLeidaAsync(clinicaId, usuarioId, id);
         return result.ToActionResult();
     }
 
@@ -74,7 +77,8 @@ public class NotificacionesController : ControllerBase
     public async Task<IActionResult> MarcarTodasLeidas()
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.MarcarTodasLeidasAsync(clinicaId);
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.MarcarTodasLeidasAsync(clinicaId, usuarioId);
         return result.ToActionResult();
     }
 }

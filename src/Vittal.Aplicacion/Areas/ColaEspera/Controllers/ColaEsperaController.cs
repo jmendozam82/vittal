@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 using Vittal.Aplicacion.Helpers;
 
@@ -22,6 +23,48 @@ public class ColaEsperaController : Controller
     {
         _apiClient = apiClient;
         _logger = logger;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    //  HELPERS DE IDENTIDAD (perfil doctor)
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>Indica si el usuario autenticado tiene perfil de doctor.</summary>
+    private bool EsDoctor() => User.FindFirstValue("app_es_doctor") == "true";
+
+    /// <summary>Indica si el usuario autenticado es administrador de clínica.</summary>
+    private bool EsAdmin() => User.FindFirstValue("app_es_admin") == "true";
+
+    /// <summary>Indica si el usuario autenticado es super administrador (global).</summary>
+    private bool EsSuperAdmin() => User.FindFirstValue("app_es_super_admin") == "true";
+
+    /// <summary>
+    /// El avance clínico de una cita (Atender/Completar) SOLO puede realizarlo
+    /// el personal asistencial: médico, admin o superadmin. La recepcionista queda
+    /// restringida al registro de llegada y cancelación (Opción A — flujo real de clínica).
+    /// </summary>
+    private bool PuedeGestionarAtencion() => EsDoctor() || EsAdmin() || EsSuperAdmin();
+
+    /// <summary>Obtiene el usuario interno (NameIdentifier) del usuario autenticado.</summary>
+    private Guid UsuarioId()
+    {
+        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(v, out var id) ? id : Guid.Empty;
+    }
+
+    /// <summary>
+    /// Regla de negocio (§12, regla 6): un doctor SOLO opera sobre sus propias citas.
+    /// Admin/Gerente/Recepcionista pueden operar sobre todas (depende del permiso del módulo).
+    /// </summary>
+    private bool PuedeOperarCita(Dictionary<string, object?>? dict)
+    {
+        if (!EsDoctor()) return true;
+        var uid = UsuarioId();
+        return dict != null
+            && dict.TryGetValue("doctorId", out var dId)
+            && dId != null
+            && Guid.TryParse(dId.ToString(), out var dGuid)
+            && dGuid == uid;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -68,6 +111,20 @@ public class ColaEsperaController : Controller
         var cola = new List<object>();
         var atendidasHoy = 0;
 
+        // Filtrar por doctor si se especifica.
+        // Regla 6: si el usuario autenticado es doctor, se fuerza SOLO su propia cola
+        // (se ignora cualquier doctorId enviado por el cliente para evitar ver/operar la cola de otros).
+        Guid? doctorFiltro = null;
+        if (EsDoctor())
+        {
+            var uid = UsuarioId();
+            if (uid != Guid.Empty) doctorFiltro = uid;
+        }
+        else if (!string.IsNullOrEmpty(doctorId) && Guid.TryParse(doctorId, out var docGuid))
+        {
+            doctorFiltro = docGuid;
+        }
+
         foreach (var item in data)
         {
             if (item is not Dictionary<string, object?> dict) continue;
@@ -92,12 +149,12 @@ public class ColaEsperaController : Controller
             // Filtrar por estado (solo estados de cola activa)
             if (estadoStr == null || !estadosCola.Contains(estadoStr)) continue;
 
-            // Filtrar por doctor si se especifica
-            if (!string.IsNullOrEmpty(doctorId) && Guid.TryParse(doctorId, out var docGuid))
+            // Filtrar por doctor (propio si es doctor, o el seleccionado en el filtro)
+            if (doctorFiltro.HasValue)
             {
                 var docIdOk = dict.TryGetValue("doctorId", out var dId) && dId is string dIdStr
                     && Guid.TryParse(dIdStr, out var dIdGuid)
-                    && dIdGuid == docGuid;
+                    && dIdGuid == doctorFiltro.Value;
 
                 if (!docIdOk) continue;
             }
@@ -120,20 +177,22 @@ public class ColaEsperaController : Controller
 
     /// <summary>
     /// Obtiene los doctores para el filtro de cola de espera.
+    /// Usa api/agenda/catalogos (permiso agenda) en lugar de api/Usuarios (permiso usuarios),
+    /// para que el Doctor pueda usar el filtro sin acceso al módulo de usuarios (fix Hallazgo 4b).
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> JsonDoctores()
     {
-        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Usuarios");
+        var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/agenda/catalogos");
 
         if (!success)
         {
             return Json(new { success = false, message = errorMessage ?? "Error al cargar doctores" });
         }
 
-        var data = ExtractDataArray(response);
+        var data = ExtractCatalogosDataArray(response, "doctores");
 
-        // Filtrar solo doctores
+        // Filtrar solo doctores (defensa en profundidad: el endpoint ya filtra)
         var doctores = new List<object>();
         foreach (var item in data)
         {
@@ -174,6 +233,13 @@ public class ColaEsperaController : Controller
         if (citaActual is not Dictionary<string, object?> dict)
         {
             return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
+        }
+
+        // Regla 6: el doctor solo puede registrar llegada de sus propias citas
+        if (!PuedeOperarCita(dict))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede registrar llegada de citas de otro doctor." });
         }
 
         // Hora de llegada actual
@@ -226,6 +292,21 @@ public class ColaEsperaController : Controller
         if (citaActual is not Dictionary<string, object?> dict)
         {
             return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
+        }
+
+        // Opción A: el avance clínico SOLO lo ejecuta el personal asistencial
+        // (médico/admin/superadmin); la recepcionista NO puede iniciar atención.
+        if (!PuedeGestionarAtencion())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "Solo el personal médico puede iniciar la atención. La recepción solo registra la llegada." });
+        }
+
+        // Regla 6: el doctor solo puede atender sus propias citas
+        if (!PuedeOperarCita(dict))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede atender citas de otro doctor." });
         }
 
         var payload = new
@@ -346,6 +427,21 @@ public class ColaEsperaController : Controller
             return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
         }
 
+        // Opción A: completar la consulta SOLO lo ejecuta el personal asistencial
+        // (médico/admin/superadmin); la recepcionista NO puede finalizar atención.
+        if (!PuedeGestionarAtencion())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "Solo el personal médico puede completar la consulta." });
+        }
+
+        // Regla 6: el doctor solo puede completar sus propias citas
+        if (!PuedeOperarCita(dict))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede completar citas de otro doctor." });
+        }
+
         var payload = new
         {
             pacienteId = GetGuidValue(dict, "pacienteId"),
@@ -395,6 +491,13 @@ public class ColaEsperaController : Controller
         if (citaActual is not Dictionary<string, object?> dict)
         {
             return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
+        }
+
+        // Regla 6: el doctor solo puede cancelar sus propias citas
+        if (!PuedeOperarCita(dict))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede cancelar citas de otro doctor." });
         }
 
         var payload = new
@@ -533,6 +636,29 @@ public class ColaEsperaController : Controller
             if (response.Value.ValueKind == JsonValueKind.Array)
             {
                 return EnumerateJsonArray(response.Value);
+            }
+        }
+        catch { }
+
+        return new List<object>();
+    }
+
+    /// <summary>
+    /// Extrae un arreglo de una propiedad interna del objeto "data" de la respuesta.
+    /// Se usa para los catálogos agregados (ej: api/agenda/catalogos → data.doctores).
+    /// </summary>
+    private static List<object> ExtractCatalogosDataArray(JsonElement? response, string property)
+    {
+        if (!response.HasValue) return new List<object>();
+
+        try
+        {
+            if (response.Value.TryGetProperty("data", out var dataProp) &&
+                dataProp.ValueKind == JsonValueKind.Object &&
+                dataProp.TryGetProperty(property, out var arr) &&
+                arr.ValueKind == JsonValueKind.Array)
+            {
+                return EnumerateJsonArray(arr);
             }
         }
         catch { }

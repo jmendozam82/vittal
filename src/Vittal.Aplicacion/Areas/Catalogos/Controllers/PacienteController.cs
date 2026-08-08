@@ -132,7 +132,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los pacientes — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los pacientes ï¿½ para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -160,7 +160,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca pacientes por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca pacientes por tï¿½rmino ï¿½ para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -194,7 +194,13 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Obtiene doctores para el dropdown — para fetch() desde Create/Edit</summary>
+        /// <summary>Obtiene doctores para el dropdown ï¿½ para fetch() desde Create/Edit</summary>
+
+        /// <summary>Obtiene doctores para el dropdown â€” para fetch() desde Create/Edit.
+        /// Usa api/agenda/catalogos (permiso "agenda") en lugar de api/Usuarios
+        /// (permiso "usuarios"), para que la Recepcionista pueda asignar doctor
+        /// sin requerir permiso de administraciÃ³n de usuarios (Hallazgo QA #2).
+        /// </summary>
 
         [HttpGet]
 
@@ -202,7 +208,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         {
 
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Usuarios");
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/agenda/catalogos");
 
             if (!success)
 
@@ -214,9 +220,9 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             }
 
-            var data = ExtractDataArray(response);
+            var data = ExtractCatalogosDataArray(response, "doctores");
 
-            // Filtrar solo doctores
+            // Filtrar solo doctores (defensa en profundidad: el endpoint ya filtra)
 
             var doctores = new List<object>();
 
@@ -248,7 +254,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo paciente — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo paciente ï¿½ para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -292,7 +298,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El nï¿½mero de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
@@ -352,7 +358,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Actualiza un paciente — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un paciente ï¿½ para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -388,7 +394,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El nï¿½mero de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
@@ -448,7 +454,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Desactiva un paciente — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un paciente ï¿½ para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -474,7 +480,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Reactiva un paciente — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un paciente ï¿½ para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -521,6 +527,46 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
                 {
 
                     return EnumerateJsonArray(response.Value);
+
+                }
+
+            }
+
+            catch { }
+
+            return new List<object>();
+
+        }
+
+        /// <summary>
+
+        /// Extrae un arreglo de una propiedad interna del objeto "data" de la respuesta.
+
+        /// Se usa para los catÃ¡logos agregados (ej: api/agenda/catalogos â†’ data.doctores).
+
+        /// </summary>
+
+        private static List<object> ExtractCatalogosDataArray(JsonElement? response, string property)
+
+        {
+
+            if (!response.HasValue) return new List<object>();
+
+            try
+
+            {
+
+                if (response.Value.TryGetProperty("data", out var dataProp) &&
+
+                    dataProp.ValueKind == JsonValueKind.Object &&
+
+                    dataProp.TryGetProperty(property, out var arr) &&
+
+                    arr.ValueKind == JsonValueKind.Array)
+
+                {
+
+                    return EnumerateJsonArray(arr).ToList();
 
                 }
 

@@ -196,6 +196,33 @@ const vittalAgenda = (function() {
         dateTitleSub = $('dateTitleSub');
         filterDoctor = $('filterDoctor');
 
+        // ── Perfil doctor: ocultar filtros que no aplican y fijar su doctorId ──
+        if (config.esDoctor) {
+            const fw = document.querySelector('.agenda-doctor-filter');
+            if (fw) fw.style.display = 'none';
+
+            const salaField = document.getElementById('citaSalaId')?.closest('.col-md-4');
+            if (salaField) salaField.style.display = 'none';
+
+            state.filterDoctor = config.usuarioId;
+
+            // Hallazgo QA #1: ocultar el campo "Doctor" del modal y fijarlo a sí mismo.
+            // El doctor no puede elegir ni cambiar el doctor de una cita.
+            const doctorField = document.getElementById('citaDoctorId')?.closest('.col-md-6');
+            if (doctorField) doctorField.style.display = 'none';
+            const doctorSel = document.getElementById('citaDoctorId');
+            if (doctorSel) {
+                doctorSel.disabled = true;
+                doctorSel.value = config.usuarioId;
+            }
+            // Ampliar el campo de paciente a ancho completo al ocultar el de doctor
+            const patientField = document.getElementById('citaPacienteId')?.closest('.col-md-6');
+            if (patientField) {
+                patientField.classList.remove('col-md-6');
+                patientField.classList.add('col-md-12');
+            }
+        }
+
         // Inicializar modales Bootstrap
         modalCita = new bootstrap.Modal($('modalCita'));
         modalDetalle = new bootstrap.Modal($('modalDetalleCita'));
@@ -245,7 +272,7 @@ const vittalAgenda = (function() {
             }
         });
 
-        $('btnConfirmarDesactivar').addEventListener('click', async () => {
+$('btnConfirmarDesactivar').addEventListener('click', async () => {
             if (state.editingId) {
                 await desactivarCita(state.editingId);
                 modalDesactivar.hide();
@@ -253,18 +280,6 @@ const vittalAgenda = (function() {
             }
         });
 
-        // Botones de cambio de estado desde detalle
-        document.querySelectorAll('#detalleAccionesEstado .btn-estado').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const estado = this.dataset.estado;
-                if (state.detallesCita) {
-                    await cambiarEstado(state.detallesCita.id, estado);
-                    modalDetalle.hide();
-                }
-            });
-        });
-
-        // Editar desde detalle
         $('btnEditarDesdeDetalle').addEventListener('click', () => {
             modalDetalle.hide();
             if (state.detallesCita) {
@@ -318,6 +333,13 @@ const vittalAgenda = (function() {
 
     function populateDoctorFilter() {
         const select = filterDoctor;
+
+        // Perfil doctor: el filtro está oculto y fijado a su propio doctorId
+        if (config.esDoctor) {
+            select.innerHTML = '';
+            return;
+        }
+
         select.innerHTML = '<option value="todos">Todos los doctores</option>';
         state.doctores.forEach(d => {
             const name = d.nombreCompleto || d.nombres + ' ' + d.apellidos || 'Doctor';
@@ -330,6 +352,20 @@ const vittalAgenda = (function() {
 
     function populateDoctorsSelect() {
         const select = $('citaDoctorId');
+
+        // Perfil doctor: fijar únicamente su propio doctorId (campo oculto en el modal)
+        if (config.esDoctor) {
+            select.innerHTML = '';
+            const opt = document.createElement('option');
+            const propio = state.doctores.find(d => (d.id || d.usuarioId) === config.usuarioId);
+            opt.value = config.usuarioId;
+            opt.textContent = (propio && (propio.nombreCompleto || propio.nombres + ' ' + propio.apellidos)) || 'Doctor';
+            select.appendChild(opt);
+            select.value = config.usuarioId;
+            select.disabled = true;
+            return;
+        }
+
         select.innerHTML = '<option value="">-- Seleccionar doctor --</option>';
         state.doctores.forEach(d => {
             const name = d.nombreCompleto || d.nombres + ' ' + d.apellidos || 'Doctor';
@@ -542,21 +578,33 @@ const vittalAgenda = (function() {
                         `onclick="vittalAgenda.onCellClick('${dateKey}', ${h})">`;
 
                 // Renderizar citas que caen en esta hora
-                cellCitas.forEach(c => {
+                const citasHora = cellCitas.filter(c => {
+                    const hora = parseTimeToMinutes(c.horaCita);
+                    return Math.floor(hora / 60) === h;
+                });
+                const colLayout = computeColumnLayout(citasHora);
+
+                citasHora.forEach(c => {
                     const hora = parseTimeToMinutes(c.horaCita);
                     const horaFin = parseTimeToMinutes(c.horaFin) || hora + 30;
-                    const startH = Math.floor(hora / 60);
-                    const endH = Math.ceil(horaFin / 60);
+                    const topOffset = ((hora % 60) / 60) * 100;
+                    const durationH = Math.max((horaFin - hora) / 60, 0.25);
+                    const heightPct = Math.min(durationH * 100, 400);
+                    const isOverlapping = durationH > 1;
+                    const layout = colLayout[c.id] || { col: 0, cols: 1 };
 
-                    if (startH === h) {
-                        const topOffset = ((hora % 60) / 60) * 100;
-                        const durationH = Math.max((horaFin - hora) / 60, 0.25);
-                        const heightPct = Math.min(durationH * 100, 400);
-                        const isOverlapping = durationH > 1;
-
-                        html += renderCitaCard(c, topOffset, heightPct, isOverlapping, di);
-                    }
+                    html += renderCitaCard(c, topOffset, heightPct, isOverlapping, layout.col, layout.cols);
                 });
+
+                // Botón "+" para agendar otra cita en esta misma hora
+                // (la clínica tiene varias salas: distintos doctores pueden
+                //  atender simultáneamente en la misma hora)
+                if (citasHora.length > 0) {
+                    html += `<div class="agenda-cell-add" ` +
+                            `onclick="event.stopPropagation(); vittalAgenda.onCellClick('${dateKey}', ${h})" ` +
+                            `title="Agendar otra cita a las ${String(h).padStart(2,'0')}:00">` +
+                            `<i class="bi bi-plus-lg"></i></div>`;
+                }
 
                 // Línea de hora actual (solo vista día y para hoy)
                 if (state.view === 'day' && today) {
@@ -649,14 +697,25 @@ const vittalAgenda = (function() {
                 return cDate === dateKey && Math.floor(cHora / 60) === h;
             });
 
+            const colLayout = computeColumnLayout(hourCitas);
+
             hourCitas.forEach(c => {
                 const cHora = parseTimeToMinutes(c.horaCita);
                 const cHoraFin = parseTimeToMinutes(c.horaFin) || cHora + 30;
                 const topOffset = ((cHora % 60) / 60) * 100;
                 const durationH = Math.max((cHoraFin - cHora) / 60, 0.25);
                 const heightPct = Math.min(durationH * 100, 400);
-                html += renderCitaCard(c, topOffset, heightPct, durationH > 1.5, 0);
+                const layout = colLayout[c.id] || { col: 0, cols: 1 };
+                html += renderCitaCard(c, topOffset, heightPct, durationH > 1.5, layout.col, layout.cols);
             });
+
+            // Botón "+" para agendar otra cita en esta misma hora
+            if (hourCitas.length > 0) {
+                html += `<div class="agenda-cell-add" ` +
+                        `onclick="event.stopPropagation(); vittalAgenda.onCellClick('${dateKey}', ${h})" ` +
+                        `title="Agendar otra cita a las ${String(h).padStart(2,'0')}:00">` +
+                        `<i class="bi bi-plus-lg"></i></div>`;
+            }
 
             if (isCurrentHour) {
                 const now = new Date();
@@ -672,7 +731,43 @@ const vittalAgenda = (function() {
     }
 
     // ── Renderizar tarjeta de cita ──────────────────────────────
-    function renderCitaCard(c, topOffset, heightPct, compact, colIndex) {
+    /**
+     * Asigna columnas a citas que se solapan en el mismo rango horario.
+     * La clínica tiene varias salas con doctores que atienden a la vez,
+     * por lo que varias citas pueden coincidir en la misma hora.
+     * Retorna { [id]: { col, cols } } donde col = índice de columna y
+     * cols = total de columnas del grupo solapado.
+     */
+    function computeColumnLayout(citas) {
+        const eventos = citas.map(c => ({
+            id: c.id,
+            start: parseTimeToMinutes(c.horaCita),
+            end: parseTimeToMinutes(c.horaFin) || parseTimeToMinutes(c.horaCita) + 30
+        })).sort((a, b) => a.start - b.start || (b.end - a.end));
+
+        const columnEnds = [];   // hora de fin de la última cita de cada columna
+        const asignadas = {};    // id -> índice de columna
+
+        eventos.forEach(ev => {
+            let col = columnEnds.findIndex(end => end <= ev.start);
+            if (col === -1) {
+                col = columnEnds.length;
+                columnEnds.push(ev.end);
+            } else {
+                columnEnds[col] = ev.end;
+            }
+            asignadas[ev.id] = col;
+        });
+
+        const totalCols = Math.max(columnEnds.length, 1);
+        const layout = {};
+        citas.forEach(c => {
+            layout[c.id] = { col: asignadas[c.id] ?? 0, cols: totalCols };
+        });
+        return layout;
+    }
+
+    function renderCitaCard(c, topOffset, heightPct, compact, colIndex, colCount) {
         const estado = c.estado || 'agendada';
         const horaInicio = fmtTime(c.horaCita);
         const horaFin = c.horaFin ? fmtTime(c.horaFin) : '';
@@ -688,6 +783,15 @@ const vittalAgenda = (function() {
         const heightStyle = heightPct > 0 ? `height:${heightPct}%` : 'height:30px';
         const topStyle = `top:${topOffset}%`;
 
+        // ── Layout en columnas paralelas para citas simultáneas ──
+        // Varios doctores pueden atender a la vez en distintas salas.
+        // Si hay N citas que se solapan, cada una ocupa 100/N % de ancho.
+        const idx = colIndex || 0;
+        const total = colCount || 1;
+        const leftPct = (idx / total) * 100;
+        const widthPct = (100 / total) - 0.4; // pequeño margen entre columnas
+        const columnStyle = `left:calc(${leftPct}% + 3px); width:calc(${widthPct}% - 3px);`;
+
         // Doctor + sala en una línea compacta
         let doctorLine = '';
         if (safeDoctor && safeSala) {
@@ -700,7 +804,7 @@ const vittalAgenda = (function() {
 
         return `
             <div class="agenda-card estado-${estado}"
-                 style="${topStyle}; ${heightStyle}"
+                 style="${topStyle}; ${heightStyle}; ${columnStyle}"
                  onclick="event.stopPropagation(); vittalAgenda.onCitaClick('${id}')"
                  title="${safePaciente} — ${horaInicio}${horaFin ? ' a ' + horaFin : ''} | ${doctorLine} | ${estadoLabel}">
                 <div class="card-row-main">
@@ -920,17 +1024,9 @@ const vittalAgenda = (function() {
 
         $('detalleCitaBody').innerHTML = body;
 
-        // Mostrar/ocultar botones de estado según estado actual
-        document.querySelectorAll('#detalleAccionesEstado .btn-estado').forEach(btn => {
-            const est = btn.dataset.estado;
-            btn.classList.remove('activo');
-            if (cita.estado === est) btn.classList.add('activo');
-            // Deshabilitar botones no aplicables
-            const order = ['agendada', 'en_espera', 'en_atencion', 'atendida'];
-            const currentIdx = order.indexOf(cita.estado);
-            const btnIdx = order.indexOf(est);
-            btn.disabled = btnIdx <= currentIdx && cita.estado !== 'agendada';
-        });
+        // ── Ocultar botón Editar en citas ya atendidas (consulta finalizada) ──
+        const esAtendida = cita.estado === 'atendida';
+        $('btnEditarDesdeDetalle').classList.toggle('d-none', esAtendida);
 
         modalDetalle.show();
     }
@@ -959,12 +1055,23 @@ const vittalAgenda = (function() {
         // ── Validar horario de atención ──────────────────────────
         aplicarRestriccionesHorario(dateStr, timeStr);
 
+        // Perfil doctor: su doctorId siempre fijado a sí mismo
+        if (config.esDoctor) {
+            $('citaDoctorId').value = config.usuarioId;
+        }
+
         modalCita.show();
     }
 
     function openEditCita(id) {
         const cita = state.citas.find(c => c.id === id);
         if (!cita) return;
+
+        // ── Bloquear edición de citas ya atendidas (consulta finalizada) ──
+        if (cita.estado === 'atendida') {
+            showToast('La cita ya fue atendida y no se puede modificar.', 'warning');
+            return;
+        }
 
         state.editingId = id;
         $('modalCitaTitleText').textContent = 'Editar Cita';
@@ -973,7 +1080,7 @@ const vittalAgenda = (function() {
         $('formCita').classList.remove('was-validated');
 
         $('citaPacienteId').value = cita.pacienteId || '';
-        $('citaDoctorId').value = cita.doctorId || '';
+        $('citaDoctorId').value = config.esDoctor ? config.usuarioId : (cita.doctorId || '');
         $('citaFecha').value = cita.fechaCita ? cita.fechaCita.substring(0,10) : '';
         $('citaHora').value = toTimeInputValue(cita.horaCita);
         $('citaHoraFin').value = toTimeInputValue(cita.horaFin);
@@ -1107,7 +1214,7 @@ const vittalAgenda = (function() {
 
         const data = {
             pacienteId: $('citaPacienteId').value || '00000000-0000-0000-0000-000000000000',
-            doctorId: $('citaDoctorId').value || '00000000-0000-0000-0000-000000000000',
+            doctorId: config.esDoctor ? config.usuarioId : ($('citaDoctorId').value || '00000000-0000-0000-0000-000000000000'),
             salaId: $('citaSalaId').value || null,
             fechaCita: $('citaFecha').value,
             horaCita: $('citaHora').value,
@@ -1158,25 +1265,6 @@ const vittalAgenda = (function() {
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
-        }
-    }
-
-    // ── Cambiar estado ──────────────────────────────────────────
-    async function cambiarEstado(id, estado) {
-        try {
-            const res = await fetch(`${config.urls.cambiarEstado}?id=${id}&estado=${estado}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const json = await res.json();
-            if (res.ok && json.success) {
-                showToast(json.message, 'success');
-                await refreshCitas();
-            } else {
-                showToast(json.message || 'Error al cambiar estado', 'danger');
-            }
-        } catch (err) {
-            showToast('Error de conexión.', 'danger');
         }
     }
 

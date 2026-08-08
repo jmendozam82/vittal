@@ -181,7 +181,8 @@ public class AuthController : ControllerBase
                 Perfil = userResult.Data.PerfilNombre,
                 PerfilId = userResult.Data.PerfilId,
                 EsAdmin = userResult.Data.EsAdmin,
-                EsSuperAdmin = userResult.Data.EsSuperAdmin
+                EsSuperAdmin = userResult.Data.EsSuperAdmin,
+                EsDoctor = userResult.Data.EsDoctor
             };
 
             return Ok(new ApiResponse<LoginResponseDto>

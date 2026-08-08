@@ -9,6 +9,7 @@ using Vittal.API.Controllers;
 using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.DTO.Expediente;
+using Vittal.DTO.Paciente;
 using Vittal.Utility;
 using Vittal.Utility.Results;
 
@@ -17,6 +18,7 @@ namespace Vittal.API.Tests.Controllers;
 public class ExpedientesControllerTests
 {
     private readonly Mock<IExpedienteService> _serviceMock;
+    private readonly Mock<IPacienteService> _pacienteServiceMock;
     private readonly Mock<ILogger<ExpedientesController>> _loggerMock;
     private readonly ExpedientesController _controller;
     private readonly Guid _clinicaId = Guid.NewGuid();
@@ -25,8 +27,9 @@ public class ExpedientesControllerTests
     public ExpedientesControllerTests()
     {
         _serviceMock = new Mock<IExpedienteService>();
+        _pacienteServiceMock = new Mock<IPacienteService>();
         _loggerMock = new Mock<ILogger<ExpedientesController>>();
-        _controller = new ExpedientesController(_serviceMock.Object, _loggerMock.Object);
+        _controller = new ExpedientesController(_serviceMock.Object, _pacienteServiceMock.Object, _loggerMock.Object);
 
         var claims = new List<Claim>
         {
@@ -56,7 +59,7 @@ public class ExpedientesControllerTests
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = Guid.NewGuid(), DoctorId = Guid.NewGuid(), PacienteNombre = "María López", DoctorNombre = "Dr. García", Activo = true }
         };
         var serviceResult = ServiceResult<IEnumerable<ExpedienteResponseDto>>.Success(expedientes);
-        _serviceMock.Setup(s => s.GetAllAsync(_clinicaId)).ReturnsAsync(serviceResult);
+        _serviceMock.Setup(s => s.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(serviceResult);
 
         // Act
         var actionResult = await _controller.GetAll();
@@ -87,7 +90,7 @@ public class ExpedientesControllerTests
             Activo = true
         };
         var serviceResult = ServiceResult<ExpedienteResponseDto>.Success(expediente);
-        _serviceMock.Setup(s => s.GetByIdAsync(_clinicaId, expedienteId)).ReturnsAsync(serviceResult);
+        _serviceMock.Setup(s => s.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(serviceResult);
 
         // Act
         var actionResult = await _controller.GetById(expedienteId);
@@ -187,5 +190,50 @@ public class ExpedientesControllerTests
         var response = okResult!.Value as ApiResponse<bool>;
         response!.Success.Should().BeTrue();
         response.Data.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPatientInfo_ShouldReturnOk_WhenPacienteExists()
+    {
+        // Arrange
+        var expedienteId = Guid.NewGuid();
+        var pacienteId = Guid.NewGuid();
+        var expediente = new ExpedienteResponseDto
+        {
+            Id = expedienteId,
+            ClinicaId = _clinicaId,
+            PacienteId = pacienteId,
+            DoctorId = Guid.NewGuid(),
+            PacienteNombre = "Juan Pérez",
+            DoctorNombre = "Dr. García",
+            Activo = true
+        };
+        var expedienteResult = ServiceResult<ExpedienteResponseDto>.Success(expediente);
+        _serviceMock.Setup(s => s.GetByIdAsync(_clinicaId, expedienteId, It.IsAny<Guid?>())).ReturnsAsync(expedienteResult);
+
+        var paciente = new PacienteResponseDto
+        {
+            Id = pacienteId,
+            ClinicaId = _clinicaId,
+            DoctorId = Guid.NewGuid(),
+            NombreCompleto = "Juan Pérez",
+            Sexo = "M",
+            TipoDocumentoIdentificacion = "CC",
+            NumeroDocumentoIdentificacion = "12345678",
+            Activo = true
+        };
+        var pacienteResult = ServiceResult<PacienteResponseDto>.Success(paciente);
+        _pacienteServiceMock.Setup(s => s.GetByIdAsync(pacienteId, _clinicaId)).ReturnsAsync(pacienteResult);
+
+        // Act
+        var actionResult = await _controller.GetPatientInfo(expedienteId);
+
+        // Assert
+        actionResult.Should().BeOfType<OkObjectResult>();
+        var okResult = actionResult as OkObjectResult;
+        var response = okResult!.Value as ApiResponse<PacienteResponseDto>;
+        response!.Success.Should().BeTrue();
+        response.Data!.Id.Should().Be(pacienteId);
+        response.Data.Sexo.Should().Be("M");
     }
 }

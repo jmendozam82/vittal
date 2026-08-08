@@ -21,7 +21,13 @@ public class TipoAntecedenteService : ITipoAntecedenteService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId)
+    public Task<ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid salaId)
+        => GetAllAsync(clinicaId, (Guid?)salaId);
+
+    /// <summary>
+    /// Lista tipos de antecedente. Si salaId es null o Guid.Empty, devuelve todos los de la clínica.
+    /// </summary>
+    public async Task<ServiceResult<IEnumerable<TipoAntecedenteDTOs.Response>>> GetAllAsync(Guid clinicaId, Guid? salaId)
     {
         try
         {

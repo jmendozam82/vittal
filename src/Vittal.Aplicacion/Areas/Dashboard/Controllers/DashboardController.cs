@@ -66,12 +66,16 @@ public class DashboardController : Controller
     {
         var (success, response, _) = await _apiClient.GetAsync<JsonElement>("api/Notificaciones/no-leidas-count");
 
-        if (!success)
+        // El API devuelve ApiResponse<int>: el "data" es un número, no un objeto.
+        // Se lee directo del nodo raíz para evitar el bug de extracción de objetos.
+        var count = 0;
+        if (success && response.ValueKind == JsonValueKind.Object
+            && response.TryGetProperty("data", out var dataProp)
+            && dataProp.ValueKind == JsonValueKind.Number)
         {
-            return Json(new { success = false, count = 0 });
+            count = (int)dataProp.GetDouble();
         }
 
-        var count = ExtractDataObject(response)?.GetValueOrDefault("data") is double d ? (int)d : 0;
         return Json(new { success = true, count });
     }
 
@@ -88,6 +92,22 @@ public class DashboardController : Controller
 
         var data = ExtractDataArray(response);
         return Json(new { success = true, data });
+    }
+
+    /// <summary>Marca una notificación como leída (proxy al API).</summary>
+    [HttpPost]
+    public async Task<IActionResult> JsonMarcarLeida([FromQuery] Guid id)
+    {
+        var (success, _, _) = await _apiClient.PutAsync<JsonElement>($"api/Notificaciones/{id}/leer", new { });
+        return Json(new { success });
+    }
+
+    /// <summary>Marca todas las notificaciones de la clínica como leídas (proxy al API).</summary>
+    [HttpPost]
+    public async Task<IActionResult> JsonMarcarTodasLeidas()
+    {
+        var (success, _, _) = await _apiClient.PutAsync<JsonElement>("api/Notificaciones/leer-todas", new { });
+        return Json(new { success });
     }
 
     // ========== Helpers ==========

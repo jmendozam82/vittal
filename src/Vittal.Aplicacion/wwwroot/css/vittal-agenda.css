@@ -405,7 +405,7 @@ body.agenda-page {
 .agenda-card {
   position: absolute;
   left: 3px;
-  right: 3px;
+  /* right lo controla el ancho calculado por JS para citas simultáneas */
   border-radius: var(--agenda-card-radius);
   padding: 6px 8px;
   font-size: 0.75rem;
@@ -451,6 +451,33 @@ body.agenda-page {
   border-left-color: var(--agenda-card-cancelada-border);
   opacity: 0.6;
   text-decoration: line-through;
+}
+
+/* ── Botón "+" para agendar otra cita en la misma hora ─────────── */
+.agenda-cell-add {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(26, 111, 168, 0.12);
+  color: var(--agenda-accent, #1a6fa8);
+  font-size: 0.8rem;
+  cursor: pointer;
+  z-index: 20;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.agenda-day-cell .agenda-cell-add {
+  opacity: 1;
+}
+.agenda-cell-add:hover {
+  background: var(--agenda-accent, #1a6fa8);
+  color: #fff;
+  transform: scale(1.1);
 }
 
 @keyframes pulse-border {
@@ -752,29 +779,6 @@ body.agenda-page {
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 600;
-}
-
-/* ── Quick status buttons ───────────────────────────────────────── */
-.btn-estado {
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--agenda-grid-border);
-  background: white;
-  color: var(--agenda-hour-label);
-  transition: all 0.15s;
-}
-
-.btn-estado:hover:not(:disabled) {
-  border-color: #D1D5DB;
-  background: #F9FAFB;
-}
-
-.btn-estado.activo { 
-  background: var(--vittal-primary);
-  color: white;
-  border-color: var(--vittal-primary);
 }
 
 /* ── Toast personalizado ─────────────────────────────────────────── */

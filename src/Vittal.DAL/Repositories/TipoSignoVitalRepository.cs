@@ -29,15 +29,20 @@ public class TipoSignoVitalRepository : ITipoSignoVitalRepository
         fecha_modificacion  AS FechaModificacion,
         creado_por          AS CreadoPor";
 
-    public async Task<IEnumerable<TipoSignoVital>> GetAllAsync(Guid clinicaId, Guid salaId)
+    public async Task<IEnumerable<TipoSignoVital>> GetAllAsync(Guid clinicaId, Guid? salaId)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        var sql = $@"
-            SELECT {SelectColumns} FROM tipos_signo_vital 
-            WHERE clinica_id = @ClinicaId AND sala_id = @SalaId AND activo = true 
-            ORDER BY orden, nombre";
+        var sql = $"SELECT {SelectColumns} FROM tipos_signo_vital WHERE clinica_id = @ClinicaId AND activo = true";
+        object param = new { ClinicaId = clinicaId };
 
-        return await connection.QueryAsync<TipoSignoVital>(sql, new { ClinicaId = clinicaId, SalaId = salaId });
+        if (salaId.HasValue && salaId.Value != Guid.Empty)
+        {
+            sql += " AND sala_id = @SalaId";
+            param = new { ClinicaId = clinicaId, SalaId = salaId.Value };
+        }
+
+        sql += " ORDER BY orden, nombre";
+        return await connection.QueryAsync<TipoSignoVital>(sql, param);
     }
 
     public async Task<TipoSignoVital?> GetByIdAsync(Guid clinicaId, Guid id)

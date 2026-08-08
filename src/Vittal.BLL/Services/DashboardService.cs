@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Dashboard;
-using Vittal.DTO.Notificacion;
 using Vittal.Entity;
 using Vittal.Utility.Results;
 
@@ -20,18 +19,15 @@ public class DashboardService : IDashboardService
 {
     private readonly IDashboardConfigRepository _configRepository;
     private readonly IDashboardRepository _dashboardRepository;
-    private readonly INotificacionRepository _notificacionRepository;
     private readonly ILogger<DashboardService> _logger;
 
     public DashboardService(
         IDashboardConfigRepository configRepository,
         IDashboardRepository dashboardRepository,
-        INotificacionRepository notificacionRepository,
         ILogger<DashboardService> logger)
     {
         _configRepository = configRepository;
         _dashboardRepository = dashboardRepository;
-        _notificacionRepository = notificacionRepository;
         _logger = logger;
     }
 
@@ -61,6 +57,7 @@ public class DashboardService : IDashboardService
                 MostrarPacientesEnEspera = true,
                 MostrarTiempoPromedioEspera = true,
                 MostrarGraficoCitasPorHora = true,
+                MostrarCitasPorMedico = true,
                 MostrarUltimasAlertas = true
             };
 
@@ -92,6 +89,7 @@ public class DashboardService : IDashboardService
                 MostrarPacientesEnEspera = dto.MostrarPacientesEnEspera,
                 MostrarTiempoPromedioEspera = dto.MostrarTiempoPromedioEspera,
                 MostrarGraficoCitasPorHora = dto.MostrarGraficoCitasPorHora,
+                MostrarCitasPorMedico = dto.MostrarCitasPorMedico,
                 MostrarUltimasAlertas = dto.MostrarUltimasAlertas,
                 Layout = dto.Layout
             };
@@ -149,7 +147,7 @@ public class DashboardService : IDashboardService
             Task<int>? pacientesEnEsperaTask = null;
             Task<double>? tiempoPromedioTask = null;
             Task<IEnumerable<DashboardGraficoDto>>? citasPorHoraTask = null;
-            Task<IEnumerable<DashboardGraficoDto>>? ultimasAlertasTask = null;
+            Task<IEnumerable<DashboardCitaPorMedicoDto>>? citasPorMedicoTask = null;
 
             if (dashboardData.MostrarPacientesDelDia)
                 pacientesDelDiaTask = _dashboardRepository.GetPacientesDelDiaAsync(clinicaId, fecha);
@@ -166,8 +164,8 @@ public class DashboardService : IDashboardService
             if (dashboardData.MostrarGraficoCitasPorHora)
                 citasPorHoraTask = _dashboardRepository.GetCitasPorHoraAsync(clinicaId, fecha);
 
-            if (dashboardData.MostrarUltimasAlertas)
-                ultimasAlertasTask = _dashboardRepository.GetUltimasAlertasAsync(clinicaId, fecha);
+            if (dashboardData.MostrarCitasPorMedico)
+                citasPorMedicoTask = _dashboardRepository.GetCitasPorMedicoAsync(clinicaId, fecha);
 
             // 3. Esperar todos los KPIs en paralelo
             if (pacientesDelDiaTask != null) dashboardData.PacientesDelDia = await pacientesDelDiaTask;
@@ -175,20 +173,7 @@ public class DashboardService : IDashboardService
             if (pacientesEnEsperaTask != null) dashboardData.PacientesEnEspera = await pacientesEnEsperaTask;
             if (tiempoPromedioTask != null) dashboardData.TiempoPromedioEspera = await tiempoPromedioTask;
             if (citasPorHoraTask != null) dashboardData.CitasPorHora = (await citasPorHoraTask).ToList();
-            if (ultimasAlertasTask != null)
-            {
-                var alertasData = await ultimasAlertasTask;
-                // DashboardGraficoDto: Etiqueta = nombre del paciente, Valor = minutos de espera
-                dashboardData.UltimasAlertas = alertasData.Select(a => new NotificacionResponseDto
-                {
-                    Id = Guid.Empty,
-                    Tipo = "alerta_espera",
-                    Titulo = "Paciente en espera excede tiempo",
-                    Mensaje = $"{a.Etiqueta} lleva {a.Valor} min de espera",
-                    Color = "warning",
-                    FechaCreacion = fecha
-                }).ToList();
-            }
+            if (citasPorMedicoTask != null) dashboardData.CitasPorMedico = (await citasPorMedicoTask).ToList();
 
             _logger.LogInformation("Dashboard data obtenido exitosamente para clínica {ClinicaId}", clinicaId);
             return ServiceResult<DashboardConfigResponseDto>.Success(dashboardData, "Datos del dashboard cargados exitosamente.");
@@ -213,6 +198,7 @@ public class DashboardService : IDashboardService
             MostrarPacientesEnEspera = entity.MostrarPacientesEnEspera,
             MostrarTiempoPromedioEspera = entity.MostrarTiempoPromedioEspera,
             MostrarGraficoCitasPorHora = entity.MostrarGraficoCitasPorHora,
+            MostrarCitasPorMedico = entity.MostrarCitasPorMedico,
             MostrarUltimasAlertas = entity.MostrarUltimasAlertas,
             Layout = entity.Layout
         };

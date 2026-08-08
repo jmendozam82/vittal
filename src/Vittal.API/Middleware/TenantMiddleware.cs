@@ -39,6 +39,7 @@ public class TenantMiddleware
                         new Claim("app_clinica_id", result.Data.ClinicaId.ToString()),
                         new Claim("app_es_admin", result.Data.EsAdmin.ToString()),
                         new Claim("app_es_super_admin", result.Data.EsSuperAdmin.ToString()),
+                        new Claim("app_es_doctor", result.Data.EsDoctor.ToString()),
                         new Claim("app_perfil_id", result.Data.PerfilId.ToString())
                     });
 

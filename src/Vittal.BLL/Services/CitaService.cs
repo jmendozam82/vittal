@@ -198,6 +198,25 @@ public class CitaService : ICitaService
                 return ServiceResult<CitaResponseDto>.Failure(pasadoError, ServiceErrorType.Validation);
             }
 
+            // ── Validar solapamiento del mismo doctor ──────────────────
+            // La clínica tiene varias salas con doctores que atienden a la vez:
+            // SÍ se permite que distintos doctores agenden en la misma hora,
+            // pero el MISMO doctor no puede tener dos citas que se solapen.
+            if (dto.DoctorId != Guid.Empty)
+            {
+                var solapa = await _repository.ExisteCitaSolapadaAsync(
+                    clinicaId, dto.DoctorId, dto.FechaCita, dto.HoraCita, dto.HoraFin);
+                if (solapa)
+                {
+                    _logger.LogWarning(
+                        "Cita rechazada por solapamiento: doctor {DoctorId} ya tiene cita el {Fecha} a las {Hora}",
+                        dto.DoctorId, dto.FechaCita, dto.HoraCita);
+                    return ServiceResult<CitaResponseDto>.Failure(
+                        "El doctor ya tiene una cita en ese horario. Seleccione otra hora.",
+                        ServiceErrorType.Validation);
+                }
+            }
+
             var entity = new Cita
             {
                 ClinicaId = clinicaId,
@@ -249,6 +268,15 @@ public class CitaService : ICitaService
                 return ServiceResult<CitaResponseDto>.Failure("Cita no encontrada.", ServiceErrorType.NotFound);
             }
 
+            // ── Validar integridad: una cita ya atendida no se puede modificar ──
+            // (consulta finalizada — la hoja de cita queda bloqueada, igual que la cita)
+            if (string.Equals(entity.Estado, "atendida", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Intento de editar cita atendida: id={Id}", id);
+                return ServiceResult<CitaResponseDto>.Failure(
+                    "La cita ya fue atendida y no se puede modificar.", ServiceErrorType.Validation);
+            }
+
             // ── Validar horario de atención de la clínica ──────────────
             var horarioError = await ValidarHorarioAtencionAsync(
                 dto.FechaCita, dto.HoraCita, dto.HoraFin, clinicaId);
@@ -256,6 +284,22 @@ public class CitaService : ICitaService
             {
                 _logger.LogWarning("Validación de horario rechazó actualización de cita: {Error}", horarioError);
                 return ServiceResult<CitaResponseDto>.Failure(horarioError, ServiceErrorType.Validation);
+            }
+
+            // ── Validar solapamiento del mismo doctor (excluyéndose a sí misma) ──
+            if (dto.DoctorId != Guid.Empty)
+            {
+                var solapa = await _repository.ExisteCitaSolapadaAsync(
+                    clinicaId, dto.DoctorId, dto.FechaCita, dto.HoraCita, dto.HoraFin, excluirId: id);
+                if (solapa)
+                {
+                    _logger.LogWarning(
+                        "Actualización rechazada por solapamiento: cita {Id}, doctor {DoctorId} el {Fecha} a las {Hora}",
+                        id, dto.DoctorId, dto.FechaCita, dto.HoraCita);
+                    return ServiceResult<CitaResponseDto>.Failure(
+                        "El doctor ya tiene una cita en ese horario. Seleccione otra hora.",
+                        ServiceErrorType.Validation);
+                }
             }
 
             entity.PacienteId = dto.PacienteId;
@@ -292,6 +336,20 @@ public class CitaService : ICitaService
     {
         try
         {
+            var entity = await _repository.GetByIdAsync(clinicaId, id);
+            if (entity == null)
+            {
+                return ServiceResult<bool>.Failure("No se encontró la cita.", ServiceErrorType.NotFound);
+            }
+
+            // ── Validar integridad: una cita ya atendida no se puede desactivar ──
+            if (string.Equals(entity.Estado, "atendida", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Intento de desactivar cita atendida: id={Id}", id);
+                return ServiceResult<bool>.Failure(
+                    "La cita ya fue atendida y no se puede desactivar.", ServiceErrorType.Validation);
+            }
+
             var result = await _repository.DeactivateAsync(clinicaId, id);
             return result
                 ? ServiceResult<bool>.Success(result, "Cita desactivada exitosamente.")

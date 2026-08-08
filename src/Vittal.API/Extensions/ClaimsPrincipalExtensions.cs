@@ -57,6 +57,16 @@ public static class ClaimsPrincipalExtensions
         return claim != null && bool.TryParse(claim.Value, out var isSuper) && isSuper;
     }
 
+    /// <summary>
+    /// Indica si el usuario autenticado tiene perfil de doctor (es_doctor = true).
+    /// Los doctores solo ven/operan sobre sus propios pacientes y citas.
+    /// </summary>
+    public static bool EsDoctor(this ClaimsPrincipal user)
+    {
+        var claim = user.FindFirst("app_es_doctor");
+        return claim != null && bool.TryParse(claim.Value, out var esDoctor) && esDoctor;
+    }
+
     public static Guid GetInternalPerfilId(this ClaimsPrincipal user)
     {
         var claim = user.FindFirst("app_perfil_id");
