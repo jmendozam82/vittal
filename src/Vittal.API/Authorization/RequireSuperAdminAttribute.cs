@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Vittal.API.Extensions;
+using Vittal.API.Models;
 
 namespace Vittal.API.Authorization;
 
@@ -20,13 +21,26 @@ public class RequireSuperAdminAttribute : Attribute, IAsyncAuthorizationFilter
 
         if (!user.Identity?.IsAuthenticated ?? true)
         {
-            context.Result = new UnauthorizedResult();
+            context.Result = new UnauthorizedObjectResult(new ApiResponse
+            {
+                Success = false,
+                Message = "Debe iniciar sesión para continuar."
+            });
             return;
         }
 
         if (!user.EsSuperAdmin())
         {
-            context.Result = new ForbidResult();
+            context.Result = new ObjectResult(new ApiResponse
+            {
+                Success = false,
+                Message =
+                    "Solo el Super Administrador puede realizar esta acción. " +
+                    "Si cree que debería tener acceso, contacte al administrador del sistema."
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
 
         await Task.CompletedTask;

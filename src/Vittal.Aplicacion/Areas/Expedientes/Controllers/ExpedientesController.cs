@@ -275,12 +275,6 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
             var (success, response, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/{id}");
@@ -531,23 +525,7 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             return Json(new { success = true, message = "Archivo eliminado exitosamente." });
         }
 
-        /// <summary>Obtiene pacientes para el dropdown — para fetch() desde Create/Edit</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonPacientes()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Pacientes");
-
-            if (!success)
-            {
-                _logger.LogWarning("JsonPacientes API call failed: {Error}", errorMessage);
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar pacientes" });
-            }
-
-            var data = ExtractDataArray(response);
-            return Json(new { success = true, data = data });
-        }
-
-        /// <summary>Obtiene doctores para el dropdown — para fetch() desde Create/Edit</summary>
+        /// <summary>Obtiene doctores para el dropdown — para fetch() desde Edit</summary>
         [HttpGet]
         public async Task<IActionResult> JsonDoctores()
         {
@@ -598,128 +576,7 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             return Json(new { success = true, data = ExtractDataObject(response) });
         }
 
-        /// <summary>Catálogo de diagnósticos — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonDiagnosticosCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Diagnosticos");
-            if (!success)
-            {
-                _logger.LogWarning("JsonDiagnosticosCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
-        /// <summary>Catálogo de medicamentos — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonMedicamentosCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Medicamentos");
-            if (!success)
-            {
-                _logger.LogWarning("JsonMedicamentosCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
-        /// <summary>Catálogo de tratamientos — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonTratamientosCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Tratamientos");
-            if (!success)
-            {
-                _logger.LogWarning("JsonTratamientosCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
-        /// <summary>Catálogo de cirugías — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonCirugiasCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Cirugias");
-            if (!success)
-            {
-                _logger.LogWarning("JsonCirugiasCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
-        /// <summary>Catálogo de exámenes — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonExamenesCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Examenes");
-            if (!success)
-            {
-                _logger.LogWarning("JsonExamenesCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
-        /// <summary>Busca pacientes por término — para autocomplete en Create</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonBuscarPacientes([FromQuery] string q)
-        {
-            if (string.IsNullOrWhiteSpace(q))
-            {
-                return Json(new { success = true, data = new List<object>() });
-            }
-
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/Pacientes/buscar?q={Uri.EscapeDataString(q)}");
-
-            if (!success)
-            {
-                _logger.LogWarning("JsonBuscarPacientes API call failed: {Error}", errorMessage);
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar pacientes" });
-            }
-
-            var data = ExtractDataArray(response);
-            return Json(new { success = true, data = data });
-        }
-
         // ===================== ACCIONES CRUD =====================
-
-        /// <summary>Crea un nuevo expediente — para fetch() desde la vista Create</summary>
-        [HttpPost]
-        public async Task<IActionResult> JsonCrear([FromBody] ExpedienteFormDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.PacienteId) || !Guid.TryParse(dto.PacienteId, out _))
-            {
-                return BadRequest(new { success = false, message = "Debe seleccionar un paciente." });
-            }
-            if (string.IsNullOrWhiteSpace(dto.DoctorId) || !Guid.TryParse(dto.DoctorId, out _))
-            {
-                return BadRequest(new { success = false, message = "Debe seleccionar un doctor." });
-            }
-
-            _logger.LogInformation("JsonCrear expediente: paciente={PacienteId}, doctor={DoctorId}",
-                dto.PacienteId, dto.DoctorId);
-
-            var payload = new
-            {
-                pacienteId = dto.PacienteId,
-                doctorId = dto.DoctorId,
-                notasGenerales = dto.NotasGenerales
-            };
-
-            var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Expedientes", payload);
-
-            if (!success)
-            {
-                _logger.LogWarning("JsonCrear expediente API call failed: {Error}", errorMessage);
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear expediente" });
-            }
-
-            var data = ExtractDataObject(response);
-            return Ok(new { success = true, data = data, message = "Expediente creado exitosamente" });
-        }
 
         /// <summary>Actualiza un expediente — para fetch() desde la vista Edit</summary>
         [HttpPut]
@@ -909,19 +766,6 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
             return Json(new { success = true, data = data });
         }
 
-        /// <summary>Catálogo de recomendaciones — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonRecomendacionesCatalogo()
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Recomendaciones");
-            if (!success)
-            {
-                _logger.LogWarning("JsonRecomendacionesCatalogo API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
-
         /// <summary>Agrega una recomendación a una hoja de cita — para fetch() desde Details</summary>
         [HttpPost]
         public async Task<IActionResult> JsonCrearRecomendacion([FromBody] RecomendacionFormDto dto)
@@ -955,19 +799,6 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
                 return Json(new { success = false, message = "No se pudo determinar la sala de la consulta." });
             }
             return Json(new { success = true, salaId = salaId, salaNombre = salaNombre });
-        }
-
-        /// <summary>Catálogo de tipos de signos vitales de una sala — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonTiposSignoVital(Guid salaId)
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/TipoSignoVital/sala/{salaId}");
-            if (!success)
-            {
-                _logger.LogWarning("JsonTiposSignoVital API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
         }
 
         /// <summary>Obtiene los signos vitales registrados en una hoja de cita (histórico de la consulta).</summary>
@@ -1039,19 +870,6 @@ namespace Vittal.Aplicacion.Areas.Expedientes.Controllers
         }
 
         // ===================== ANTECEDENTES DEL PACIENTE (HU-E05) =====================
-
-        /// <summary>Catálogo de tipos de antecedentes de una sala — proxy con JWT</summary>
-        [HttpGet]
-        public async Task<IActionResult> JsonTiposAntecedente(Guid salaId)
-        {
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>($"api/TipoAntecedente/sala/{salaId}");
-            if (!success)
-            {
-                _logger.LogWarning("JsonTiposAntecedente API call failed: {Error}", errorMessage);
-                return Json(new { success = false, data = Array.Empty<object>() });
-            }
-            return Json(new { success = true, data = ExtractDataArray(response) });
-        }
 
         /// <summary>Obtiene los antecedentes existentes de un paciente en una sala (para pre-cargar en el modal).</summary>
         [HttpGet]

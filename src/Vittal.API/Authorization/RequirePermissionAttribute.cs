@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using Vittal.API.Extensions;
+using Vittal.API.Models;
 using Vittal.BLL.Interfaces;
 using Vittal.Utility;
 
@@ -55,7 +56,11 @@ public class RequirePermissionAttribute : Attribute, IAsyncAuthorizationFilter
         // Usuario no autenticado
         if (!user.Identity?.IsAuthenticated ?? true)
         {
-            context.Result = new UnauthorizedResult();
+            context.Result = new UnauthorizedObjectResult(new ApiResponse
+            {
+                Success = false,
+                Message = "Debe iniciar sesión para continuar."
+            });
             return;
         }
 
@@ -65,7 +70,11 @@ public class RequirePermissionAttribute : Attribute, IAsyncAuthorizationFilter
 
         if (clinicaId == Guid.Empty || perfilId == Guid.Empty)
         {
-            context.Result = new ForbidResult();
+            context.Result = new UnauthorizedObjectResult(new ApiResponse
+            {
+                Success = false,
+                Message = "Su sesión no tiene un contexto de clínica válido. Vuelva a iniciar sesión."
+            });
             return;
         }
 
@@ -78,7 +87,16 @@ public class RequirePermissionAttribute : Attribute, IAsyncAuthorizationFilter
 
         if (!result.IsSuccess || !result.Data)
         {
-            context.Result = new ForbidResult();
+            context.Result = new ObjectResult(new ApiResponse
+            {
+                Success = false,
+                Message =
+                    "No tiene permiso para realizar esta acción. " +
+                    "Si cree que debería tener acceso, contacte a un administrador de la clínica."
+            })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
         }
     }
 }

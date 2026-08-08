@@ -532,18 +532,10 @@
         // El endpoint unificado api/expedientes/catalogos (hallazgo #26) exige solo
         // expedientes:Read y alimenta todos los selects de la hoja de cita en una llamada.
         expedientesCatalogos: '@Url.Action("JsonExpedientesCatalogos")',
-        diagnosticosCatalogo: '@Url.Action("JsonDiagnosticosCatalogo")',
-        medicamentosCatalogo: '@Url.Action("JsonMedicamentosCatalogo")',
-        tratamientosCatalogo: '@Url.Action("JsonTratamientosCatalogo")',
-        cirugiasCatalogo: '@Url.Action("JsonCirugiasCatalogo")',
-        examenesCatalogo: '@Url.Action("JsonExamenesCatalogo")',
-        recomendacionesCatalogo: '@Url.Action("JsonRecomendacionesCatalogo")',
         // Signos vitales y antecedentes (HU-E05 / HU-E06)
         salaDeHoja: '@Url.Action("JsonSalaDeHoja")',
-        tiposSignoVital: '@Url.Action("JsonTiposSignoVital")',
         signosVitalesHoja: '@Url.Action("JsonSignosVitalesHoja")',
         guardarSignosVitales: '@Url.Action("JsonGuardarSignosVitales")',
-        tiposAntecedente: '@Url.Action("JsonTiposAntecedente")',
         antecedentes: '@Url.Action("JsonAntecedentes")',
         guardarAntecedentes: '@Url.Action("JsonGuardarAntecedentes")',
         // Constancias
@@ -756,26 +748,6 @@
             poblarSelect('recRecomendacionId', data.recomendaciones, 'nombre', 'id');
         } catch (err) {
             console.error('Error al cargar catálogos unificados:', err);
-        }
-    }
-
-    // Mantenida por compatibilidad con flujos existentes que pasan una URL individual.
-    async function cargarCatalogo(url, selectId, labelField, valueField) {
-        try {
-            const res = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (!res.ok) {
-                console.warn(`Error al cargar catálogo ${url}: ${res.status}`);
-                return;
-            }
-            const json = await res.json();
-            // Puede venir como { success: true, data: [...] } o como array directo
-            let items = json.data || json;
-            if (!Array.isArray(items)) items = [];
-            poblarSelect(selectId, items, labelField, valueField);
-        } catch (err) {
-            console.error(`Error al cargar catálogo ${url}:`, err);
         }
     }
 
