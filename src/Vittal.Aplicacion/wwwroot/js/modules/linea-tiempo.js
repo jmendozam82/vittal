@@ -230,10 +230,10 @@
                 var esUltimo = idx === pasos.length - 1;
                 var stateClass = paso.estado === 'completado' ? 'done'
                     : (paso.estado === 'en_sala' || paso.estado === 'activo') ? 'active'
-                    : paso.estado === 'saltado' ? 'skipped' : 'pending';
+                        : paso.estado === 'saltado' ? 'skipped' : 'pending';
                 var icono = paso.estado === 'completado' ? 'bi-check-lg'
                     : (paso.estado === 'en_sala' || paso.estado === 'activo') ? 'bi-play-fill'
-                    : paso.estado === 'saltado' ? 'bi-forward' : 'bi-circle';
+                        : paso.estado === 'saltado' ? 'bi-forward' : 'bi-circle';
                 var horaLabel = paso.estado === 'completado'
                     ? (paso.horaSalida || paso.horaLlegada || '--:--')
                     : (paso.estado === 'en_sala' || paso.estado === 'activo') ? (paso.horaLlegada || '--:--') : '';
@@ -299,7 +299,7 @@
                 html += '<div class="card-header d-flex align-items-center justify-content-between p-2">';
                 html += '<div>';
                 html += '<i class="bi bi-person-circle text-primary me-2"></i>';
-                html += '<strong>Paciente #' + pacienteLabel + '</strong>';
+                html += '<strong>Paciente ' + pacienteLabel + '</strong>';
                 html += '<span class="badge bg-light text-dark ms-2">' + pProgreso + '%</span>';
                 html += '</div>';
                 html += '<a href="/LineaTiempo/LineaTiempo?citaId=' + encodeURIComponent(grupo.citaId) + '" class="btn btn-outline-primary btn-sm">';
