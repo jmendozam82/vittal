@@ -1,6 +1,9 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
@@ -9,17 +12,20 @@ using Vittal.Entity;
 namespace Vittal.BLL.Services;
 
 /// <summary>
-/// Servicio de envío de correos electrónicos using System.Net.Mail.
-/// Configuración SMTP en appsettings.json → sección "Smtp".
+/// Servicio de envío de correos electrónicos.
+/// En producción usa Resend (API REST, configurable con RESEND_API_KEY);
+/// en desarrollo local cae a SMTP (System.Net.Mail) con configuración "Smtp".
 /// </summary>
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<EmailService> logger)
     {
         _configuration = configuration;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -49,6 +55,16 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Producción: si RESEND_API_KEY está configurado, enviamos vía Resend
+            // (email transaccional confiable, sin depender de puertos SMTP que Render
+            //  o el firewall corporativo pueden bloquear). En desarrollo local, sin la
+            //  variable, se usa SMTP (Gmail) como fallback.
+            var resendApiKey = GetConfig("Resend:ApiKey", "RESEND_API_KEY");
+            if (!string.IsNullOrWhiteSpace(resendApiKey))
+            {
+                return await SendViaResendAsync(resendApiKey, toEmail, subject, htmlBody);
+            }
+
             // Lee de variables de entorno primero (producción/Render),
             // luego de appsettings (desarrollo local)
             var host = GetConfig("Smtp:Host", "SMTP_HOST") ?? "smtp.gmail.com";
@@ -115,6 +131,66 @@ public class EmailService : IEmailService
             _logger.LogError(ex, "Error inesperado al enviar correo a {ToEmail}", toEmail);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Envía el correo vía Resend (https://resend.com) usando su API REST.
+    /// Requiere RESEND_API_KEY. Incluye reintento ante fallos transitorios de red.
+    /// </summary>
+    private async Task<bool> SendViaResendAsync(string apiKey, string toEmail, string subject, string htmlBody)
+    {
+        // Opción A: sin RESEND_FROM_EMAIL, Resend usa su dominio compartido
+        // onboarding@resend.dev (solo envía al correo de la cuenta dueña de la key).
+        // Opción B: con dominio verificado, configurar RESEND_FROM_EMAIL=notificaciones@vittal.com
+        var fromEmail = GetConfig("Resend:FromEmail", "RESEND_FROM_EMAIL") ?? "onboarding@resend.dev";
+        var fromName = GetConfig("Resend:FromName", "RESEND_FROM_NAME") ?? "Vittal";
+
+        using var httpClient = _httpClientFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+        var payload = new
+        {
+            from = $"{fromName} <{fromEmail}>",
+            to = new[] { toEmail },
+            subject,
+            html = htmlBody
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                using var response = await httpClient.PostAsync("https://api.resend.com/emails", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation(
+                        "Correo enviado vía Resend a {ToEmail} — Asunto: {Subject} (HTTP {Status})",
+                        toEmail, subject, (int)response.StatusCode);
+                    return true;
+                }
+
+                _logger.LogError(
+                    "Resend respondió {Status} al enviar a {ToEmail}: {Body}",
+                    (int)response.StatusCode, toEmail, responseBody);
+                return false;
+            }
+            catch (HttpRequestException ex) when (attempt < maxAttempts)
+            {
+                _logger.LogWarning(
+                    "Fallo transitorio Resend (intento {Attempt}/{Max}) a {ToEmail}: {Message}",
+                    attempt, maxAttempts, toEmail, ex.Message);
+                await Task.Delay(TimeSpan.FromSeconds(2 * attempt));
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
