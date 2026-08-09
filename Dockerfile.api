@@ -20,4 +20,7 @@ WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/out .
 ENV ASPNETCORE_URLS=http://+:8080
+# Desactiva file watchers de configuración (inotify instances) para evitar el
+# crash "user limit (128) on the number of inotify instances" en hosts compartidos
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
 ENTRYPOINT ["dotnet", "Vittal.API.dll"]

@@ -18,6 +18,16 @@ using Vittal.API.Middleware;
 using Vittal.API.Services;
 using Vittal.IOC;
 
+// ── Fix crash de arranque en Render free tier (host compartido) ─────────────
+// WebApplication.CreateBuilder() registra appsettings.json con reloadOnChange:true,
+// lo que crea FileSystemWatchers (inotify instances). En hosts compartidos el
+// límite de 128 inotify instances se agota y el proceso muere con:
+//   System.IO.IOException: The configured user limit (128) on the number of
+//   inotify instances has been reached
+// La clave hostBuilder:reloadConfigOnChange=false desactiva los watchers.
+// Debe estar ANTES de CreateBuilder porque el host config se lee con prefijo DOTNET_.
+Environment.SetEnvironmentVariable("DOTNET_hostBuilder__reloadConfigOnChange", "false");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Kestrel: HTTPS para WSS (WebSocket Secure) ─────────────────────
