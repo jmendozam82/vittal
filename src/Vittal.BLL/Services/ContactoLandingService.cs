@@ -48,22 +48,25 @@ public class ContactoLandingService : IContactoLandingService
                 "Nuevo contacto de landing creado: {Email} (Rol: {Rol}, Id: {Id})",
                 contacto.Email, contacto.Rol, id);
 
-            // Enviar correo de notificación al admin (await: si falla se registra
-            // en logs con reintento — evita cold-start con fire-and-forget Task.Run
-            // que en Render corre antes de que la red del contenedor esté lista)
-            try
+            // Enviar correo de notificación al admin en segundo plano (no bloquear
+            // el POST: la confirmación del contacto debe ser inmediata). El email
+            // tiene reintentos internos en EmailService para el cold start.
+            _ = Task.Run(async () =>
             {
-                contacto.Id = id;
-                var emailSent = await _emailService.SendLandingContactNotificationAsync(contacto);
-                if (emailSent)
-                    _logger.LogInformation("Notificación de landing enviada al admin para {Email}", contacto.Email);
-                else
-                    _logger.LogWarning("No se pudo enviar notificación de landing al admin para {Email}", contacto.Email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al enviar notificación de landing al admin para {Email}", contacto.Email);
-            }
+                try
+                {
+                    contacto.Id = id;
+                    var emailSent = await _emailService.SendLandingContactNotificationAsync(contacto);
+                    if (emailSent)
+                        _logger.LogInformation("Notificación de landing enviada al admin para {Email}", contacto.Email);
+                    else
+                        _logger.LogWarning("No se pudo enviar notificación de landing al admin para {Email}", contacto.Email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al enviar notificación de landing al admin para {Email}", contacto.Email);
+                }
+            });
 
             return ServiceResult<ContactoLandingResponseDto>.Success(
                 new ContactoLandingResponseDto

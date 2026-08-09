@@ -70,8 +70,9 @@ public class EmailService : IEmailService
             message.IsBodyHtml = true;
 
             // Reintento ante fallos transitorios de red (cold-start del contenedor
-            // en Render: SocketException 101 "Network is unreachable")
-            var maxAttempts = 3;
+            // en Render: SocketException 101 "Network is unreachable"). El backoff
+            // creciente permite esperar que la red del contenedor termine de inicializarse.
+            var maxAttempts = 6;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try
@@ -97,7 +98,7 @@ public class EmailService : IEmailService
                     _logger.LogWarning(
                         "Fallo SMTP transitorio (intento {Attempt}/{Max}) a {ToEmail}: {Message}",
                         attempt, maxAttempts, toEmail, ex.Message);
-                    await Task.Delay(TimeSpan.FromSeconds(1 * attempt));
+                    await Task.Delay(TimeSpan.FromSeconds(5 * attempt));
                 }
             }
 
