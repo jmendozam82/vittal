@@ -9,7 +9,13 @@ namespace Vittal.DAL.Interfaces;
 public interface ICitaRepository : IPaginatedRepository<Cita>
 {
     /// <summary>Obtiene todas las citas activas de una clínica.</summary>
-    Task<IEnumerable<Cita>> GetAllAsync(Guid clinicaId);
+    /// <param name="clinicaId">Clínica (tenant).</param>
+    /// <param name="doctorId">
+    /// Si se indica (consulta de doctor), filtra por el doctor de la cita (c.doctor_id)
+    /// de modo que el doctor solo vea sus propias citas. Si es null (recepción/admin),
+    /// se ven todas las citas de la clínica.
+    /// </param>
+    Task<IEnumerable<Cita>> GetAllAsync(Guid clinicaId, Guid? doctorId = null);
 
     /// <summary>Obtiene una cita por ID dentro de una clínica.</summary>
     Task<Cita?> GetByIdAsync(Guid clinicaId, Guid id);

@@ -110,6 +110,7 @@ public class ColaEsperaController : Controller
 
         var cola = new List<object>();
         var atendidasHoy = 0;
+        var canceladasHoy = 0;
 
         // Filtrar por doctor si se especifica.
         // Regla 6: si el usuario autenticado es doctor, se fuerza SOLO su propia cola
@@ -146,6 +147,13 @@ public class ColaEsperaController : Controller
                 continue; // No agregar a la cola activa
             }
 
+            // Contar canceladas de hoy para estadísticas (tarjeta "Canceladas")
+            if (estadoStr == "cancelada")
+            {
+                canceladasHoy++;
+                continue; // No agregar a la cola activa
+            }
+
             // Filtrar por estado (solo estados de cola activa)
             if (estadoStr == null || !estadosCola.Contains(estadoStr)) continue;
 
@@ -172,7 +180,7 @@ public class ColaEsperaController : Controller
             return TimeSpan.MaxValue;
         }).ToList();
 
-        return Json(new { success = true, data = cola, total = cola.Count, stats = new { atendidasHoy } });
+        return Json(new { success = true, data = cola, total = cola.Count, stats = new { atendidasHoy, canceladasHoy } });
     }
 
     /// <summary>

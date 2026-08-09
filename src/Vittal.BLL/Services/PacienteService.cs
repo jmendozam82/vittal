@@ -409,6 +409,56 @@ public class PacienteService : IPacienteService
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // 9. CambiarDoctorAsync — Reasigna el médico tratante del paciente (HU21)
+    // ────────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Reasigna el médico tratante del paciente (pacientes.doctor_id).
+    /// Se invoca desde la Agenda de citas cuando el doctor de la cita difiere
+    /// del doctor asignado al paciente y el usuario confirma la reasignación.
+    /// </summary>
+    /// <param name="pacienteId">Identificador del paciente.</param>
+    /// <param name="doctorId">Nuevo doctor a asignar.</param>
+    /// <param name="clinicaId">Identificador de la clínica (aislamiento de tenant).</param>
+    /// <param name="modificadoPor">Identificador del usuario que ejecuta el cambio (auditoría).</param>
+    public async Task<ServiceResult<bool>> CambiarDoctorAsync(
+        Guid pacienteId, Guid doctorId, Guid clinicaId, Guid modificadoPor)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Reasignando médico tratante del paciente {PacienteId} al doctor {DoctorId} en clínica {ClinicaId} (usuario {UsuarioId})",
+                pacienteId, doctorId, clinicaId, modificadoPor);
+
+            var existing = await _repo.GetByIdAsync(pacienteId, clinicaId);
+            if (existing == null)
+            {
+                return ServiceResult<bool>.Failure(
+                    "Paciente no encontrado", ServiceErrorType.NotFound);
+            }
+
+            if (existing.DoctorId == doctorId)
+            {
+                return ServiceResult<bool>.Success(true, "El paciente ya tiene asignado este médico.");
+            }
+
+            var changed = await _repo.CambiarDoctorAsync(pacienteId, doctorId, clinicaId);
+            if (!changed)
+            {
+                return ServiceResult<bool>.Failure(
+                    "No se pudo cambiar el médico asignado del paciente.", ServiceErrorType.InternalError);
+            }
+
+            return ServiceResult<bool>.Success(true, "Médico asignado del paciente actualizado exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cambiar médico asignado del paciente {PacienteId} en clínica {ClinicaId}",
+                pacienteId, clinicaId);
+            return ServiceResult<bool>.Failure($"Error interno: {ex.Message}");
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Mapping: Entity → DTO
     // ────────────────────────────────────────────────────────────────────────
     private static PacienteResponseDto MapPacienteToDto(Paciente p)

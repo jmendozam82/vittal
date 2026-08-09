@@ -37,7 +37,8 @@ public class CitasController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetAllAsync(clinicaId);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetAllAsync(clinicaId, doctorId);
         return result.ToActionResult();
     }
 
@@ -88,7 +89,8 @@ public class CitasController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] CitaRequestDto dto)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.UpdateAsync(id, dto, clinicaId);
+        var usuarioId = User.GetInternalUserId();
+        var result = await _service.UpdateAsync(id, dto, clinicaId, usuarioId);
         return result.ToActionResult();
     }
 

@@ -228,8 +228,9 @@ window.vittalColaEspera = (function() {
         setText('statAgendadas', agendadas);
         setText('statEnEspera', enEspera);
         setText('statEnAtencion', enAtencion);
-        // El conteo de atendidas viene del servidor (filtro propio en JsonCola)
+        // Los conteos de atendidas y canceladas vienen del servidor (filtro propio en JsonCola)
         setText('statAtendidas', stats ? stats.atendidasHoy : 0);
+        setText('statCanceladas', stats ? stats.canceladasHoy : 0);
     }
 
     function updateTotalCount(count) {

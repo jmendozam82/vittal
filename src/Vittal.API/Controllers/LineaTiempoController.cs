@@ -60,6 +60,23 @@ public class LineaTiempoController : ControllerBase
         var clinicaId = User.GetClinicaId();
         // Fecha LOCAL (DateTime.Today) no UTC — mismo patrón de zona horaria que Dashboard
         var fechaConsulta = fecha?.Date ?? DateTime.Today;
+
+        // ── Perfil doctor: forzar su propio doctorId ────────────────────
+        // Defensa: un doctor solo puede ver la línea de tiempo de sus propios
+        // pacientes. Se ignora el parámetro doctorId enviado por el cliente.
+        // (Recepción y administración pueden filtrar por cualquier doctor.)
+        if (User.EsDoctor())
+        {
+            var miDoctorId = User.GetInternalUserId();
+            if (doctorId != miDoctorId)
+            {
+                _logger.LogWarning(
+                    "Doctor {UsuarioId} intentó consultar el timeline del doctor {DoctorId}; se fuerza su propio doctorId",
+                    miDoctorId, doctorId);
+            }
+            doctorId = miDoctorId;
+        }
+
         var result = await _service.GetTimelineDelDiaAsync(clinicaId, doctorId, fechaConsulta);
         return result.ToActionResult();
     }

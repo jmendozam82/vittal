@@ -43,4 +43,7 @@ public interface IPacienteRepository : IPaginatedRepository<Paciente>
 
     /// <summary>Busca pacientes por término (nombre, documento, email, celular) con ILIKE. Límite 20 resultados.</summary>
     Task<IEnumerable<Paciente>> SearchAsync(Guid clinicaId, string term, int limit = 20);
+
+    /// <summary>Actualiza únicamente el doctor asignado del paciente en el retail de la clínica.</summary>
+    Task<bool> CambiarDoctorAsync(Guid id, Guid doctorId, Guid clinicaId);
 }

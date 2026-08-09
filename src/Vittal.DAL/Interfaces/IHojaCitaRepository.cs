@@ -9,13 +9,32 @@ namespace Vittal.DAL.Interfaces;
 public interface IHojaCitaRepository : IPaginatedRepository<HojaCita>
 {
     /// <summary>Obtiene todas las hojas de cita activas de una clínica.</summary>
-    Task<IEnumerable<HojaCita>> GetAllAsync(Guid clinicaId);
+    /// <param name="clinicaId">Clínica (tenant).</param>
+    /// <param name="doctorId">
+    /// Si se indica (consulta de doctor), filtra por el doctor asignado al EXPEDIENTE (e.doctor_id),
+    /// de modo que el doctor dueño ve todo el historial del paciente aunque la hoja la haya creado otro médico.
+    /// Si es null (recepción/admin), no se filtra y se ven todas.
+    /// </param>
+    Task<IEnumerable<HojaCita>> GetAllAsync(Guid clinicaId, Guid? doctorId = null);
 
     /// <summary>Obtiene una hoja de cita por ID dentro de una clínica.</summary>
-    Task<HojaCita?> GetByIdAsync(Guid clinicaId, Guid id);
+    /// <param name="clinicaId">Clínica (tenant).</param>
+    /// <param name="id">Identificador de la hoja de cita.</param>
+    /// <param name="doctorId">
+    /// Si se indica (consulta de doctor), solo devuelve la hoja cuando el doctor es el asignado al expediente.
+    /// Si es null (recepción/admin), se valida solo clínica.
+    /// </param>
+    Task<HojaCita?> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null);
 
     /// <summary>Obtiene todas las hojas de cita activas de un expediente.</summary>
-    Task<IEnumerable<HojaCita>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId);
+    /// <param name="clinicaId">Clínica (tenant).</param>
+    /// <param name="expedienteId">Identificador del expediente.</param>
+    /// <param name="doctorId">
+    /// Si se indica (consulta de doctor), filtra por el doctor asignado al expediente (e.doctor_id),
+    /// de modo que el doctor dueño ve todo el historial del paciente aunque la hoja la haya creado otro médico.
+    /// Si es null (recepción/admin), no se filtra.
+    /// </param>
+    Task<IEnumerable<HojaCita>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId, Guid? doctorId = null);
 
     /// <summary>Crea una nueva hoja de cita y retorna su ID.</summary>
     Task<Guid> CreateAsync(HojaCita entity);

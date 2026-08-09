@@ -443,4 +443,41 @@ public class PacienteRepository : IPacienteRepository
             throw;
         }
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 10. CambiarDoctorAsync — Reasigna el doctor del paciente
+    // ────────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Actualiza únicamente el doctor asignado del paciente, validando que pertenece a la clínica.
+    /// No modifica el estado activo del paciente. Retorna true si se actualizó una fila.
+    /// </summary>
+    /// <param name="id">Identificador del paciente.</param>
+    /// <param name="doctorId">Nuevo identificador del doctor a asignar.</param>
+    /// <param name="clinicaId">Identificador de la clínica (aislamiento de tenant).</param>
+    /// <returns>true si el paciente fue actualizado; false si no existe o no pertenece a la clínica.</returns>
+    public async Task<bool> CambiarDoctorAsync(Guid id, Guid doctorId, Guid clinicaId)
+    {
+        const string sql = @"
+            UPDATE public.pacientes
+            SET doctor_id = @DoctorId,
+                fecha_modificacion = NOW()
+            WHERE id = @Id AND clinica_id = @ClinicaId;";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(sql, new
+            {
+                Id = id,
+                DoctorId = doctorId,
+                ClinicaId = clinicaId
+            });
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cambiar doctor del paciente {Id} en clínica {ClinicaId}", id, clinicaId);
+            throw;
+        }
+    }
 }

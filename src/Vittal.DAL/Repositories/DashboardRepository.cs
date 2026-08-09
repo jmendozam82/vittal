@@ -104,6 +104,58 @@ public class DashboardRepository : IDashboardRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // 4a. GetPacientesEnAtencionAsync — Pacientes actualmente en atención
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<int> GetPacientesEnAtencionAsync(Guid clinicaId)
+    {
+        const string sql = @"
+            SELECT COUNT(*)
+            FROM public.citas
+            WHERE clinica_id = @ClinicaId
+              AND estado = 'en_atencion'
+              AND activo = true";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(sql,
+                new { ClinicaId = clinicaId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener pacientes en atención de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // 3b. GetCitasCanceladasAsync — Citas canceladas de una fecha
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<int> GetCitasCanceladasAsync(Guid clinicaId, DateTime fecha)
+    {
+        const string sql = @"
+            SELECT COUNT(*) FROM public.citas
+            WHERE clinica_id = @ClinicaId
+              AND fecha_cita = @Fecha
+              AND estado = 'cancelada'
+              AND activo = true";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(sql,
+                new { ClinicaId = clinicaId, Fecha = fecha.Date });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener citas canceladas de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // 4. GetTiempoPromedioEsperaAsync — Tiempo promedio en minutos
     // ────────────────────────────────────────────────────────────────────
     public async Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha)
@@ -163,15 +215,20 @@ public class DashboardRepository : IDashboardRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // 5. GetCitasPorHoraAsync — Distribución de citas por hora del día
+    // 6. GetCitasPorHoraAsync — Distribución de citas por hora del día,
+    //    segmentada por estado para el gráfico de barras apiladas.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<DashboardGraficoDto>> GetCitasPorHoraAsync(
+    public async Task<IEnumerable<DashboardCitaPorHoraDto>> GetCitasPorHoraAsync(
         Guid clinicaId, DateTime fecha)
     {
         const string sql = @"
             SELECT
                 TO_CHAR(c.hora_cita, 'HH24:00') AS Etiqueta,
-                COUNT(*)::int AS Valor
+                COUNT(*) FILTER (WHERE c.estado = 'agendada')::int    AS Agendadas,
+                COUNT(*) FILTER (WHERE c.estado = 'en_espera')::int   AS EnEspera,
+                COUNT(*) FILTER (WHERE c.estado = 'en_atencion')::int AS EnAtencion,
+                COUNT(*) FILTER (WHERE c.estado = 'atendida')::int    AS Atendidas,
+                COUNT(*) FILTER (WHERE c.estado = 'cancelada')::int   AS Canceladas
             FROM public.citas c
             WHERE c.clinica_id = @ClinicaId
               AND c.fecha_cita = @Fecha
@@ -182,7 +239,7 @@ public class DashboardRepository : IDashboardRepository
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
-            return await connection.QueryAsync<DashboardGraficoDto>(sql,
+            return await connection.QueryAsync<DashboardCitaPorHoraDto>(sql,
                 new { ClinicaId = clinicaId, Fecha = fecha.Date });
         }
         catch (Exception ex)

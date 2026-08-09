@@ -21,11 +21,17 @@ public interface IDashboardRepository
     /// <summary>Obtiene la cantidad de pacientes actualmente en espera.</summary>
     Task<int> GetPacientesEnEsperaAsync(Guid clinicaId);
 
+    /// <summary>Obtiene la cantidad de pacientes actualmente en atención.</summary>
+    Task<int> GetPacientesEnAtencionAsync(Guid clinicaId);
+
+    /// <summary>Obtiene la cantidad de citas canceladas (estado = cancelada) en una fecha.</summary>
+    Task<int> GetCitasCanceladasAsync(Guid clinicaId, DateTime fecha);
+
     /// <summary>Obtiene el tiempo promedio de espera en minutos para una fecha específica.</summary>
     Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha);
 
-    /// <summary>Obtiene la distribución de citas por hora para el día.</summary>
-    Task<IEnumerable<DashboardGraficoDto>> GetCitasPorHoraAsync(Guid clinicaId, DateTime fecha);
+    /// <summary>Obtiene la distribución de citas por hora para el día, segmentada por estado para el gráfico apilado.</summary>
+    Task<IEnumerable<DashboardCitaPorHoraDto>> GetCitasPorHoraAsync(Guid clinicaId, DateTime fecha);
 
     /// <summary>Obtiene las citas por médico segmentadas por estado (atendidas / pendientes) para el gráfico apilado.</summary>
     Task<IEnumerable<DashboardCitaPorMedicoDto>> GetCitasPorMedicoAsync(Guid clinicaId, DateTime fecha);

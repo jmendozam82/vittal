@@ -38,16 +38,22 @@
 
 <!-- ── KPIs ────────────────────────────────────────────────────── -->
 <div class="row g-3 mb-4" id="kpiContainer">
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md-2">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
 </div>
@@ -65,6 +71,7 @@
             <div class="chart-container">
                 <canvas id="chartCitasPorHora"></canvas>
             </div>
+            <div class="chart-legend" id="legendCitasPorHora"></div>
         </div>
     </div>
     <div class="col-md-6">
@@ -78,6 +85,7 @@
             <div class="chart-container">
                 <canvas id="chartCitasPorMedico"></canvas>
             </div>
+            <div class="chart-legend" id="legendCitasPorMedico"></div>
         </div>
     </div>
 </div>
@@ -121,6 +129,13 @@
             };
 
             document.addEventListener('DOMContentLoaded', function() {
+                Chart.defaults.font.family = "'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif";
+                Chart.defaults.font.size = 12;
+                Chart.defaults.font.weight = '500';
+                Chart.defaults.font.color = '#374151';
+                // Textos nítidos en pantallas HiDPI: respetar el DPR real del dispositivo
+                Chart.defaults.devicePixelRatio = window.devicePixelRatio || 1;
+
                 DOM.filtroFecha.value = hoyStr();
                 fechaFiltro = '';
 
@@ -288,6 +303,24 @@
                         trendText: data.pacientesEnEspera > 5 ? 'Congestión' : 'Fluido'
                     },
                     {
+                        label: 'En Atención',
+                        value: data.pacientesEnAtencion ?? 0,
+                        icon: 'bi-activity',
+                        color: 'primary',
+                        bg: '#EDE9FE',
+                        trend: data.pacientesEnAtencion > 0 ? 'up' : 'stable',
+                        trendText: data.pacientesEnAtencion > 0 ? 'En consulta' : 'Sin consultas'
+                    },
+                    {
+                        label: 'Canceladas',
+                        value: data.citasCanceladas ?? 0,
+                        icon: 'bi-x-circle',
+                        color: 'secondary',
+                        bg: '#F3F4F6',
+                        trend: (data.citasCanceladas || 0) > 0 ? 'up' : 'stable',
+                        trendText: (data.citasCanceladas || 0) > 0 ? 'Del día' : 'Sin cancelaciones'
+                    },
+                    {
                         label: 'Tiempo Promedio',
                         value: Math.round(data.tiempoPromedioEspera ?? 0) + ' min',
                         icon: 'bi-speedometer2',
@@ -306,7 +339,7 @@
                     const trendClass = kpi.trend === 'up' ? 'up' : kpi.trend === 'down' ? 'down' : 'stable';
                     const trendIcon = kpi.trend === 'up' ? 'bi-arrow-up' : kpi.trend === 'down' ? 'bi-arrow-down' : 'bi-dash';
                     return `
-                        <div class="col-6 col-md-3">
+                        <div class="col-6 col-md-2">
                             <div class="kpi-card">
                                 <div class="d-flex align-items-center gap-3 mb-2">
                                     <div class="kpi-icon" style="background:${kpi.bg};color:var(--vittal-${kpi.color})">
@@ -326,6 +359,23 @@
                 }).join('');
             }
 
+            // Renderiza una leyenda en HTML real (texto del navegador, siempre nítido)
+            // evitando que Chart.js dibuje el texto rasterizado dentro del canvas.
+            function renderizarLeyenda(containerId, items) {
+                var cont = document.getElementById(containerId);
+                if (!cont) return;
+                if (!items || items.length === 0) {
+                    cont.innerHTML = '';
+                    return;
+                }
+                cont.innerHTML = items.map(function(it) {
+                    return '<span class="legend-item">' +
+                        '<span class="legend-swatch" style="background:' + it.color + '"></span>' +
+                        escapeHtml(it.label) +
+                        '</span>';
+                }).join('');
+            }
+
             function renderizarGrafico(datos) {
                 var chartWrapper = document.querySelector('.chart-container');
                 if (!chartWrapper) return;
@@ -335,6 +385,7 @@
                     chartWrapper.innerHTML =
                         '<div class="empty-state"><i class="bi bi-bar-chart"></i><p class="small">Sin datos de citas para hoy</p></div>';
                     if (DOM.totalCitasDia) DOM.totalCitasDia.textContent = '0 citas';
+                    renderizarLeyenda('legendCitasPorHora', []);
                     return;
                 }
 
@@ -343,8 +394,22 @@
                     chartWrapper.innerHTML = '<canvas id="chartCitasPorHora"></canvas>';
                 }
 
+                // Leyenda en HTML real (texto nítido del navegador) de los segmentos de estado
+                renderizarLeyenda('legendCitasPorHora', [
+                    { label: 'Agendadas', color: '#94A3B8' },
+                    { label: 'En Espera', color: '#0EA5E9' },
+                    { label: 'En Atención', color: '#6366F1' },
+                    { label: 'Atendidas', color: '#059669' },
+                    { label: 'Canceladas', color: '#DC2626' }
+                ]);
+
+                // Total del día = suma de todos los segmentos por hora
+                const total = datos.reduce(function(sum, d) {
+                    return sum +
+                        (d.agendadas || 0) + (d.enEspera || 0) + (d.enAtencion || 0) +
+                        (d.atendidas || 0) + (d.canceladas || 0);
+                }, 0);
                 if (DOM.totalCitasDia) {
-                    const total = datos.reduce(function(sum, d) { return sum + (d.valor || 0); }, 0);
                     DOM.totalCitasDia.textContent = total + ' cita' + (total !== 1 ? 's' : '');
                 }
 
@@ -356,36 +421,73 @@
                     chartInstance.destroy();
                 }
 
+                // Barras apiladas por hora: 1 segmento por estado de cita
                 chartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: datos.map(function(d) { return d.etiqueta || ''; }),
-                        datasets: [{
-                            label: 'Citas',
-                            data: datos.map(function(d) { return d.valor || 0; }),
-                            backgroundColor: datos.map(function(_, i) {
-                                var palette = ['#4F46E5','#7C3AED','#2563EB','#0891B2','#059669','#D97706','#DC2626','#DB2777','#7C3AED','#4F46E5','#2563EB','#0891B2'];
-                                return palette[i % palette.length];
-                            }),
-                            borderRadius: 6,
-                            borderSkipped: false
-                        }]
+                        datasets: [
+                            {
+                                label: 'Agendadas',
+                                data: datos.map(function(d) { return d.agendadas || 0; }),
+                                backgroundColor: '#94A3B8',
+                                borderRadius: 3,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'En Espera',
+                                data: datos.map(function(d) { return d.enEspera || 0; }),
+                                backgroundColor: '#0EA5E9',
+                                borderRadius: 3,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'En Atención',
+                                data: datos.map(function(d) { return d.enAtencion || 0; }),
+                                backgroundColor: '#6366F1',
+                                borderRadius: 3,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'Atendidas',
+                                data: datos.map(function(d) { return d.atendidas || 0; }),
+                                backgroundColor: '#059669',
+                                borderRadius: 3,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'Canceladas',
+                                data: datos.map(function(d) { return d.canceladas || 0; }),
+                                backgroundColor: '#DC2626',
+                                borderRadius: 3,
+                                borderSkipped: false
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false }
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctxItem) {
+                                        return ctxItem.dataset.label + ': ' + ctxItem.parsed.y + ' cita(s)';
+                                    }
+                                }
+                            }
                         },
                         scales: {
+                            x: {
+                                stacked: true,
+                                ticks: { font: { size: 10 } },
+                                grid: { display: false }
+                            },
                             y: {
+                                stacked: true,
                                 beginAtZero: true,
                                 ticks: { stepSize: 1, font: { size: 11 } },
                                 grid: { color: 'rgba(0,0,0,0.05)' }
-                            },
-                            x: {
-                                ticks: { font: { size: 10 } },
-                                grid: { display: false }
                             }
                         }
                     }
@@ -396,12 +498,19 @@
                 if (!datos || datos.length === 0) {
                     if (chartMedicoInstance) { chartMedicoInstance.destroy(); chartMedicoInstance = null; }
                     if (DOM.totalCitasMedico) DOM.totalCitasMedico.textContent = '0 médicos';
+                    renderizarLeyenda('legendCitasPorMedico', []);
                     return;
                 }
 
                 if (DOM.totalCitasMedico) {
                     DOM.totalCitasMedico.textContent = datos.length + ' médico' + (datos.length !== 1 ? 's' : '');
                 }
+
+                // Leyenda en HTML real (texto nítido del navegador) de los segmentos por estado
+                renderizarLeyenda('legendCitasPorMedico', [
+                    { label: 'Atendidas', color: '#059669' },
+                    { label: 'Pendientes', color: '#F59E0B' }
+                ]);
 
                 var canvas = document.getElementById('chartCitasPorMedico');
                 if (!canvas) return;
@@ -439,10 +548,7 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { usePointStyle: true, font: { size: 11 } }
-                            },
+                            legend: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: function(ctxItem) {
@@ -472,32 +578,46 @@
                 const pacientes = data.pacientesDelDia ?? 0;
                 const pendientes = data.citasPendientes ?? 0;
                 const espera = data.pacientesEnEspera ?? 0;
+                const atencion = data.pacientesEnAtencion ?? 0;
+                const canceladas = data.citasCanceladas ?? 0;
                 const tiempo = Math.round(data.tiempoPromedioEspera ?? 0);
 
                 DOM.resumenContainer.innerHTML = `
-                    <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <div class="border-start border-4 border-primary ps-3">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-primary ps-2">
                                 <div class="text-muted small text-uppercase">Pacientes Hoy</div>
-                                <div class="fs-3 fw-bold">${pacientes}</div>
+                                <div class="fs-4 fw-bold">${pacientes}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border-start border-4 border-warning ps-3">
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-warning ps-2">
                                 <div class="text-muted small text-uppercase">Pendientes</div>
-                                <div class="fs-3 fw-bold">${pendientes}</div>
+                                <div class="fs-4 fw-bold">${pendientes}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border-start border-4 border-info ps-3">
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-info ps-2">
                                 <div class="text-muted small text-uppercase">En Espera</div>
-                                <div class="fs-3 fw-bold">${espera}</div>
+                                <div class="fs-4 fw-bold">${espera}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="border-start border-4 border-success ps-3">
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-primary ps-2">
+                                <div class="text-muted small text-uppercase">En Atención</div>
+                                <div class="fs-4 fw-bold">${atencion}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-secondary ps-2">
+                                <div class="text-muted small text-uppercase">Canceladas</div>
+                                <div class="fs-4 fw-bold">${canceladas}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="border-start border-4 border-success ps-2">
                                 <div class="text-muted small text-uppercase">Tiempo Prom.</div>
-                                <div class="fs-3 fw-bold">${tiempo} <small class="fs-6 text-muted fw-normal">min</small></div>
+                                <div class="fs-4 fw-bold">${tiempo} <small class="fs-6 text-muted fw-normal">min</small></div>
                             </div>
                         </div>
                     </div>`;

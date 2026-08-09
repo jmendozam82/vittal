@@ -116,7 +116,8 @@ public class ExpedientesController : ControllerBase
     {
         var clinicaId = User.GetClinicaId();
         var creadoPor = User.GetInternalUserId();
-        var result = await _service.CreateAsync(dto, clinicaId, creadoPor);
+        Guid? doctorContexto = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.CreateAsync(dto, clinicaId, creadoPor, doctorContexto);
 
         if (result.IsSuccess && result.Data != null)
         {
@@ -140,7 +141,8 @@ public class ExpedientesController : ControllerBase
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ExpedienteRequestDto dto)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.UpdateAsync(id, dto, clinicaId);
+        Guid? doctorContexto = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.UpdateAsync(id, dto, clinicaId, doctorContexto);
         return result.ToActionResult();
     }
 

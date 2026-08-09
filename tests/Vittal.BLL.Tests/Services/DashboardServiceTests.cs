@@ -205,12 +205,14 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetPacientesDelDiaAsync(_clinicaId, _fecha)).ReturnsAsync(15);
         _dashboardRepoMock.Setup(r => r.GetCitasPendientesAsync(_clinicaId, _fecha)).ReturnsAsync(8);
         _dashboardRepoMock.Setup(r => r.GetPacientesEnEsperaAsync(_clinicaId)).ReturnsAsync(3);
+        _dashboardRepoMock.Setup(r => r.GetPacientesEnAtencionAsync(_clinicaId)).ReturnsAsync(2);
+        _dashboardRepoMock.Setup(r => r.GetCitasCanceladasAsync(_clinicaId, _fecha)).ReturnsAsync(1);
         _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(12.5);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
-            .ReturnsAsync(new List<DashboardGraficoDto>
+            .ReturnsAsync(new List<DashboardCitaPorHoraDto>
             {
-                new() { Etiqueta = "09:00", Valor = 5, Color = "#4F46E5" },
-                new() { Etiqueta = "10:00", Valor = 8, Color = "#4F46E5" }
+                new() { Etiqueta = "09:00", Agendadas = 2, EnEspera = 1, EnAtencion = 0, Atendidas = 2, Canceladas = 1 },
+                new() { Etiqueta = "10:00", Agendadas = 1, EnEspera = 0, EnAtencion = 2, Atendidas = 5, Canceladas = 0 }
             });
         _dashboardRepoMock.Setup(r => r.GetCitasPorMedicoAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardCitaPorMedicoDto>
@@ -228,8 +230,12 @@ public class DashboardServiceTests
         result.Data!.PacientesDelDia.Should().Be(15);
         result.Data.CitasPendientes.Should().Be(8);
         result.Data.PacientesEnEspera.Should().Be(3);
+        result.Data.PacientesEnAtencion.Should().Be(2);
+        result.Data.CitasCanceladas.Should().Be(1);
         result.Data.TiempoPromedioEspera.Should().Be(12.5);
         result.Data.CitasPorHora.Should().HaveCount(2);
+        result.Data.CitasPorHora[0].Canceladas.Should().Be(1);
+        result.Data.CitasPorHora[0].Atendidas.Should().Be(2);
         result.Data.CitasPorMedico.Should().HaveCount(2);
         result.Data.CitasPorMedico[0].Atendidas.Should().Be(6);
         result.Data.CitasPorMedico[0].Pendientes.Should().Be(2);
@@ -298,9 +304,11 @@ public class DashboardServiceTests
         _dashboardRepoMock.Setup(r => r.GetPacientesDelDiaAsync(_clinicaId, _fecha)).ReturnsAsync(0);
         _dashboardRepoMock.Setup(r => r.GetCitasPendientesAsync(_clinicaId, _fecha)).ReturnsAsync(0);
         _dashboardRepoMock.Setup(r => r.GetPacientesEnEsperaAsync(_clinicaId)).ReturnsAsync(0);
+        _dashboardRepoMock.Setup(r => r.GetPacientesEnAtencionAsync(_clinicaId)).ReturnsAsync(0);
+        _dashboardRepoMock.Setup(r => r.GetCitasCanceladasAsync(_clinicaId, _fecha)).ReturnsAsync(0);
         _dashboardRepoMock.Setup(r => r.GetTiempoPromedioEsperaAsync(_clinicaId, _fecha)).ReturnsAsync(0.0);
         _dashboardRepoMock.Setup(r => r.GetCitasPorHoraAsync(_clinicaId, _fecha))
-            .ReturnsAsync(new List<DashboardGraficoDto>());
+            .ReturnsAsync(new List<DashboardCitaPorHoraDto>());
         _dashboardRepoMock.Setup(r => r.GetCitasPorMedicoAsync(_clinicaId, _fecha))
             .ReturnsAsync(new List<DashboardCitaPorMedicoDto>());
 

@@ -32,11 +32,17 @@ public class DashboardConfigResponseDto
     /// <summary>Cantidad de pacientes actualmente en espera.</summary>
     public int PacientesEnEspera { get; set; }
 
+    /// <summary>Cantidad de pacientes actualmente en atención.</summary>
+    public int PacientesEnAtencion { get; set; }
+
+    /// <summary>Cantidad de citas canceladas del día (estado = cancelada).</summary>
+    public int CitasCanceladas { get; set; }
+
     /// <summary>Tiempo promedio de espera en minutos.</summary>
     public double TiempoPromedioEspera { get; set; }
 
-    /// <summary>Distribución de citas por hora para gráficos.</summary>
-    public List<DashboardGraficoDto> CitasPorHora { get; set; } = new();
+    /// <summary>Distribución de citas por hora, segmentada por estado para el gráfico apilado.</summary>
+    public List<DashboardCitaPorHoraDto> CitasPorHora { get; set; } = new();
 
     /// <summary>Citas por médico, segmentadas por estado (atendidas / pendientes) para el gráfico apilado.</summary>
     public List<DashboardCitaPorMedicoDto> CitasPorMedico { get; set; } = new();

@@ -192,6 +192,7 @@
 .cola-stat-espera      { background: var(--cola-espera); }
 .cola-stat-atencion    { background: var(--cola-atencion); }
 .cola-stat-atendidas   { background: var(--cola-atendida); }
+.cola-stat-canceladas  { background: var(--cola-cancelada); }
 
 .cola-stat-info {
   display: flex;

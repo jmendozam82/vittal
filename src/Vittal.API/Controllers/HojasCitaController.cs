@@ -39,7 +39,8 @@ public class HojasCitaController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetAllAsync(clinicaId);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetAllAsync(clinicaId, doctorId);
         return result.ToActionResult();
     }
 
@@ -51,7 +52,8 @@ public class HojasCitaController : ControllerBase
     public async Task<IActionResult> GetByExpediente([FromRoute] Guid expedienteId)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetByExpedienteIdAsync(clinicaId, expedienteId);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetByExpedienteIdAsync(clinicaId, expedienteId, doctorId);
         return result.ToActionResult();
     }
 
@@ -63,7 +65,8 @@ public class HojasCitaController : ControllerBase
     public async Task<IActionResult> GetById([FromRoute] Guid id)
     {
         var clinicaId = User.GetClinicaId();
-        var result = await _service.GetByIdAsync(clinicaId, id);
+        Guid? doctorId = User.EsDoctor() ? User.GetInternalUserId() : null;
+        var result = await _service.GetByIdAsync(clinicaId, id, doctorId);
         return result.ToActionResult();
     }
 

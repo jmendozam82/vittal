@@ -12,14 +12,25 @@ namespace Vittal.BLL.Interfaces;
 /// </summary>
 public interface IHojaCitaService
 {
-    /// <summary>Lista todas las hojas de cita activas de la clínica.</summary>
-    Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetAllAsync(Guid clinicaId);
+    /// <summary>
+    /// Lista todas las hojas de cita activas de la clínica.
+    /// Si doctorId no es null (usuario doctor), se filtra por el doctor asignado
+    /// al EXPEDIENTE (e.doctor_id), de modo que el doctor dueño del paciente ve
+    /// todo el historial del expediente (incluso hojas creadas por otros médicos).
+    /// </summary>
+    Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetAllAsync(Guid clinicaId, Guid? doctorId = null);
 
-    /// <summary>Obtiene detalle de una hoja de cita por ID.</summary>
-    Task<ServiceResult<HojaCitaResponseDto>> GetByIdAsync(Guid clinicaId, Guid id);
+    /// <summary>
+    /// Obtiene detalle de una hoja de cita por ID.
+    /// Si doctorId no es null, solo devuelve la hoja cuando el doctor es el asignado al expediente.
+    /// </summary>
+    Task<ServiceResult<HojaCitaResponseDto>> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null);
 
-    /// <summary>Obtiene todas las hojas de cita activas de un expediente.</summary>
-    Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId);
+    /// <summary>
+    /// Obtiene todas las hojas de cita activas de un expediente.
+    /// Si doctorId no es null, filtra por el doctor asignado al expediente (e.doctor_id).
+    /// </summary>
+    Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId, Guid? doctorId = null);
 
     /// <summary>Crea una nueva hoja de cita.</summary>
     Task<ServiceResult<HojaCitaResponseDto>> CreateAsync(HojaCitaRequestDto dto, Guid clinicaId, Guid creadoPor);

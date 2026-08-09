@@ -51,37 +51,45 @@ public class HojaCitaRepository : IHojaCitaRepository
 
     // ────────────────────────────────────────────────────────────────────
     // 1. GetAllAsync — Obtiene todas las hojas de cita activas de una clínica
+    //    Si doctorId viene, filtra por el doctor asignado al EXPEDIENTE (e.doctor_id),
+    //    no por el doctor que creó la hoja: el doctor dueño ve todo el historial.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<HojaCita>> GetAllAsync(Guid clinicaId)
+    public async Task<IEnumerable<HojaCita>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @$"
             SELECT {SelectColumns}
             {FromJoin}
             WHERE h.clinica_id = @ClinicaId AND h.activo = true
+              AND (@DoctorId IS NULL OR e.doctor_id = @DoctorId)
             ORDER BY h.fecha_consulta DESC";
 
-        return await connection.QueryAsync<HojaCita>(sql, new { ClinicaId = clinicaId });
+        return await connection.QueryAsync<HojaCita>(sql, new { ClinicaId = clinicaId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────
     // 2. GetByIdAsync — Obtiene una hoja de cita por ID validando clínica
+    //    Si doctorId viene, protege el expediente: solo el doctor asignado lo ve.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<HojaCita?> GetByIdAsync(Guid clinicaId, Guid id)
+    public async Task<HojaCita?> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @$"
             SELECT {SelectColumns}
             {FromJoin}
-            WHERE h.id = @Id AND h.clinica_id = @ClinicaId AND h.activo = true";
+            WHERE h.id = @Id AND h.clinica_id = @ClinicaId AND h.activo = true
+              AND (@DoctorId IS NULL OR e.doctor_id = @DoctorId)";
 
-        return await connection.QuerySingleOrDefaultAsync<HojaCita>(sql, new { Id = id, ClinicaId = clinicaId });
+        return await connection.QuerySingleOrDefaultAsync<HojaCita>(sql,
+            new { Id = id, ClinicaId = clinicaId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────
     // 3. GetByExpedienteIdAsync — Obtiene todas las hojas de un expediente
+    //    Si doctorId viene, filtra por el doctor asignado al expediente (e.doctor_id),
+    //    no por h.doctor_id: el doctor dueño ve todas las hojas del paciente.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<HojaCita>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId)
+    public async Task<IEnumerable<HojaCita>> GetByExpedienteIdAsync(Guid clinicaId, Guid expedienteId, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = @$"
@@ -90,10 +98,11 @@ public class HojaCitaRepository : IHojaCitaRepository
             WHERE h.clinica_id = @ClinicaId 
               AND h.expediente_id = @ExpedienteId 
               AND h.activo = true
+              AND (@DoctorId IS NULL OR e.doctor_id = @DoctorId)
             ORDER BY h.fecha_consulta DESC";
 
         return await connection.QueryAsync<HojaCita>(sql,
-            new { ClinicaId = clinicaId, ExpedienteId = expedienteId });
+            new { ClinicaId = clinicaId, ExpedienteId = expedienteId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────

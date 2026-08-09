@@ -27,11 +27,22 @@ public interface IExpedienteService
     /// <summary>Obtiene el expediente activo de un paciente.</summary>
     Task<ServiceResult<ExpedienteResponseDto>> GetByPacienteIdAsync(Guid clinicaId, Guid pacienteId);
 
-    /// <summary>Crea un nuevo expediente médico.</summary>
-    Task<ServiceResult<ExpedienteResponseDto>> CreateAsync(ExpedienteRequestDto dto, Guid clinicaId, Guid creadoPor);
+    /// <summary>
+    /// Crea un nuevo expediente médico.
+    /// Si doctorContexto no es null (usuario autenticado con perfil doctor), se usa ese
+    /// valor como DoctorId del expediente en lugar del enviado en el DTO (seguridad HU20):
+    /// el doctor no puede asignar el expediente de un paciente a otra persona.
+    /// </summary>
+    Task<ServiceResult<ExpedienteResponseDto>> CreateAsync(
+        ExpedienteRequestDto dto, Guid clinicaId, Guid creadoPor, Guid? doctorContexto = null);
 
-    /// <summary>Actualiza los datos de un expediente.</summary>
-    Task<ServiceResult<ExpedienteResponseDto>> UpdateAsync(Guid id, ExpedienteRequestDto dto, Guid clinicaId);
+    /// <summary>
+    /// Actualiza los datos de un expediente.
+    /// Si doctorContexto no es null (usuario autenticado con perfil doctor), se fija ese
+    /// valor como DoctorId del expediente en lugar del enviado en el DTO (seguridad HU20).
+    /// </summary>
+    Task<ServiceResult<ExpedienteResponseDto>> UpdateAsync(
+        Guid id, ExpedienteRequestDto dto, Guid clinicaId, Guid? doctorContexto = null);
 
     /// <summary>Desactiva un expediente (activo = false). Nunca elimina.</summary>
     Task<ServiceResult<bool>> DeactivateAsync(Guid clinicaId, Guid id);

@@ -260,6 +260,16 @@ const vittalAgenda = (function() {
             aplicarRestriccionesHorario(this.value, $('citaHora').value);
         });
 
+        // HU21: coherencia doctor de la cita ↔ médico asignado del paciente.
+        // Al cambiar el paciente se autocompleta el doctor con el asignado del
+        // paciente; al cambiar el doctor se recalcula si hace falta reasignar.
+        $('citaPacienteId').addEventListener('change', function() {
+            syncDoctorPacienteInfo(true);
+        });
+        $('citaDoctorId').addEventListener('change', function() {
+            syncDoctorPacienteInfo(false);
+        });
+
         // Desactivar cita desde modal
         $('btnDesactivarCita').addEventListener('click', () => {
             if (state.editingId) {
@@ -384,6 +394,11 @@ $('btnConfirmarDesactivar').addEventListener('click', async () => {
             const opt = document.createElement('option');
             opt.value = p.id || '';
             opt.textContent = name;
+            // HU21: datos del médico asignado del paciente para el badge y la
+            // reasignación. Guid vacío (all-zeros) se trata como sin asignar.
+            const docId = p.doctorId || '';
+            opt.dataset.doctorId = (docId && docId !== '00000000-0000-0000-0000-000000000000') ? docId : '';
+            opt.dataset.doctorNombre = p.doctorNombre || '';
             select.appendChild(opt);
         });
     }
@@ -1060,6 +1075,9 @@ $('btnConfirmarDesactivar').addEventListener('click', async () => {
             $('citaDoctorId').value = config.usuarioId;
         }
 
+        // HU21: ocultar/limpiar badge y checkbox de reasignación al abrir nueva cita
+        syncDoctorPacienteInfo(false);
+
         modalCita.show();
     }
 
@@ -1093,6 +1111,9 @@ $('btnConfirmarDesactivar').addEventListener('click', async () => {
 
         // ── Validar horario de atención ──────────────────────────
         aplicarRestriccionesHorario($('citaFecha').value, $('citaHora').value);
+
+        // HU21: recalcular badge y checkbox de reasignación con los datos de la cita
+        syncDoctorPacienteInfo(false);
 
         modalCita.show();
     }
@@ -1152,6 +1173,61 @@ $('btnConfirmarDesactivar').addEventListener('click', async () => {
         if (apertura && cierre) {
             horaInput.placeholder = apertura;
             horaFinInput.placeholder = cierre;
+        }
+    }
+
+    // ── HU21: coherencia doctor de cita ↔ médico asignado del paciente ──
+    /**
+     * Sincroniza la información del médico asignado del paciente con el doctor
+     * seleccionado en la cita:
+     * - Muestra un badge con el médico asignado del paciente (si tiene).
+     * - Si el paciente tiene médico asignado y el doctor de la cita difiere,
+     *   muestra (y marca) el checkbox de reasignación del médico tratante.
+     * - Al cambiar de paciente (autofillDoctor=true) autocompleta el doctor
+     *   de la cita con el asignado del paciente.
+     * - Perfil doctor: no aplica (el doctor se fija a sí mismo y el campo está oculto).
+     */
+    function syncDoctorPacienteInfo(autofillDoctor) {
+        if (config.esDoctor) return;
+
+        const pacienteSel = $('citaPacienteId');
+        const doctorSel = $('citaDoctorId');
+        const infoDiv = $('doctorAssignadoInfo');
+        const nombreSpan = $('doctorAssignadoNombre');
+        const wrapChk = $('cambiarDoctorPacienteWrap');
+        const chk = $('cambiarDoctorPaciente');
+
+        if (!infoDiv || !wrapChk || !chk) return;
+
+        const opt = pacienteSel.selectedOptions && pacienteSel.selectedOptions[0];
+        const pacienteDoctorId = opt ? (opt.dataset.doctorId || '') : '';
+        const pacienteDoctorNombre = opt ? (opt.dataset.doctorNombre || '') : '';
+
+        // Sin paciente seleccionado o sin médico asignado: ocultar badge y checkbox
+        if (!opt || !opt.value || !pacienteDoctorId) {
+            infoDiv.classList.add('d-none');
+            wrapChk.classList.add('d-none');
+            chk.checked = false;
+            return;
+        }
+
+        // Badge informativo con el médico asignado del paciente
+        nombreSpan.textContent = pacienteDoctorNombre || '—';
+        infoDiv.classList.remove('d-none');
+
+        // Autocompletar el doctor de la cita con el asignado del paciente
+        if (autofillDoctor) {
+            doctorSel.value = pacienteDoctorId;
+        }
+
+        // Checkbox de reasignación: solo si el doctor elegido difiere del asignado
+        const doctorSeleccionado = doctorSel.value || '';
+        if (doctorSeleccionado && doctorSeleccionado !== pacienteDoctorId) {
+            wrapChk.classList.remove('d-none');
+            chk.checked = true;
+        } else {
+            wrapChk.classList.add('d-none');
+            chk.checked = false;
         }
     }
 
@@ -1215,6 +1291,7 @@ $('btnConfirmarDesactivar').addEventListener('click', async () => {
         const data = {
             pacienteId: $('citaPacienteId').value || '00000000-0000-0000-0000-000000000000',
             doctorId: config.esDoctor ? config.usuarioId : ($('citaDoctorId').value || '00000000-0000-0000-0000-000000000000'),
+            cambiarDoctorPaciente: $('cambiarDoctorPaciente').checked,
             salaId: $('citaSalaId').value || null,
             fechaCita: $('citaFecha').value,
             horaCita: $('citaHora').value,

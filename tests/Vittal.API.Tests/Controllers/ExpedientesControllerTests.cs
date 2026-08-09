@@ -128,7 +128,7 @@ public class ExpedientesControllerTests
             Activo = true
         };
         var serviceResult = ServiceResult<ExpedienteResponseDto>.Success(responseDto, "Expediente creado exitosamente.");
-        _serviceMock.Setup(s => s.CreateAsync(request, _clinicaId, _usuarioId)).ReturnsAsync(serviceResult);
+        _serviceMock.Setup(s => s.CreateAsync(request, _clinicaId, _usuarioId, It.IsAny<Guid?>())).ReturnsAsync(serviceResult);
 
         // Act
         var actionResult = await _controller.Create(request);

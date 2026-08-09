@@ -39,6 +39,21 @@ public class AgendaController : Controller
         return Guid.TryParse(v, out var id) ? id : Guid.Empty;
     }
 
+    /// <summary>
+    /// Regla de negocio (§12, regla 6): un doctor SOLO opera sobre sus propias citas.
+    /// Admin/Gerente/Recepcionista pueden operar sobre todas (depende del permiso del módulo).
+    /// </summary>
+    private bool PuedeOperarCita(Dictionary<string, object?>? dict)
+    {
+        if (!EsDoctor()) return true;
+        var uid = UsuarioId();
+        return dict != null
+            && dict.TryGetValue("doctorId", out var dId)
+            && dId != null
+            && Guid.TryParse(dId.ToString(), out var dGuid)
+            && dGuid == uid;
+    }
+
     // ──────────────────────────────────────────────────────────────
     //  VISTAS PRINCIPALES
     // ──────────────────────────────────────────────────────────────
@@ -343,7 +358,8 @@ public class AgendaController : Controller
             lugar = dto.Lugar,
             motivo = dto.Motivo,
             estado = "agendada",
-            notas = dto.Notas
+            notas = dto.Notas,
+            cambiarDoctorPaciente = dto.CambiarDoctorPaciente
         };
 
         var (success, response, errorMessage) = await _apiClient.PostAsync<JsonElement>("api/Citas", payload);
@@ -358,12 +374,15 @@ public class AgendaController : Controller
 
         // Opción D: verificar si el paciente tiene expediente para informar al usuario.
         // No bloquea la creación de la cita — solo devuelve el flag para mostrar un aviso.
+        // IMPORTANTE (hallazgo #46): solo se marca sinExpediente cuando la API responde
+        // 404 (el paciente realmente no tiene expediente). Un 403 (sin permiso del módulo
+        // expedientes, p.ej. Recepcionista) o cualquier otro error NO se considera como
+        // "sin expediente" — de lo contrario se mostraba un aviso falso al crear citas.
         bool sinExpediente = false;
         try
         {
-            var (expCheck, _, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/paciente/{dto.PacienteId}");
-            // El GET falla (404) cuando el paciente no tiene expediente
-            sinExpediente = !expCheck;
+            var (_, _, _, statusCode) = await _apiClient.GetWithStatusAsync<JsonElement>($"api/Expedientes/paciente/{dto.PacienteId}");
+            sinExpediente = statusCode == StatusCodes.Status404NotFound;
         }
         catch (Exception ex)
         {
@@ -401,7 +420,8 @@ public class AgendaController : Controller
             lugar = dto.Lugar,
             motivo = dto.Motivo,
             estado = dto.Estado,
-            notas = dto.Notas
+            notas = dto.Notas,
+            cambiarDoctorPaciente = dto.CambiarDoctorPaciente
         };
 
         var (success, response, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Citas/{id}", payload);
@@ -418,6 +438,7 @@ public class AgendaController : Controller
 
     /// <summary>
     /// Desactiva una cita (activo = false). Nunca elimina.
+    /// Se usa para limpiar citas mal registradas. NO es el flujo de "cancelar" del negocio.
     /// </summary>
     [HttpPatch]
     public async Task<IActionResult> JsonDesactivar(Guid id)
@@ -432,6 +453,76 @@ public class AgendaController : Controller
         }
 
         return Ok(new { success = true, message = "Cita desactivada exitosamente" });
+    }
+
+    /// <summary>
+    /// Cancela una cita (estado = "cancelada").
+    /// Flujo de negocio idéntico al de Cola de Espera: la cita NO se desactiva,
+    /// permanece visible en el historial como "Cancelada" y puede volver a reprogramarse.
+    /// Un doctor solo puede cancelar sus propias citas (regla 6, §12).
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> JsonCancelar(Guid id)
+    {
+        _logger.LogInformation("JsonCancelar cita: id={Id}", id);
+
+        var (getSuccess, getResponse, getError) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{id}");
+        if (!getSuccess)
+        {
+            return BadRequest(new { success = false, message = "Cita no encontrada." });
+        }
+
+        var citaActual = ExtractDataObject(getResponse) as Dictionary<string, object?>;
+        if (citaActual == null)
+        {
+            return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
+        }
+
+        // Regla 6 (§12): un doctor solo opera sobre sus propias citas.
+        // Admin/Gerente/Recepcionista pueden operar sobre todas (permiso del módulo).
+        if (!PuedeOperarCita(citaActual))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede cancelar citas de otro doctor." });
+        }
+
+        // Guard de integridad: una cita ya atendida no se puede cancelar.
+        var estadoActual = GetValue<string>(citaActual, "estado");
+        if (string.Equals(estadoActual, "atendida", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { success = false, message = "La cita ya fue atendida y no se puede cancelar." });
+        }
+        if (string.Equals(estadoActual, "cancelada", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { success = false, message = "La cita ya está cancelada." });
+        }
+
+        // Reenviar los datos actuales cambiando únicamente el estado (igual que Cola de Espera).
+        var fechaCita = GetValue<string>(citaActual, "fechaCita");
+        var payload = new
+        {
+            pacienteId = GetGuidValue(citaActual, "pacienteId"),
+            doctorId = GetGuidValue(citaActual, "doctorId"),
+            salaId = GetNullableGuidValue(citaActual, "salaId"),
+            fechaCita = fechaCita is { Length: >= 10 } ? fechaCita[..10] : null,
+            horaCita = GetValue<string>(citaActual, "horaCita"),
+            horaFin = GetValue<string>(citaActual, "horaFin"),
+            horaLlegada = GetValue<string>(citaActual, "horaLlegada"),
+            lugar = GetValue<string>(citaActual, "lugar"),
+            motivo = GetValue<string>(citaActual, "motivo"),
+            estado = "cancelada",
+            notas = GetValue<string>(citaActual, "notas")
+        };
+
+        var (success, _, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Citas/{id}", payload);
+
+        if (!success)
+        {
+            _logger.LogWarning("JsonCancelar API call failed: {Error}", errorMessage);
+            return BadRequest(new { success = false, message = errorMessage ?? "Error al cancelar la cita" });
+        }
+
+        return Ok(new { success = true, message = "Cita cancelada exitosamente" });
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -543,6 +634,23 @@ public class AgendaController : Controller
         }
         return default!;
     }
+
+    // ── Helper para extraer GUIDs desde diccionarios JSON ─────────
+    // Los valores JSON se deserializan como strings, NO como Guid.
+    // GetValue<Guid> falla (return Guid.Empty). Este helper parsea correctamente.
+    private static Guid GetGuidValue(Dictionary<string, object?>? dict, string key)
+    {
+        if (dict != null && dict.TryGetValue(key, out var val) && val is string strVal && Guid.TryParse(strVal, out var guid))
+            return guid;
+        return Guid.Empty;
+    }
+
+    private static Guid? GetNullableGuidValue(Dictionary<string, object?>? dict, string key)
+    {
+        if (dict != null && dict.TryGetValue(key, out var val) && val is string strVal && Guid.TryParse(strVal, out var guid))
+            return guid;
+        return null;
+    }
 }
 
 /// <summary>
@@ -560,4 +668,7 @@ public class CitaFormDto
     public string? Motivo { get; set; }
     public string Estado { get; set; } = "agendada";
     public string? Notas { get; set; }
+
+    /// <summary>Indica si al asignar este doctor a la cita también se reasigna el médico asignado del paciente.</summary>
+    public bool CambiarDoctorPaciente { get; set; }
 }

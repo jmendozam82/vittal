@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cita;
+using Vittal.DTO.Paciente;
 using Vittal.Entity;
 using Vittal.Utility.Results;
 
@@ -16,17 +17,20 @@ public class CitaService : ICitaService
     private readonly ICitaRepository _repository;
     private readonly ILineaTiempoService _lineaTiempoService;
     private readonly IClinicaService _clinicaService;
+    private readonly IPacienteService _pacienteService;
     private readonly ILogger<CitaService> _logger;
 
     public CitaService(
         ICitaRepository repository,
         ILineaTiempoService lineaTiempoService,
         IClinicaService clinicaService,
+        IPacienteService pacienteService,
         ILogger<CitaService> logger)
     {
         _repository = repository;
         _lineaTiempoService = lineaTiempoService;
         _clinicaService = clinicaService;
+        _pacienteService = pacienteService;
         _logger = logger;
     }
 
@@ -142,11 +146,86 @@ public class CitaService : ICitaService
         return null;
     }
 
-    public async Task<ServiceResult<IEnumerable<CitaResponseDto>>> GetAllAsync(Guid clinicaId)
+    /// <summary>
+    /// Valida la coherencia entre el doctor de la cita y el médico asignado del paciente (HU21).
+    /// Si el doctor de la cita difiere del doctor asignado al paciente y NO se indica
+    /// reasignación explícita, se rechaza la operación. Si se indica, reasigna el
+    /// médico tratante del paciente (pacientes.doctor_id) antes de continuar.
+    /// Retorna null cuando todo es válido, o un mensaje de error en caso contrario.
+    /// </summary>
+    private async Task<string?> ValidarCoherenciaDoctorPacienteAsync(
+        Guid clinicaId, Guid pacienteId, Guid doctorId, bool cambiarDoctorPaciente, Guid modificadoPor)
     {
         try
         {
-            var entities = await _repository.GetAllAsync(clinicaId);
+            // 1. El paciente debe existir en la clínica
+            var pacienteResult = await _pacienteService.GetByIdAsync(pacienteId, clinicaId);
+            if (!pacienteResult.IsSuccess || pacienteResult.Data == null)
+            {
+                _logger.LogWarning("Cita rechazada: paciente {PacienteId} no encontrado en clínica {ClinicaId}",
+                    pacienteId, clinicaId);
+                return "Paciente no encontrado.";
+            }
+
+            var paciente = pacienteResult.Data;
+
+            // 2. El doctor de la cita debe estar seleccionado (validación de seguridad;
+            //    el frontend y el DTO [Required] ya lo validan)
+            if (doctorId == Guid.Empty)
+            {
+                _logger.LogWarning("Cita rechazada: no se seleccionó doctor para el paciente {PacienteId}", pacienteId);
+                return "Debe seleccionar un doctor.";
+            }
+
+            // 2b. Si el paciente aún no tiene médico asignado (dato legado), no hay
+            //     conflicto que validar: el doctor de la cita queda como su médico.
+            if (paciente.DoctorId == Guid.Empty)
+            {
+                return null;
+            }
+
+            // 3. El doctor de la cita coincide con el asignado del paciente → válido
+            if (paciente.DoctorId == doctorId)
+            {
+                return null;
+            }
+
+            // 4. Difieren: se requiere reasignación explícita del médico tratante
+            if (!cambiarDoctorPaciente)
+            {
+                _logger.LogWarning(
+                    "Cita rechazada: doctor de cita {DoctorCita} difiere del asignado del paciente {DoctorPaciente} " +
+                    "(paciente {PacienteId}) y no se solicita reasignación",
+                    doctorId, paciente.DoctorId, pacienteId);
+                return "El paciente ya tiene un médico asignado. Si desea cambiar el médico asignado del paciente seleccione la opción de reasignación.";
+            }
+
+            var cambioResult = await _pacienteService.CambiarDoctorAsync(pacienteId, doctorId, clinicaId, modificadoPor);
+            if (!cambioResult.IsSuccess || !cambioResult.Data)
+            {
+                _logger.LogError("No se pudo cambiar el médico asignado del paciente {PacienteId} al doctor {DoctorId}",
+                    pacienteId, doctorId);
+                return "No se pudo cambiar el médico asignado del paciente.";
+            }
+
+            _logger.LogInformation(
+                "Médico asignado del paciente {PacienteId} reasignado al doctor {DoctorId} desde la Agenda de citas (usuario {UsuarioId})",
+                pacienteId, doctorId, modificadoPor);
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al validar coherencia de doctor para paciente {PacienteId}", pacienteId);
+            return "No se pudo validar el médico asignado del paciente.";
+        }
+    }
+
+    public async Task<ServiceResult<IEnumerable<CitaResponseDto>>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
+    {
+        try
+        {
+            var entities = await _repository.GetAllAsync(clinicaId, doctorId);
             var dtos = entities.Select(MapToDto);
             return ServiceResult<IEnumerable<CitaResponseDto>>.Success(dtos);
         }
@@ -217,6 +296,16 @@ public class CitaService : ICitaService
                 }
             }
 
+            // ── Validar coherencia doctor de cita ↔ médico asignado del paciente (HU21) ──
+            // Si difieren, se permite reasignar el médico tratante del paciente (flag del frontend).
+            var coherenciaError = await ValidarCoherenciaDoctorPacienteAsync(
+                clinicaId, dto.PacienteId, dto.DoctorId, dto.CambiarDoctorPaciente, creadoPor);
+            if (coherenciaError != null)
+            {
+                _logger.LogWarning("Validación de coherencia rechazó cita: {Error}", coherenciaError);
+                return ServiceResult<CitaResponseDto>.Failure(coherenciaError, ServiceErrorType.Validation);
+            }
+
             var entity = new Cita
             {
                 ClinicaId = clinicaId,
@@ -258,7 +347,7 @@ public class CitaService : ICitaService
         }
     }
 
-    public async Task<ServiceResult<CitaResponseDto>> UpdateAsync(Guid id, CitaRequestDto dto, Guid clinicaId)
+    public async Task<ServiceResult<CitaResponseDto>> UpdateAsync(Guid id, CitaRequestDto dto, Guid clinicaId, Guid modificadoPor)
     {
         try
         {
@@ -302,6 +391,17 @@ public class CitaService : ICitaService
                 }
             }
 
+            // ── Validar coherencia doctor de cita ↔ médico asignado del paciente (HU21) ──
+            // Si aplica, la reasignación del médico tratante del paciente se audita con el
+            // usuario modificador recibido por el contrato (no Guid.Empty).
+            var coherenciaError = await ValidarCoherenciaDoctorPacienteAsync(
+                clinicaId, dto.PacienteId, dto.DoctorId, dto.CambiarDoctorPaciente, modificadoPor);
+            if (coherenciaError != null)
+            {
+                _logger.LogWarning("Validación de coherencia rechazó actualización de cita {Id}: {Error}", id, coherenciaError);
+                return ServiceResult<CitaResponseDto>.Failure(coherenciaError, ServiceErrorType.Validation);
+            }
+
             entity.PacienteId = dto.PacienteId;
             entity.DoctorId = dto.DoctorId;
             entity.SalaId = dto.SalaId;
@@ -314,6 +414,7 @@ public class CitaService : ICitaService
             entity.Estado = dto.Estado;
             entity.Notas = dto.Notas;
             entity.FechaModificacion = DateTime.UtcNow;
+            entity.ModificadoPor = modificadoPor;
 
             var result = await _repository.UpdateAsync(entity);
             if (!result)

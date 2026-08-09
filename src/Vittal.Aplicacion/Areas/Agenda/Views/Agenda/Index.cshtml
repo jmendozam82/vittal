@@ -161,6 +161,18 @@
                         </div>
                     </div>
 
+                    @{/* ── HU21: médico asignado del paciente y reasignación ── */}
+                    <div id="doctorAssignadoInfo" class="form-text small text-muted d-none mb-1">
+                        <i class="bi bi-person-check me-1"></i>
+                        Médico asignado del paciente: <span id="doctorAssignadoNombre" class="fw-semibold">—</span>
+                    </div>
+                    <div class="form-check mb-3 d-none" id="cambiarDoctorPacienteWrap">
+                        <input class="form-check-input" type="checkbox" id="cambiarDoctorPaciente">
+                        <label class="form-check-label" for="cambiarDoctorPaciente">
+                            Cambiar el médico asignado del paciente a este doctor
+                        </label>
+                    </div>
+
                     @{/* ── Fecha y Hora ──────────────────────────── */}
                     <div class="row g-3 mb-2">
                         <div class="col-md-4">

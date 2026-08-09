@@ -196,6 +196,41 @@ namespace Vittal.Aplicacion.Helpers
         }
 
         /// <summary>
+        /// GET autenticado que además expone el StatusCode HTTP.
+        /// Permite distinguir, por ejemplo, un 403 (sin permiso) de un 404 (recurso
+        /// inexistente), que GetAsync colapsa en Success=false.
+        /// </summary>
+        public async Task<(bool Success, T? Data, string? ErrorMessage, int StatusCode)> GetWithStatusAsync<T>(string endpoint)
+        {
+            try
+            {
+                var response = await SendAuthenticatedRequestAsync(HttpMethod.Get, endpoint);
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var statusCode = (int)response.StatusCode;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    return (true, result, null, statusCode);
+                }
+
+                var errorMsg = ExtractErrorMessage(responseBody);
+                _logger.LogWarning("API GET {Endpoint} failed: {Status}", endpoint, statusCode);
+                return (false, default, errorMsg, statusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error de conexión al llamar a {Endpoint}", endpoint);
+                return (false, default, "No se pudo conectar con el servidor.", 0);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al llamar a {Endpoint}", endpoint);
+                return (false, default, "Ocurrió un error inesperado.", 0);
+            }
+        }
+
+        /// <summary>
         /// POST autenticado.
         /// </summary>
         public async Task<(bool Success, T? Data, string? ErrorMessage)> PostAsync<T>(

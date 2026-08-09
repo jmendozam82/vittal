@@ -66,6 +66,36 @@
     min-height: 280px;
 }
 
+/* ── Leyenda HTML (texto del navegador, nítido) ───────────────── */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding-top: 0.85rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid var(--vittal-border);
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: default;
+}
+.legend-swatch {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
 /* ── Notificaciones / Alertas List ────────────────────────────── */
 .alerta-item {
     border-left: 4px solid var(--vittal-warning);

@@ -145,18 +145,28 @@ public class DashboardService : IDashboardService
             Task<int>? pacientesDelDiaTask = null;
             Task<int>? citasPendientesTask = null;
             Task<int>? pacientesEnEsperaTask = null;
+            Task<int>? pacientesEnAtencionTask = null;
+            Task<int>? citasCanceladasTask = null;
             Task<double>? tiempoPromedioTask = null;
-            Task<IEnumerable<DashboardGraficoDto>>? citasPorHoraTask = null;
+            Task<IEnumerable<DashboardCitaPorHoraDto>>? citasPorHoraTask = null;
             Task<IEnumerable<DashboardCitaPorMedicoDto>>? citasPorMedicoTask = null;
 
             if (dashboardData.MostrarPacientesDelDia)
                 pacientesDelDiaTask = _dashboardRepository.GetPacientesDelDiaAsync(clinicaId, fecha);
 
             if (dashboardData.MostrarCitasPendientes)
+            {
                 citasPendientesTask = _dashboardRepository.GetCitasPendientesAsync(clinicaId, fecha);
+                // El total de canceladas del día acompaña el conteo de citas del día.
+                citasCanceladasTask = _dashboardRepository.GetCitasCanceladasAsync(clinicaId, fecha);
+            }
 
             if (dashboardData.MostrarPacientesEnEspera)
+            {
                 pacientesEnEsperaTask = _dashboardRepository.GetPacientesEnEsperaAsync(clinicaId);
+                // Las citas en atención acompañan el conteo de pacientes en espera.
+                pacientesEnAtencionTask = _dashboardRepository.GetPacientesEnAtencionAsync(clinicaId);
+            }
 
             if (dashboardData.MostrarTiempoPromedioEspera)
                 tiempoPromedioTask = _dashboardRepository.GetTiempoPromedioEsperaAsync(clinicaId, fecha);
@@ -171,6 +181,8 @@ public class DashboardService : IDashboardService
             if (pacientesDelDiaTask != null) dashboardData.PacientesDelDia = await pacientesDelDiaTask;
             if (citasPendientesTask != null) dashboardData.CitasPendientes = await citasPendientesTask;
             if (pacientesEnEsperaTask != null) dashboardData.PacientesEnEspera = await pacientesEnEsperaTask;
+            if (pacientesEnAtencionTask != null) dashboardData.PacientesEnAtencion = await pacientesEnAtencionTask;
+            if (citasCanceladasTask != null) dashboardData.CitasCanceladas = await citasCanceladasTask;
             if (tiempoPromedioTask != null) dashboardData.TiempoPromedioEspera = await tiempoPromedioTask;
             if (citasPorHoraTask != null) dashboardData.CitasPorHora = (await citasPorHoraTask).ToList();
             if (citasPorMedicoTask != null) dashboardData.CitasPorMedico = (await citasPorMedicoTask).ToList();

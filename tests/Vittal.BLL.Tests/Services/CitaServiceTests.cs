@@ -7,6 +7,7 @@ using Vittal.BLL.Services;
 using Vittal.DAL.Interfaces;
 using Vittal.DTO.Cita;
 using Vittal.DTO.Clinica;
+using Vittal.DTO.Paciente;
 using Vittal.Entity;
 using Vittal.Utility.Results;
 
@@ -17,6 +18,7 @@ public class CitaServiceTests
     private readonly Mock<ICitaRepository> _repoMock;
     private readonly Mock<ILineaTiempoService> _lineaTiempoMock;
     private readonly Mock<IClinicaService> _clinicaServiceMock;
+    private readonly Mock<IPacienteService> _pacienteServiceMock;
     private readonly Mock<ILogger<CitaService>> _loggerMock;
     private readonly CitaService _service;
     private readonly Guid _clinicaId = Guid.NewGuid();
@@ -29,6 +31,7 @@ public class CitaServiceTests
         _repoMock = new Mock<ICitaRepository>();
         _lineaTiempoMock = new Mock<ILineaTiempoService>();
         _clinicaServiceMock = new Mock<IClinicaService>();
+        _pacienteServiceMock = new Mock<IPacienteService>();
         _loggerMock = new Mock<ILogger<CitaService>>();
 
         // Default: clinic has no schedule configured (validation skipped)
@@ -42,6 +45,20 @@ public class CitaServiceTests
                 DiasAtencion = null
             }));
 
+        // Default: paciente legado sin médico asignado (DoctorId = Guid.Empty).
+        // La validación de coherencia HU21 retorna null cuando el paciente no tiene
+        // médico asignado, por lo que no bloquea los tests existentes de Create/Update.
+        // (No usar Failure(NotFound): ValidarCoherenciaDoctorPacienteAsync retorna
+        // "Paciente no encontrado." y bloquearía esos tests.)
+        _pacienteServiceMock
+            .Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .ReturnsAsync(ServiceResult<PacienteResponseDto>.Success(new PacienteResponseDto
+            {
+                Id = _pacienteId,
+                ClinicaId = _clinicaId,
+                DoctorId = Guid.Empty
+            }));
+
         // Default: no hay solapamiento de horario para el doctor
         _repoMock
             .Setup(r => r.ExisteCitaSolapadaAsync(
@@ -49,7 +66,7 @@ public class CitaServiceTests
                 It.IsAny<TimeOnly>(), It.IsAny<TimeOnly?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(false);
 
-        _service = new CitaService(_repoMock.Object, _lineaTiempoMock.Object, _clinicaServiceMock.Object, _loggerMock.Object);
+        _service = new CitaService(_repoMock.Object, _lineaTiempoMock.Object, _clinicaServiceMock.Object, _pacienteServiceMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -61,7 +78,7 @@ public class CitaServiceTests
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateOnly.FromDateTime(DateTime.UtcNow), HoraCita = new TimeOnly(9, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow },
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = _pacienteId, DoctorId = _doctorId, FechaCita = DateOnly.FromDateTime(DateTime.UtcNow), HoraCita = new TimeOnly(10, 0, 0), Estado = "agendada", Activo = true, FechaCreacion = DateTime.UtcNow }
         };
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(citas);
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(citas);
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);
@@ -75,7 +92,7 @@ public class CitaServiceTests
     public async Task GetAllAsync_ShouldReturnEmptyList_WhenNoCitas()
     {
         // Arrange
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ReturnsAsync(new List<Cita>());
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(new List<Cita>());
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);
@@ -218,7 +235,7 @@ public class CitaServiceTests
         _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync(existingCita);
 
         // Act
-        var result = await _service.UpdateAsync(citaId, request, _clinicaId);
+        var result = await _service.UpdateAsync(citaId, request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -240,7 +257,7 @@ public class CitaServiceTests
         _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync((Cita?)null);
 
         // Act
-        var result = await _service.UpdateAsync(citaId, request, _clinicaId);
+        var result = await _service.UpdateAsync(citaId, request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -346,7 +363,7 @@ public class CitaServiceTests
         _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync(atendidaCita);
 
         // Act
-        var result = await _service.UpdateAsync(citaId, request, _clinicaId);
+        var result = await _service.UpdateAsync(citaId, request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -359,7 +376,7 @@ public class CitaServiceTests
     public async Task GetAllAsync_ShouldReturnFailure_WhenExceptionThrown()
     {
         // Arrange
-        _repoMock.Setup(r => r.GetAllAsync(_clinicaId)).ThrowsAsync(new Exception("DB error"));
+        _repoMock.Setup(r => r.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ThrowsAsync(new Exception("DB error"));
 
         // Act
         var result = await _service.GetAllAsync(_clinicaId);
@@ -469,7 +486,7 @@ public class CitaServiceTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _service.UpdateAsync(citaId, request, _clinicaId);
+        var result = await _service.UpdateAsync(citaId, request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -513,10 +530,98 @@ public class CitaServiceTests
         _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, citaId)).ReturnsAsync(existingCita);
 
         // Act
-        var result = await _service.UpdateAsync(citaId, request, _clinicaId);
+        var result = await _service.UpdateAsync(citaId, request, _clinicaId, _userId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         _repoMock.Verify(r => r.UpdateAsync(It.IsAny<Cita>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_PacienteConOtroDoctor_SinFlagReasignacion_DeberiaFallar()
+    {
+        // Arrange — el paciente tiene un médico asignado distinto al doctor de la cita
+        // y no se envía el flag de reasignación (HU21)
+        var doctorAsignadoPaciente = Guid.NewGuid();
+        _pacienteServiceMock
+            .Setup(s => s.GetByIdAsync(_pacienteId, _clinicaId))
+            .ReturnsAsync(ServiceResult<PacienteResponseDto>.Success(new PacienteResponseDto
+            {
+                Id = _pacienteId,
+                ClinicaId = _clinicaId,
+                DoctorId = doctorAsignadoPaciente
+            }));
+
+        var request = new CitaRequestDto
+        {
+            PacienteId = _pacienteId,
+            DoctorId = _doctorId, // distinto al médico asignado del paciente
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
+            Estado = "agendada"
+        };
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ServiceErrorType.Validation);
+        result.Message.Should().Contain("médico asignado");
+        _repoMock.Verify(r => r.CreateAsync(It.IsAny<Cita>()), Times.Never);
+        _pacienteServiceMock.Verify(s => s.CambiarDoctorAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_PacienteConOtroDoctor_ConFlagReasignacion_DeberiaReasignarYCrear()
+    {
+        // Arrange — con el flag de reasignación se cambia el médico tratante
+        // del paciente y la cita se crea (HU21)
+        var doctorAsignadoPaciente = Guid.NewGuid();
+        _pacienteServiceMock
+            .Setup(s => s.GetByIdAsync(_pacienteId, _clinicaId))
+            .ReturnsAsync(ServiceResult<PacienteResponseDto>.Success(new PacienteResponseDto
+            {
+                Id = _pacienteId,
+                ClinicaId = _clinicaId,
+                DoctorId = doctorAsignadoPaciente
+            }));
+        _pacienteServiceMock
+            .Setup(s => s.CambiarDoctorAsync(_pacienteId, _doctorId, _clinicaId, _userId))
+            .ReturnsAsync(ServiceResult<bool>.Success(true));
+
+        var request = new CitaRequestDto
+        {
+            PacienteId = _pacienteId,
+            DoctorId = _doctorId,
+            FechaCita = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            HoraCita = new TimeOnly(9, 0, 0),
+            Estado = "agendada",
+            CambiarDoctorPaciente = true
+        };
+        var newId = Guid.NewGuid();
+        var createdCita = new Cita
+        {
+            Id = newId,
+            ClinicaId = _clinicaId,
+            PacienteId = _pacienteId,
+            DoctorId = _doctorId,
+            FechaCita = request.FechaCita,
+            HoraCita = request.HoraCita,
+            Estado = "agendada",
+            Activo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+        _repoMock.Setup(r => r.CreateAsync(It.IsAny<Cita>())).ReturnsAsync(newId);
+        _repoMock.Setup(r => r.GetByIdAsync(_clinicaId, newId)).ReturnsAsync(createdCita);
+
+        // Act
+        var result = await _service.CreateAsync(request, _clinicaId, _userId);
+
+        // Assert
+        _pacienteServiceMock.Verify(s => s.CambiarDoctorAsync(_pacienteId, _doctorId, _clinicaId, _userId), Times.Once);
+        result.IsSuccess.Should().BeTrue();
+        result.Data!.Id.Should().Be(newId);
+        _repoMock.Verify(r => r.CreateAsync(It.IsAny<Cita>()), Times.Once);
     }
 }

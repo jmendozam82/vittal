@@ -55,4 +55,11 @@ public class CitaRequestDto
     /// <summary>Notas internas de la cita.</summary>
     [StringLength(1000, ErrorMessage = "Las notas no pueden exceder 1000 caracteres.")]
     public string? Notas { get; set; }
+
+    /// <summary>
+    /// Indica si al asignar este doctor a la cita también se reasigna el médico
+    /// asignado del paciente (pacientes.doctor_id). Permitido solo cuando el DTO
+    /// lo envía el frontend al cambiar el médico tratante desde la Agenda.
+    /// </summary>
+    public bool CambiarDoctorPaciente { get; set; }
 }

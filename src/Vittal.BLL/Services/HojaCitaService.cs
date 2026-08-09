@@ -27,14 +27,18 @@ public class HojaCitaService : IHojaCitaService
 
     // ────────────────────────────────────────────────────────────────────────
     // 1. GetAllAsync — Lista hojas de cita activas
+    //    Si doctorId no es null (consulta de doctor), se filtra por el doctor
+    //    asignado al EXPEDIENTE (e.doctor_id) para que el doctor dueño del
+    //    paciente vea todo el historial del expediente (regla HU20/HUEST).
     // ────────────────────────────────────────────────────────────────────────
-    public async Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetAllAsync(Guid clinicaId)
+    public async Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
     {
         try
         {
-            _logger.LogInformation("Obteniendo hojas de cita de la clínica {ClinicaId}", clinicaId);
+            _logger.LogInformation("Obteniendo hojas de cita de la clínica {ClinicaId} (doctor: {DoctorId})",
+                clinicaId, doctorId?.ToString() ?? "todos");
 
-            var entities = await _repo.GetAllAsync(clinicaId);
+            var entities = await _repo.GetAllAsync(clinicaId, doctorId);
             var dtos = new List<HojaCitaResponseDto>();
             foreach (var entity in entities)
             {
@@ -53,13 +57,14 @@ public class HojaCitaService : IHojaCitaService
     // ────────────────────────────────────────────────────────────────────────
     // 2. GetByIdAsync — Detalle de una hoja de cita por ID
     // ────────────────────────────────────────────────────────────────────────
-    public async Task<ServiceResult<HojaCitaResponseDto>> GetByIdAsync(Guid clinicaId, Guid id)
+    public async Task<ServiceResult<HojaCitaResponseDto>> GetByIdAsync(Guid clinicaId, Guid id, Guid? doctorId = null)
     {
         try
         {
-            _logger.LogInformation("Buscando hoja de cita {Id} en clínica {ClinicaId}", id, clinicaId);
+            _logger.LogInformation("Buscando hoja de cita {Id} en clínica {ClinicaId} (doctor: {DoctorId})",
+                id, clinicaId, doctorId?.ToString() ?? "todos");
 
-            var entity = await _repo.GetByIdAsync(clinicaId, id);
+            var entity = await _repo.GetByIdAsync(clinicaId, id, doctorId);
             if (entity == null)
             {
                 return ServiceResult<HojaCitaResponseDto>.Failure(
@@ -79,13 +84,14 @@ public class HojaCitaService : IHojaCitaService
     // 3. GetByExpedienteIdAsync — Hojas de cita de un expediente
     // ────────────────────────────────────────────────────────────────────────
     public async Task<ServiceResult<IEnumerable<HojaCitaResponseDto>>> GetByExpedienteIdAsync(
-        Guid clinicaId, Guid expedienteId)
+        Guid clinicaId, Guid expedienteId, Guid? doctorId = null)
     {
         try
         {
-            _logger.LogInformation("Buscando hojas de cita del expediente {ExpedienteId}", expedienteId);
+            _logger.LogInformation("Buscando hojas de cita del expediente {ExpedienteId} (doctor: {DoctorId})",
+                expedienteId, doctorId?.ToString() ?? "todos");
 
-            var entities = await _repo.GetByExpedienteIdAsync(clinicaId, expedienteId);
+            var entities = await _repo.GetByExpedienteIdAsync(clinicaId, expedienteId, doctorId);
             var dtos = new List<HojaCitaResponseDto>();
             foreach (var entity in entities)
             {

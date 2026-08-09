@@ -56,7 +56,7 @@ public class CitasControllerTests
             new() { Id = Guid.NewGuid(), ClinicaId = _clinicaId, PacienteId = Guid.NewGuid(), DoctorId = Guid.NewGuid(), FechaCita = DateOnly.FromDateTime(DateTime.Today), HoraCita = new TimeOnly(10, 0), Estado = "agendada", PacienteNombre = "María López", DoctorNombre = "Dr. García" }
         };
         var serviceResult = ServiceResult<IEnumerable<CitaResponseDto>>.Success(citas);
-        _serviceMock.Setup(s => s.GetAllAsync(_clinicaId)).ReturnsAsync(serviceResult);
+        _serviceMock.Setup(s => s.GetAllAsync(_clinicaId, It.IsAny<Guid?>())).ReturnsAsync(serviceResult);
 
         // Act
         var actionResult = await _controller.GetAll();
@@ -195,7 +195,7 @@ public class CitasControllerTests
             DoctorNombre = "Dr. García"
         };
         var serviceResult = ServiceResult<CitaResponseDto>.Success(responseDto);
-        _serviceMock.Setup(s => s.UpdateAsync(citaId, request, _clinicaId)).ReturnsAsync(serviceResult);
+        _serviceMock.Setup(s => s.UpdateAsync(citaId, request, _clinicaId, It.IsAny<Guid>())).ReturnsAsync(serviceResult);
 
         // Act
         var actionResult = await _controller.Update(citaId, request);

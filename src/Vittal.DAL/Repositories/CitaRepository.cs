@@ -57,17 +57,20 @@ public class CitaRepository : ICitaRepository
 
     // ────────────────────────────────────────────────────────────────────
     // 1. GetAllAsync — Lista todas las citas activas de una clinica
+    //    Si doctorId viene, filtra solo por sus citas (c.doctor_id).
+    //    Recepción/prefiso (doctorId null) ven todas.
     // ────────────────────────────────────────────────────────────────────
-    public async Task<IEnumerable<Cita>> GetAllAsync(Guid clinicaId)
+    public async Task<IEnumerable<Cita>> GetAllAsync(Guid clinicaId, Guid? doctorId = null)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var sql = $@"
             SELECT {SelectColumns}
             {FromJoin}
             WHERE c.clinica_id = @ClinicaId AND c.activo = true
+              AND (@DoctorId IS NULL OR c.doctor_id = @DoctorId)
             ORDER BY c.fecha_cita DESC, c.hora_cita ASC";
 
-        return await connection.QueryAsync<Cita>(sql, new { ClinicaId = clinicaId });
+        return await connection.QueryAsync<Cita>(sql, new { ClinicaId = clinicaId, DoctorId = doctorId });
     }
 
     // ────────────────────────────────────────────────────────────────────

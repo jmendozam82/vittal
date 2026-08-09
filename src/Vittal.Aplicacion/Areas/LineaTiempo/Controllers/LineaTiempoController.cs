@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 using Vittal.Aplicacion.Helpers;
 
@@ -31,6 +32,9 @@ public class LineaTiempoController : Controller
     [HttpGet]
     public async Task<IActionResult> JsonTimelineDelDia([FromQuery] string? fecha, [FromQuery] string? doctorId)
     {
+        // Regla 6: un doctor solo ve su propia línea de tiempo (defensa en profundidad).
+        if (EsDoctor()) doctorId = UsuarioId().ToString();
+
         var queryParams = new List<string>();
         if (!string.IsNullOrEmpty(fecha)) queryParams.Add($"fecha={fecha}");
         if (!string.IsNullOrEmpty(doctorId)) queryParams.Add($"doctorId={doctorId}");
@@ -134,6 +138,16 @@ public class LineaTiempoController : Controller
     }
 
     // ========== Helpers ==========
+
+    /// <summary>Indica si el usuario autenticado tiene perfil de doctor.</summary>
+    private bool EsDoctor() => User.FindFirstValue("app_es_doctor") == "true";
+
+    /// <summary>Obtiene el usuario interno (NameIdentifier) del usuario autenticado.</summary>
+    private Guid UsuarioId()
+    {
+        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(v, out var id) ? id : Guid.Empty;
+    }
 
     private static Dictionary<string, object?>? ExtractDataObject(JsonElement? response)
     {

@@ -35,4 +35,7 @@ public interface IPacienteService
 
     /// <summary>Lista pacientes activos asignados a un doctor de la clínica.</summary>
     Task<ServiceResult<IEnumerable<PacienteResponseDto>>> GetByDoctorAsync(Guid clinicaId, Guid doctorId);
+
+    /// <summary>Reasigna el médico tratante de un paciente (pacientes.doctor_id).</summary>
+    Task<ServiceResult<bool>> CambiarDoctorAsync(Guid pacienteId, Guid doctorId, Guid clinicaId, Guid modificadoPor);
 }

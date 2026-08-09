@@ -107,14 +107,18 @@ public class ExpedienteService : IExpedienteService
 
     // ────────────────────────────────────────────────────────────────────────
     // 4. CreateAsync — Crea un nuevo expediente
+    //    SEGURIDAD (HU20): si el usuario autenticado es un doctor (doctorContexto),
+    //    el DoctorId del expediente proviene del contexto seguro y NO del DTO del
+    //    cliente. Esto evita que un doctor asigne el expediente de un paciente a
+    //    otra persona. Recepción/admin (doctorContexto null) sí usan el dto.DoctorId.
     // ────────────────────────────────────────────────────────────────────────
     public async Task<ServiceResult<ExpedienteResponseDto>> CreateAsync(
-        ExpedienteRequestDto dto, Guid clinicaId, Guid creadoPor)
+        ExpedienteRequestDto dto, Guid clinicaId, Guid creadoPor, Guid? doctorContexto = null)
     {
         try
         {
-            _logger.LogInformation("Creando expediente para paciente {PacienteId} en clínica {ClinicaId}",
-                dto.PacienteId, clinicaId);
+            _logger.LogInformation("Creando expediente para paciente {PacienteId} en clínica {ClinicaId} (doctorContexto: {DoctorContexto})",
+                dto.PacienteId, clinicaId, doctorContexto?.ToString() ?? "dto");
 
             // Validar que el paciente no tenga ya un expediente activo
             var existing = await _repo.GetByPacienteIdAsync(clinicaId, dto.PacienteId);
@@ -124,11 +128,16 @@ public class ExpedienteService : IExpedienteService
                     "El paciente ya tiene un expediente activo.", ServiceErrorType.Conflict);
             }
 
+            // SEGURIDAD: el DoctorId se toma del contexto autenticado cuando el
+            // creador es un doctor; el valor enviado por el cliente se ignora en
+            // ese caso (evita auto-asignación cruzada de expedientes).
+            var doctorId = doctorContexto ?? dto.DoctorId;
+
             var entity = new Expediente
             {
                 ClinicaId = clinicaId,
                 PacienteId = dto.PacienteId,
-                DoctorId = dto.DoctorId,
+                DoctorId = doctorId,
                 NotasGenerales = dto.NotasGenerales,
                 Activo = true,
                 FechaCreacion = DateTime.UtcNow
@@ -157,13 +166,17 @@ public class ExpedienteService : IExpedienteService
 
     // ────────────────────────────────────────────────────────────────────────
     // 5. UpdateAsync — Actualiza datos del expediente
+    //    SEGURIDAD (HU20): si el usuario autenticado es un doctor (doctorContexto),
+    //    el DoctorId se fija al doctor del contexto, ignorando el dto.DoctorId.
+    //    Recepción/admin (doctorContexto null) sí usan el dto.DoctorId.
     // ────────────────────────────────────────────────────────────────────────
     public async Task<ServiceResult<ExpedienteResponseDto>> UpdateAsync(
-        Guid id, ExpedienteRequestDto dto, Guid clinicaId)
+        Guid id, ExpedienteRequestDto dto, Guid clinicaId, Guid? doctorContexto = null)
     {
         try
         {
-            _logger.LogInformation("Actualizando expediente {Id} en clínica {ClinicaId}", id, clinicaId);
+            _logger.LogInformation("Actualizando expediente {Id} en clínica {ClinicaId} (doctorContexto: {DoctorContexto})",
+                id, clinicaId, doctorContexto?.ToString() ?? "dto");
 
             var existing = await _repo.GetByIdAsync(clinicaId, id);
             if (existing == null)
@@ -172,7 +185,18 @@ public class ExpedienteService : IExpedienteService
                     "Expediente no encontrado", ServiceErrorType.NotFound);
             }
 
-            existing.DoctorId = dto.DoctorId;
+            // SEGURIDAD: si quien actualiza es un doctor, el DoctorId del expediente
+            // es el del contexto autenticado; el valor del DTO del cliente se ignora
+            // para evitar que un doctor reasigne el expediente a otra persona.
+            if (doctorContexto.HasValue)
+            {
+                existing.DoctorId = doctorContexto.Value;
+            }
+            else
+            {
+                existing.DoctorId = dto.DoctorId;
+            }
+
             existing.NotasGenerales = dto.NotasGenerales;
             existing.FechaModificacion = DateTime.UtcNow;
 
