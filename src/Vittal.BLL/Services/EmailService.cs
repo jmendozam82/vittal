@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Sockets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Vittal.BLL.Interfaces;
@@ -68,20 +69,39 @@ public class EmailService : IEmailService
             message.Body = htmlBody;
             message.IsBodyHtml = true;
 
-            using var client = new SmtpClient(host, port)
+            // Reintento ante fallos transitorios de red (cold-start del contenedor
+            // en Render: SocketException 101 "Network is unreachable")
+            var maxAttempts = 3;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                EnableSsl = enableSsl,
-                Credentials = new NetworkCredential(username, password),
-                Timeout = 30000 // 30 segundos
-            };
+                try
+                {
+                    using var client = new SmtpClient(host, port)
+                    {
+                        EnableSsl = enableSsl,
+                        Credentials = new NetworkCredential(username, password),
+                        Timeout = 30000 // 30 segundos
+                    };
 
-            await client.SendMailAsync(message);
+                    await client.SendMailAsync(message);
 
-            _logger.LogInformation(
-                "Correo enviado exitosamente a {ToEmail} — Asunto: {Subject}",
-                toEmail, subject);
+                    _logger.LogInformation(
+                        "Correo enviado exitosamente a {ToEmail} — Asunto: {Subject}",
+                        toEmail, subject);
 
-            return true;
+                    return true;
+                }
+                catch (SmtpException ex) when (attempt < maxAttempts &&
+                    (ex.InnerException is SocketException { SocketErrorCode: SocketError.NetworkUnreachable or SocketError.TimedOut or SocketError.ConnectionReset or SocketError.TryAgain }))
+                {
+                    _logger.LogWarning(
+                        "Fallo SMTP transitorio (intento {Attempt}/{Max}) a {ToEmail}: {Message}",
+                        attempt, maxAttempts, toEmail, ex.Message);
+                    await Task.Delay(TimeSpan.FromSeconds(1 * attempt));
+                }
+            }
+
+            return false;
         }
         catch (SmtpException ex)
         {
