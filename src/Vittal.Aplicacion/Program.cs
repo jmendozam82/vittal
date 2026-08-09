@@ -37,6 +37,8 @@ builder.Services.AddHttpClient("VittalApi", (sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     client.BaseAddress = new Uri(config["VittalApi:BaseUrl"] ?? "http://localhost:5089");
+    // 180s: permite el cold start de la API en Render free tier
+    client.Timeout = TimeSpan.FromSeconds(180);
 }).ConfigurePrimaryHttpMessageHandler(() =>
 {
     return new HttpClientHandler

@@ -90,7 +90,31 @@ public class LandingController : Controller
             var json = JsonSerializer.Serialize(dto);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("/api/ContactoLanding", content);
+            // Reintento ante cold start de la API en Render free tier
+            // (HttpClient.Timeout puede vencer mientras la API "despierta")
+            HttpResponseMessage? response = null;
+            var maxAttempts = 3;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    response = await client.PostAsync("/api/ContactoLanding", content);
+                    break;
+                }
+                catch (TaskCanceledException) when (attempt < maxAttempts)
+                {
+                    _logger.LogWarning(
+                        "Timeout al contactar API (intento {Attempt}/{Max}): cold start en Render",
+                        attempt, maxAttempts);
+                    await Task.Delay(TimeSpan.FromSeconds(3 * attempt));
+                }
+            }
+
+            if (response is null)
+            {
+                throw new HttpRequestException("No se obtuvo respuesta de la API de contacto.");
+            }
+
             var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
