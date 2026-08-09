@@ -15,6 +15,7 @@ namespace Vittal.BLL.Tests.Services;
 public class PacienteServiceTests
 {
     private readonly Mock<IPacienteRepository> _repoMock;
+    private readonly Mock<IExpedienteRepository> _expedienteRepoMock;
     private readonly Mock<ILogger<PacienteService>> _loggerMock;
     private readonly Mock<IValidator<PacienteRequestDto>> _validatorMock;
     private readonly PacienteService _service;
@@ -25,11 +26,12 @@ public class PacienteServiceTests
     public PacienteServiceTests()
     {
         _repoMock = new Mock<IPacienteRepository>();
+        _expedienteRepoMock = new Mock<IExpedienteRepository>();
         _loggerMock = new Mock<ILogger<PacienteService>>();
         _validatorMock = new Mock<IValidator<PacienteRequestDto>>();
         _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<PacienteRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
-        _service = new PacienteService(_repoMock.Object, _loggerMock.Object, _validatorMock.Object);
+        _service = new PacienteService(_repoMock.Object, _expedienteRepoMock.Object, _loggerMock.Object, _validatorMock.Object);
     }
 
     [Fact]

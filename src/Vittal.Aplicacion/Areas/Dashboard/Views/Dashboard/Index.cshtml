@@ -38,22 +38,25 @@
 
 <!-- ── KPIs ────────────────────────────────────────────────────── -->
 <div class="row g-3 mb-4" id="kpiContainer">
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md">
+        <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
+    </div>
+    <div class="col-6 col-md">
         <div class="kpi-card skeleton-pulse" style="height:130px;"></div>
     </div>
 </div>
@@ -285,7 +288,7 @@
                         trendText: 'Conteo del día'
                     },
                     {
-                        label: 'Citas Pendientes',
+                        label: 'Pendientes',
                         value: data.citasPendientes ?? 0,
                         icon: 'bi-clock',
                         color: 'warning',
@@ -321,7 +324,16 @@
                         trendText: (data.citasCanceladas || 0) > 0 ? 'Del día' : 'Sin cancelaciones'
                     },
                     {
-                        label: 'Tiempo Promedio',
+                        label: 'Atendidas',
+                        value: data.citasAtendidas ?? 0,
+                        icon: 'bi-check2-circle',
+                        color: 'success',
+                        bg: '#E8F8F0',
+                        trend: (data.citasAtendidas || 0) > 0 ? 'up' : 'stable',
+                        trendText: (data.citasAtendidas || 0) > 0 ? 'Completadas' : 'Sin atender'
+                    },
+                    {
+                        label: 'Tiempo Prom.',
                         value: Math.round(data.tiempoPromedioEspera ?? 0) + ' min',
                         icon: 'bi-speedometer2',
                         color: 'success',
@@ -339,7 +351,7 @@
                     const trendClass = kpi.trend === 'up' ? 'up' : kpi.trend === 'down' ? 'down' : 'stable';
                     const trendIcon = kpi.trend === 'up' ? 'bi-arrow-up' : kpi.trend === 'down' ? 'bi-arrow-down' : 'bi-dash';
                     return `
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="kpi-card">
                                 <div class="d-flex align-items-center gap-3 mb-2">
                                     <div class="kpi-icon" style="background:${kpi.bg};color:var(--vittal-${kpi.color})">
@@ -580,41 +592,48 @@
                 const espera = data.pacientesEnEspera ?? 0;
                 const atencion = data.pacientesEnAtencion ?? 0;
                 const canceladas = data.citasCanceladas ?? 0;
+                const atendidas = data.citasAtendidas ?? 0;
                 const tiempo = Math.round(data.tiempoPromedioEspera ?? 0);
 
                 DOM.resumenContainer.innerHTML = `
                     <div class="row g-2">
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-primary ps-2">
                                 <div class="text-muted small text-uppercase">Pacientes Hoy</div>
                                 <div class="fs-4 fw-bold">${pacientes}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-warning ps-2">
                                 <div class="text-muted small text-uppercase">Pendientes</div>
                                 <div class="fs-4 fw-bold">${pendientes}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-info ps-2">
                                 <div class="text-muted small text-uppercase">En Espera</div>
                                 <div class="fs-4 fw-bold">${espera}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-primary ps-2">
                                 <div class="text-muted small text-uppercase">En Atención</div>
                                 <div class="fs-4 fw-bold">${atencion}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-secondary ps-2">
                                 <div class="text-muted small text-uppercase">Canceladas</div>
                                 <div class="fs-4 fw-bold">${canceladas}</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-6 col-md">
+                            <div class="border-start border-4 border-success ps-2">
+                                <div class="text-muted small text-uppercase">Atendidas</div>
+                                <div class="fs-4 fw-bold">${atendidas}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md">
                             <div class="border-start border-4 border-success ps-2">
                                 <div class="text-muted small text-uppercase">Tiempo Prom.</div>
                                 <div class="fs-4 fw-bold">${tiempo} <small class="fs-6 text-muted fw-normal">min</small></div>

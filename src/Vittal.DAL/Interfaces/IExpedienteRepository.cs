@@ -31,6 +31,14 @@ public interface IExpedienteRepository : IPaginatedRepository<Expediente>
     /// <summary>Actualiza un expediente existente.</summary>
     Task<bool> UpdateAsync(Expediente entity);
 
+    /// <summary>
+    /// Reasigna el doctor del expediente (expedientes.doctor_id).
+    /// Se invoca cuando se reasigna el médico tratante del paciente (HU21)
+    /// para mantener el expediente sincronizado con el nuevo doctor asignado.
+    /// Solo actualiza doctor_id y fecha_modificacion; no toca notas ni estado activo.
+    /// </summary>
+    Task<bool> CambiarDoctorAsync(Guid clinicaId, Guid expedienteId, Guid doctorId);
+
     /// <summary>Desactiva un expediente (activo = false). No elimina.</summary>
     Task<bool> DeactivateAsync(Guid clinicaId, Guid id);
 }

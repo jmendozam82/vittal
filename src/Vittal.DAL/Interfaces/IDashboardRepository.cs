@@ -27,6 +27,9 @@ public interface IDashboardRepository
     /// <summary>Obtiene la cantidad de citas canceladas (estado = cancelada) en una fecha.</summary>
     Task<int> GetCitasCanceladasAsync(Guid clinicaId, DateTime fecha);
 
+    /// <summary>Obtiene la cantidad de citas atendidas (estado = atendida) en una fecha.</summary>
+    Task<int> GetCitasAtendidasAsync(Guid clinicaId, DateTime fecha);
+
     /// <summary>Obtiene el tiempo promedio de espera en minutos para una fecha específica.</summary>
     Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha);
 

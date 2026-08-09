@@ -18,15 +18,18 @@ namespace Vittal.BLL.Services;
 public class PacienteService : IPacienteService
 {
     private readonly IPacienteRepository _repo;
+    private readonly IExpedienteRepository _expedienteRepo;
     private readonly ILogger<PacienteService> _logger;
     private readonly IValidator<PacienteRequestDto> _validator;
 
     public PacienteService(
         IPacienteRepository repo,
+        IExpedienteRepository expedienteRepo,
         ILogger<PacienteService> logger,
         IValidator<PacienteRequestDto> validator)
     {
         _repo = repo;
+        _expedienteRepo = expedienteRepo;
         _logger = logger;
         _validator = validator;
     }
@@ -446,6 +449,21 @@ public class PacienteService : IPacienteService
             {
                 return ServiceResult<bool>.Failure(
                     "No se pudo cambiar el médico asignado del paciente.", ServiceErrorType.InternalError);
+            }
+
+            // ── Propagación: mantener el expediente sincronizado con el nuevo médico (HU21) ──
+            // Al reasignar el médico tratante del paciente, el expediente activo debe quedar
+            // bajo el nuevo doctor; de lo contrario el doctor asignado no vería el historial.
+            var expediente = await _expedienteRepo.GetByPacienteIdAsync(clinicaId, pacienteId);
+            if (expediente != null && expediente.DoctorId != doctorId)
+            {
+                var expedienteOk = await _expedienteRepo.CambiarDoctorAsync(clinicaId, expediente.Id, doctorId);
+                if (!expedienteOk)
+                {
+                    _logger.LogWarning(
+                        "Paciente {PacienteId} reasignado a doctor {DoctorId} pero NO se actualizó expediente {ExpedienteId}",
+                        pacienteId, doctorId, expediente.Id);
+                }
             }
 
             return ServiceResult<bool>.Success(true, "Médico asignado del paciente actualizado exitosamente.");

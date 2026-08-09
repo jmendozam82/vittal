@@ -156,6 +156,32 @@ public class DashboardRepository : IDashboardRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // 3b-2. GetCitasAtendidasAsync — Citas atendidas de una fecha
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<int> GetCitasAtendidasAsync(Guid clinicaId, DateTime fecha)
+    {
+        const string sql = @"
+            SELECT COUNT(*) FROM public.citas
+            WHERE clinica_id = @ClinicaId
+              AND fecha_cita = @Fecha
+              AND estado = 'atendida'
+              AND activo = true";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(sql,
+                new { ClinicaId = clinicaId, Fecha = fecha.Date });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al obtener citas atendidas de clínica {ClinicaId}", clinicaId);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // 4. GetTiempoPromedioEsperaAsync — Tiempo promedio en minutos
     // ────────────────────────────────────────────────────────────────────
     public async Task<double> GetTiempoPromedioEsperaAsync(Guid clinicaId, DateTime fecha)

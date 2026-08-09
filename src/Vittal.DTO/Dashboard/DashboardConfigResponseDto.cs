@@ -38,6 +38,9 @@ public class DashboardConfigResponseDto
     /// <summary>Cantidad de citas canceladas del día (estado = cancelada).</summary>
     public int CitasCanceladas { get; set; }
 
+    /// <summary>Cantidad de citas atendidas del día (estado = atendida).</summary>
+    public int CitasAtendidas { get; set; }
+
     /// <summary>Tiempo promedio de espera en minutos.</summary>
     public double TiempoPromedioEspera { get; set; }
 

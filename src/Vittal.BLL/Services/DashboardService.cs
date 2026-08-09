@@ -147,6 +147,7 @@ public class DashboardService : IDashboardService
             Task<int>? pacientesEnEsperaTask = null;
             Task<int>? pacientesEnAtencionTask = null;
             Task<int>? citasCanceladasTask = null;
+            Task<int>? citasAtendidasTask = null;
             Task<double>? tiempoPromedioTask = null;
             Task<IEnumerable<DashboardCitaPorHoraDto>>? citasPorHoraTask = null;
             Task<IEnumerable<DashboardCitaPorMedicoDto>>? citasPorMedicoTask = null;
@@ -159,6 +160,8 @@ public class DashboardService : IDashboardService
                 citasPendientesTask = _dashboardRepository.GetCitasPendientesAsync(clinicaId, fecha);
                 // El total de canceladas del día acompaña el conteo de citas del día.
                 citasCanceladasTask = _dashboardRepository.GetCitasCanceladasAsync(clinicaId, fecha);
+                // Las citas atendidas del día complementan el resumen (resuelto/completado).
+                citasAtendidasTask = _dashboardRepository.GetCitasAtendidasAsync(clinicaId, fecha);
             }
 
             if (dashboardData.MostrarPacientesEnEspera)
@@ -183,6 +186,7 @@ public class DashboardService : IDashboardService
             if (pacientesEnEsperaTask != null) dashboardData.PacientesEnEspera = await pacientesEnEsperaTask;
             if (pacientesEnAtencionTask != null) dashboardData.PacientesEnAtencion = await pacientesEnAtencionTask;
             if (citasCanceladasTask != null) dashboardData.CitasCanceladas = await citasCanceladasTask;
+            if (citasAtendidasTask != null) dashboardData.CitasAtendidas = await citasAtendidasTask;
             if (tiempoPromedioTask != null) dashboardData.TiempoPromedioEspera = await tiempoPromedioTask;
             if (citasPorHoraTask != null) dashboardData.CitasPorHora = (await citasPorHoraTask).ToList();
             if (citasPorMedicoTask != null) dashboardData.CitasPorMedico = (await citasPorMedicoTask).ToList();

@@ -148,6 +148,37 @@ public class ExpedienteRepository : IExpedienteRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // 5b. CambiarDoctorAsync — Reasigna el doctor del expediente (HU21)
+    // ────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Reasigna el doctor del expediente (expedientes.doctor_id) sin tocar
+    /// notas ni el estado activo. Se invoca cuando se reasigna el médico
+    /// tratante del paciente para mantener el expediente sincronizado con
+    /// el nuevo doctor asignado.
+    /// </summary>
+    /// <param name="clinicaId">Identificador de la clínica (aislamiento de tenant).</param>
+    /// <param name="expedienteId">Identificador del expediente.</param>
+    /// <param name="doctorId">Nuevo identificador del doctor.</param>
+    /// <returns>true si se actualizó una fila; false si no existe.</returns>
+    public async Task<bool> CambiarDoctorAsync(Guid clinicaId, Guid expedienteId, Guid doctorId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var sql = @"
+            UPDATE public.expedientes
+            SET doctor_id = @DoctorId,
+                fecha_modificacion = NOW()
+            WHERE id = @Id AND clinica_id = @ClinicaId AND activo = true";
+
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            Id = expedienteId,
+            ClinicaId = clinicaId,
+            DoctorId = doctorId
+        });
+        return rowsAffected > 0;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // 7. GetAllPaginatedAsync — Página de expedientes con búsqueda ILIKE
     // ────────────────────────────────────────────────────────────────────
     public async Task<PaginatedResultDto<Expediente>> GetAllPaginatedAsync(
