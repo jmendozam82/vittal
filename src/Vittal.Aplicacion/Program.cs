@@ -82,6 +82,13 @@ app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Home/Dashboard del sistema en ruta explícita. NO usar la raíz "/" porque
+// ahí vive la Landing. Los redirects post-login deben apuntar a /home.
+app.MapControllerRoute(
+    name: "home",
+    pattern: "home",
+    defaults: new { controller = "Home", action = "Index", area = "" });
+
 // Landing page como página de inicio (marketing). Los usuarios autenticados
 // aterrizan en Home/Index vía redirect post-login.
 app.MapControllerRoute(

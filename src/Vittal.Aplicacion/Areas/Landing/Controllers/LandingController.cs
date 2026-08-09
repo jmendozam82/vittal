@@ -29,6 +29,11 @@ public class LandingController : Controller
     /// </summary>
     public IActionResult Index()
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return Redirect("/home");
+        }
+
         ViewData["Title"] = "Software de Gestión Clínica Inteligente";
         ViewData["MetaDescription"] = "Vittal es el software de gestión clínica que centraliza citas, expedientes, diagnósticos y más. Diseñado para clínicas médicas modernas.";
         ViewData["MetaKeywords"] = "gestión clínica, software médico, expedientes electrónicos, agenda médica, citas online";

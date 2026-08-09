@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -28,7 +28,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "Home", new { area = "" });
+                return Redirect("/home");
             }
 
             ViewData["ReturnUrl"] = returnUrl;
@@ -50,7 +50,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                 if (!ModelState.IsValid)
                 {
                     var errors = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                    _logger.LogWarning("ModelState inválido: {Errors}", errors);
+                    _logger.LogWarning("ModelState inv�lido: {Errors}", errors);
                     return View(model);
                 }
 
@@ -118,12 +118,12 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                     HttpContext.Session.SetString("AccessToken", user.AccessToken);
                     HttpContext.Session.SetString("ClinicaId", user.ClinicaId.ToString());
 
-                    _logger.LogInformation("Usuario {Email} inició sesión correctamente. JWT guardado en cookie y session.", user.Email);
+                    _logger.LogInformation("Usuario {Email} inici� sesi�n correctamente. JWT guardado en cookie y session.", user.Email);
 
-                    return RedirectToAction("Index", "Home", new { area = "" });
+                    return Redirect("/home");
                 }
 
-                var errorMsg = errorMessage ?? response?.Message ?? "Credenciales inválidas.";
+                var errorMsg = errorMessage ?? response?.Message ?? "Credenciales inv�lidas.";
                 _logger.LogWarning("Login fallido para {Email}: {Error}", model.Email, errorMsg);
                 ModelState.AddModelError(string.Empty, errorMsg);
                 ViewData["LoginError"] = errorMsg;
@@ -133,7 +133,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error inesperado durante el login para {Email}", model.Email);
-                var errMsg = "Ocurrió un error inesperado. Intente nuevamente.";
+                var errMsg = "Ocurri� un error inesperado. Intente nuevamente.";
                 ModelState.AddModelError(string.Empty, errMsg);
                 ViewData["LoginError"] = errMsg;
                 return View(model);
@@ -151,9 +151,9 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
             return RedirectToAction("Login");
         }
 
-        // ────────────────────────────────────────────────────────────────────
-        // Forgot Password — Notifica al admin de la clínica
-        // ────────────────────────────────────────────────────────────────────
+        // --------------------------------------------------------------------
+        // Forgot Password � Notifica al admin de la cl�nica
+        // --------------------------------------------------------------------
 
         [HttpGet]
         public IActionResult ForgotPassword()
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                     return View(model);
                 }
 
-                _logger.LogInformation("Solicitud de recuperación de contraseña para email: {Email}", model.Email);
+                _logger.LogInformation("Solicitud de recuperaci�n de contrase�a para email: {Email}", model.Email);
 
                 // Llamar a la API (no al BLL directamente) para mantener la arquitectura N-capas
                 var (success, response, errorMessage) = await _apiClient.PostAnonymousAsync<ApiResponse>(
@@ -181,7 +181,7 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
 
                 if (success && response != null)
                 {
-                    _logger.LogInformation("API ForgotPassword respondió exitosamente para {Email}: {Message}",
+                    _logger.LogInformation("API ForgotPassword respondi� exitosamente para {Email}: {Message}",
                         model.Email, response.Message);
                 }
                 else
@@ -190,13 +190,13 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         errorMessage ?? response?.Message ?? "unknown error", model.Email);
                 }
 
-                // Siempre mostrar confirmación (por seguridad, no revelar si el email existe)
+                // Siempre mostrar confirmaci�n (por seguridad, no revelar si el email existe)
                 return RedirectToAction(nameof(ForgotPasswordConfirmation));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error inesperado en ForgotPassword para {Email}", model.Email);
-                // Redirigir a confirmación igualmente (no revelar errores)
+                // Redirigir a confirmaci�n igualmente (no revelar errores)
                 return RedirectToAction(nameof(ForgotPasswordConfirmation));
             }
         }
