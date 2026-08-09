@@ -196,9 +196,9 @@ builder.Services.AddRateLimiter(options =>
             $"auth_{context.Connection.RemoteIpAddress}",
             _ => new TokenBucketRateLimiterOptions
             {
-                TokenLimit = 5,
+                TokenLimit = 100,
                 ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                TokensPerPeriod = 5,
+                TokensPerPeriod = 100,
                 AutoReplenishment = true
             });
     });
