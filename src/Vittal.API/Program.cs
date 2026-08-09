@@ -192,13 +192,20 @@ builder.Services.AddRateLimiter(options =>
     });
     options.AddPolicy("auth", context =>
     {
+        // Partition by REAL client IP (forwarded by the web app). Behind Render's
+        // proxy RemoteIpAddress is the container's / shared, so without this the
+        // bucket is shared across ALL users and gets exhausted → 429 for everyone.
+        var clientIp = context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim();
+        if (string.IsNullOrWhiteSpace(clientIp))
+            clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
         return RateLimitPartition.GetTokenBucketLimiter(
-            $"auth_{context.Connection.RemoteIpAddress}",
+            $"auth_{clientIp}",
             _ => new TokenBucketRateLimiterOptions
             {
-                TokenLimit = 100,
+                TokenLimit = 30,
                 ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                TokensPerPeriod = 100,
+                TokensPerPeriod = 30,
                 AutoReplenishment = true
             });
     });

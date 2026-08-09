@@ -45,10 +45,11 @@ builder.Services.AddHttpClient("VittalApi", (sp, client) =>
     {
         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
     };
-});
+}).AddHttpMessageHandler<Vittal.Aplicacion.Helpers.ClientIpForwardingHandler>();
 
 // Register application helpers
 builder.Services.AddScoped<Vittal.Aplicacion.Helpers.ApiClientHelper>();
+builder.Services.AddTransient<Vittal.Aplicacion.Helpers.ClientIpForwardingHandler>();
 
 // Register Vittal BLL + DAL services (Repository, Service, FluentValidation)
 builder.Services.AddVittalServices(builder.Configuration);
