@@ -27,8 +27,8 @@ public class EmailService : IEmailService
     {
         try
         {
-            var adminEmail = _configuration["Smtp:AdminEmail"]
-                ?? throw new InvalidOperationException("Smtp:AdminEmail no está configurado.");
+            var adminEmail = GetConfig("Smtp:AdminEmail", "SMTP_ADMIN_EMAIL")
+                ?? throw new InvalidOperationException("SMTP_ADMIN_EMAIL no está configurado.");
 
             var subject = $"🔔 Nuevo contacto desde la Landing — {contacto.NombreCompleto}";
 
