@@ -82,6 +82,13 @@ app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Landing page como página de inicio (marketing). Los usuarios autenticados
+// aterrizan en Home/Index vía redirect post-login.
+app.MapControllerRoute(
+    name: "landing",
+    pattern: "",
+    defaults: new { controller = "Landing", action = "Index", area = "Landing" });
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
