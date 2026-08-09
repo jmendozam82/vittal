@@ -21,14 +21,18 @@ using Vittal.IOC;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Kestrel: HTTPS para WSS (WebSocket Secure) ─────────────────────
-// En desarrollo usa el dev-cert; en producción configurar un cert real.
-builder.WebHost.ConfigureKestrel(options =>
+// Solo en Development (usa el dev-cert). En producción el contenedor
+// respeta ASPNETCORE_URLS / el puerto de Render y el TLS lo termina el proxy.
+if (builder.Environment.IsDevelopment())
 {
-    options.ListenLocalhost(5089, listenOptions =>
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        listenOptions.UseHttps(); // Dev cert auto-managed by .NET
+        options.ListenLocalhost(5089, listenOptions =>
+        {
+            listenOptions.UseHttps(); // Dev cert auto-managed by .NET
+        });
     });
-});
+}
 
 // Add services to the container.
 builder.Services.AddControllers()
