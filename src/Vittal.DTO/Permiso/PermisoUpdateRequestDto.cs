@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Vittal.DTO.Permiso;
 
 /// <summary>
-/// Request DTO para actualizar los permisos de un perfil sobre un módulo específico.
+/// Request DTO para actualizar los permisos de un perfil sobre un mÃ³dulo especÃ­fico.
 /// </summary>
 public class PermisoItemUpdateDto
 {

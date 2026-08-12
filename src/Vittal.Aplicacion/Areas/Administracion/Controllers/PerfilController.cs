@@ -110,7 +110,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los perfiles — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los perfiles â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -140,7 +140,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-        /// <summary>Crea un nuevo perfil — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo perfil â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -178,7 +178,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-        /// <summary>Actualiza un perfil — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un perfil â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -216,7 +216,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
         }
 
-        /// <summary>Desactiva un perfil — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un perfil â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 

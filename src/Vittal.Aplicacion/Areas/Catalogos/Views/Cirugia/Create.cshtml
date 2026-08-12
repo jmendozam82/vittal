@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Nueva Cirugía";
+    ViewData["Title"] = "Nueva CirugÃ­a";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Cirugia'>Cirugías</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Cirugia'>CirugÃ­as</a></li>" +
 
-                             "<li class='breadcrumb-item active'>Nueva Cirugía</li>";
+                             "<li class='breadcrumb-item active'>Nueva CirugÃ­a</li>";
 
 }
 
@@ -18,7 +18,7 @@
 
         <h5 class="mb-0">
 
-            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nueva Cirugía
+            <i class="bi bi-plus-circle me-2 text-primary"></i>Registrar Nueva CirugÃ­a
 
         </h5>
 
@@ -28,11 +28,11 @@
 
         <form id="formCirugia" novalidate>
 
-            <!-- Datos de la cirugía -->
+            <!-- Datos de la cirugÃ­a -->
 
             <h6 class="text-primary border-bottom pb-2 mb-3">
 
-                <i class="bi bi-info-circle me-2"></i>Datos de la Cirugía
+                <i class="bi bi-info-circle me-2"></i>Datos de la CirugÃ­a
 
             </h6>
 
@@ -42,15 +42,15 @@
 
                 <div class="col-md-6">
 
-                    <label for="tipoCirugiaId" class="form-label fw-semibold">Tipo de Cirugía <span class="text-danger">*</span></label>
+                    <label for="tipoCirugiaId" class="form-label fw-semibold">Tipo de CirugÃ­a <span class="text-danger">*</span></label>
 
                     <select class="form-select" id="tipoCirugiaId" name="tipoCirugiaId" required>
 
-                        <option value="">-- Seleccione un tipo de cirugía --</option>
+                        <option value="">-- Seleccione un tipo de cirugÃ­a --</option>
 
                     </select>
 
-                    <div class="invalid-feedback">Debe seleccionar un tipo de cirugía.</div>
+                    <div class="invalid-feedback">Debe seleccionar un tipo de cirugÃ­a.</div>
 
                 </div>
 
@@ -60,9 +60,9 @@
 
                     <input type="text" class="form-control" id="nombre" name="nombre"
 
-                           required maxlength="255" placeholder="Ingrese el nombre de la cirugía">
+                           required maxlength="255" placeholder="Ingrese el nombre de la cirugÃ­a">
 
-                    <div class="invalid-feedback">El nombre de la cirugía es obligatorio.</div>
+                    <div class="invalid-feedback">El nombre de la cirugÃ­a es obligatorio.</div>
 
                 </div>
 
@@ -74,11 +74,11 @@
 
                 <div class="col-md-12">
 
-                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                    <label for="descripcion" class="form-label fw-semibold">DescripciÃ³n</label>
 
                     <textarea class="form-control" id="descripcion" name="descripcion"
 
-                              rows="3" placeholder="Descripción de la cirugía (opcional)"></textarea>
+                              rows="3" placeholder="DescripciÃ³n de la cirugÃ­a (opcional)"></textarea>
 
                 </div>
 
@@ -98,7 +98,7 @@
 
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
 
-                    <i class="bi bi-floppy me-1"></i> Guardar Cirugía
+                    <i class="bi bi-floppy me-1"></i> Guardar CirugÃ­a
 
                 </button>
 
@@ -116,7 +116,7 @@
 
 <script>
 
-    // Cargar tipos de cirugía al iniciar
+    // Cargar tipos de cirugÃ­a al iniciar
 
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -140,7 +140,7 @@
 
             if (!res.ok) {
 
-                console.error('Error al cargar tipos de cirugía');
+                console.error('Error al cargar tipos de cirugÃ­a');
 
                 return;
 
@@ -172,7 +172,7 @@
 
         } catch (err) {
 
-            console.error('Error al cargar tipos de cirugía:', err);
+            console.error('Error al cargar tipos de cirugÃ­a:', err);
 
         }
 
@@ -188,7 +188,7 @@
 
 
 
-        // Validación del lado cliente
+        // ValidaciÃ³n del lado cliente
 
         const form = this;
 
@@ -244,7 +244,7 @@
 
             if (res.ok && json.success) {
 
-                showToast('success', json.message || 'Cirugía creada exitosamente.');
+                showToast('success', json.message || 'CirugÃ­a creada exitosamente.');
 
                 setTimeout(() => {
 
@@ -254,7 +254,7 @@
 
             } else {
 
-                showToast('danger', json.message || 'Error al crear la cirugía.');
+                showToast('danger', json.message || 'Error al crear la cirugÃ­a.');
 
                 btn.disabled = false;
 
@@ -264,7 +264,7 @@
 
         } catch (err) {
 
-            showToast('danger', 'Error de conexión al guardar.');
+            showToast('danger', 'Error de conexiÃ³n al guardar.');
 
             btn.disabled = false;
 

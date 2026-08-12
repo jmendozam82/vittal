@@ -94,7 +94,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                TempData["Error"] = "Recomendación no encontrada.";
+                TempData["Error"] = "RecomendaciÃ³n no encontrada.";
 
                 return RedirectToAction("Index");
 
@@ -108,7 +108,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todas las recomendaciones — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todas las recomendaciones â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -136,7 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca recomendaciones por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca recomendaciones por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea una nueva recomendación — para fetch() desde la vista Create</summary>
+        /// <summary>Crea una nueva recomendaciÃ³n â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -184,7 +184,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la recomendación es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la recomendaciÃ³n es obligatorio." });
 
             }
 
@@ -208,17 +208,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear recomendación" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear recomendaciÃ³n" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Recomendación creada exitosamente" });
+            return Ok(new { success = true, data = data, message = "RecomendaciÃ³n creada exitosamente" });
 
         }
 
-        /// <summary>Actualiza una recomendación — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza una recomendaciÃ³n â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -230,7 +230,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la recomendación es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la recomendaciÃ³n es obligatorio." });
 
             }
 
@@ -254,17 +254,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar recomendación" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar recomendaciÃ³n" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Recomendación actualizada exitosamente" });
+            return Ok(new { success = true, data = data, message = "RecomendaciÃ³n actualizada exitosamente" });
 
         }
 
-        /// <summary>Desactiva una recomendación — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva una recomendaciÃ³n â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -282,15 +282,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar recomendación" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar recomendaciÃ³n" });
 
             }
 
-            return Ok(new { success = true, message = "Recomendación desactivada exitosamente" });
+            return Ok(new { success = true, message = "RecomendaciÃ³n desactivada exitosamente" });
 
         }
 
-        /// <summary>Reactiva una recomendación — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva una recomendaciÃ³n â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -304,11 +304,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar recomendación" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar recomendaciÃ³n" });
 
             }
 
-            return Ok(new { success = true, message = "Recomendación reactivada exitosamente" });
+            return Ok(new { success = true, message = "RecomendaciÃ³n reactivada exitosamente" });
 
         }
 

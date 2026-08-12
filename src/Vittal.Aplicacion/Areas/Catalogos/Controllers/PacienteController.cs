@@ -132,7 +132,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los pacientes � para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los pacientes — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -160,7 +160,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca pacientes por t�rmino � para fetch() desde la vista Index</summary>
+        /// <summary>Busca pacientes por término — para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -194,7 +194,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Obtiene doctores para el dropdown � para fetch() desde Create/Edit</summary>
+        /// <summary>Obtiene doctores para el dropdown — para fetch() desde Create/Edit</summary>
 
         /// <summary>Obtiene doctores para el dropdown — para fetch() desde Create/Edit.
         /// Usa api/agenda/catalogos (permiso "agenda") en lugar de api/Usuarios
@@ -254,7 +254,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo paciente � para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo paciente — para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -298,7 +298,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El n�mero de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
@@ -358,7 +358,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Actualiza un paciente � para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un paciente — para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -394,7 +394,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El n�mero de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
@@ -454,7 +454,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Desactiva un paciente � para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un paciente — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -480,7 +480,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Reactiva un paciente � para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un paciente — para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 

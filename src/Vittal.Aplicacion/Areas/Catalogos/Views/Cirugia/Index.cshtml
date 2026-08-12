@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Gestión de Cirugías";
+    ViewData["Title"] = "GestiÃ³n de CirugÃ­as";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'>Catálogos</li>" +
+                             "<li class='breadcrumb-item'>CatÃ¡logos</li>" +
 
-                             "<li class='breadcrumb-item active'>Cirugías</li>";
+                             "<li class='breadcrumb-item active'>CirugÃ­as</li>";
 
     var jsonListarUrl = Url.Action("JsonListar");
 
@@ -21,7 +21,7 @@
 
     <a asp-action="Create" class="btn btn-primary btn-sm">
 
-        <i class="bi bi-plus-lg me-1"></i> Nueva Cirugía
+        <i class="bi bi-plus-lg me-1"></i> Nueva CirugÃ­a
 
     </a>
 
@@ -52,7 +52,7 @@
 
                            class="form-control"
 
-                           placeholder="Buscar por nombre o tipo de cirugía..."
+                           placeholder="Buscar por nombre o tipo de cirugÃ­a..."
 
                            autocomplete="off" />
 
@@ -64,7 +64,7 @@
 
                             style="display: none;"
 
-                            title="Limpiar búsqueda">
+                            title="Limpiar bÃºsqueda">
 
                         <i class="bi bi-x-lg"></i>
 
@@ -116,7 +116,7 @@
 </div>
 
 
-<!-- Modal de confirmación de desactivar -->
+<!-- Modal de confirmaciÃ³n de desactivar -->
 
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
 
@@ -130,7 +130,7 @@
 
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
 
-                    Confirmar desactivación
+                    Confirmar desactivaciÃ³n
 
                 </h5>
 
@@ -142,13 +142,13 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea desactivar la cirugía
+                    Â¿EstÃ¡ seguro que desea desactivar la cirugÃ­a
 
                     <strong id="nombreCirugiaDesactivar"></strong>?
 
                     <br><small class="text-muted">
 
-                        El registro no será eliminado, solo quedará inactivo.
+                        El registro no serÃ¡ eliminado, solo quedarÃ¡ inactivo.
 
                     </small>
 
@@ -179,7 +179,7 @@
 </div>
 
 
-<!-- Modal de confirmación de reactivar -->
+<!-- Modal de confirmaciÃ³n de reactivar -->
 
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
 
@@ -193,7 +193,7 @@
 
                     <i class="bi bi-check-circle text-success me-2"></i>
 
-                    Confirmar reactivación
+                    Confirmar reactivaciÃ³n
 
                 </h5>
 
@@ -205,7 +205,7 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea reactivar la cirugía
+                    Â¿EstÃ¡ seguro que desea reactivar la cirugÃ­a
 
                     <strong id="nombreCirugiaReactivar"></strong>?
 
@@ -354,7 +354,7 @@
 
             if (!res.ok) {
 
-                mostrarError('Error al buscar cirugías.');
+                mostrarError('Error al buscar cirugÃ­as.');
 
                 return;
 
@@ -381,7 +381,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexión.');
+            mostrarError('Error de conexiÃ³n.');
 
         }
 
@@ -397,7 +397,7 @@
 
         if (esBusqueda && terminoBusqueda) {
 
-            el.textContent = mostrados + ' de ' + total + ' cirugías encontradas';
+            el.textContent = mostrados + ' de ' + total + ' cirugÃ­as encontradas';
 
         } else {
 
@@ -435,7 +435,7 @@
 
             if (!json.success) {
 
-                mostrarError(json.message || 'Error al cargar las cirugías.');
+                mostrarError(json.message || 'Error al cargar las cirugÃ­as.');
 
                 return;
 
@@ -448,7 +448,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexiÃ³n. Verifique su red e intente nuevamente.');
 
         }
 
@@ -488,15 +488,15 @@
 
             const mensaje = hayDatos
 
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la bÃºsqueda.'
 
-                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron cirugías registradas.';
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron cirugÃ­as registradas.';
 
             const accion = hayDatos
 
                 ? ''
 
-                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera cirugía</a>';
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera cirugÃ­a</a>';
 
 
             document.getElementById('tablaContainer').innerHTML = `
@@ -518,9 +518,9 @@
 
             const nombreCompleto = c.nombreCompleto || c.nombre || '';
 
-            const tipoCirugia = c.tipoCirugiaNombre || '—';
+            const tipoCirugia = c.tipoCirugiaNombre || 'â€”';
 
-            const descripcion = c.descripcion || '—';
+            const descripcion = c.descripcion || 'â€”';
 
             const estadoBadge = c.activo
 
@@ -593,11 +593,11 @@
 
                         <tr>
 
-                            <th>Tipo de Cirugía</th>
+                            <th>Tipo de CirugÃ­a</th>
 
                             <th>Nombre</th>
 
-                            <th>Descripción</th>
+                            <th>DescripciÃ³n</th>
 
                             <th class="text-center">Estado</th>
 
@@ -666,19 +666,19 @@
 
             if (res.ok && json.success) {
 
-                showToast(json.message || 'Cirugía desactivada exitosamente.', 'success');
+                showToast(json.message || 'CirugÃ­a desactivada exitosamente.', 'success');
 
                 await cargarCirugias();
 
             } else {
 
-                showToast(json.message || 'Error al desactivar la cirugía.', 'danger');
+                showToast(json.message || 'Error al desactivar la cirugÃ­a.', 'danger');
 
             }
 
         } catch (err) {
 
-            showToast('Error de conexión al desactivar.', 'danger');
+            showToast('Error de conexiÃ³n al desactivar.', 'danger');
 
         } finally {
 
@@ -723,19 +723,19 @@
 
             if (res.ok && json.success) {
 
-                showToast(json.message || 'Cirugía reactivada exitosamente.', 'success');
+                showToast(json.message || 'CirugÃ­a reactivada exitosamente.', 'success');
 
                 await cargarCirugias();
 
             } else {
 
-                showToast(json.message || 'Error al reactivar la cirugía.', 'danger');
+                showToast(json.message || 'Error al reactivar la cirugÃ­a.', 'danger');
 
             }
 
         } catch (err) {
 
-            showToast('Error de conexión al reactivar.', 'danger');
+            showToast('Error de conexiÃ³n al reactivar.', 'danger');
 
         } finally {
 

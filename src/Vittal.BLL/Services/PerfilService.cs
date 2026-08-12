@@ -14,8 +14,8 @@ using Vittal.Utility.Results;
 namespace Vittal.BLL.Services;
 
 /// <summary>
-/// Implementación de lógica de negocio para Perfil.
-/// Historia de Usuario: HU03 — Gestión de Perfiles
+/// ImplementaciÃ³n de lÃ³gica de negocio para Perfil.
+/// Historia de Usuario: HU03 â€” GestiÃ³n de Perfiles
 /// </summary>
 public class PerfilService : IPerfilService
 {
@@ -37,7 +37,7 @@ public class PerfilService : IPerfilService
     {
         try
         {
-            _logger.LogInformation("Obteniendo perfiles de la clínica {ClinicaId} (incluirInactivos: {IncluirInactivos})", clinicaId, incluirInactivos);
+            _logger.LogInformation("Obteniendo perfiles de la clÃ­nica {ClinicaId} (incluirInactivos: {IncluirInactivos})", clinicaId, incluirInactivos);
 
             var entities = incluirInactivos
                 ? await _perfilRepository.GetAllIncludingInactiveAsync(clinicaId)
@@ -48,7 +48,7 @@ public class PerfilService : IPerfilService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener perfiles de la clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al obtener perfiles de la clÃ­nica {ClinicaId}", clinicaId);
             return ServiceResult<IEnumerable<PerfilResponseDto>>.Failure("Error interno al consultar perfiles.");
         }
     }
@@ -60,7 +60,7 @@ public class PerfilService : IPerfilService
             var perfil = await _perfilRepository.GetByIdAsync(id, clinicaId);
             if (perfil == null)
                 return ServiceResult<PerfilResponseDto>.Failure(
-                    "Perfil no encontrado en esta clínica.", ServiceErrorType.NotFound);
+                    "Perfil no encontrado en esta clÃ­nica.", ServiceErrorType.NotFound);
 
             return ServiceResult<PerfilResponseDto>.Success(MapToResponseDto(perfil));
         }
@@ -73,7 +73,7 @@ public class PerfilService : IPerfilService
 
     public async Task<ServiceResult<PerfilResponseDto>> CreateAsync(PerfilRequestDto dto, Guid clinicaId)
     {
-        // Validación FluentValidation — reemplaza validación inline eliminada
+        // ValidaciÃ³n FluentValidation â€” reemplaza validaciÃ³n inline eliminada
         var validationResult = await _validator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
@@ -82,11 +82,11 @@ public class PerfilService : IPerfilService
                 string.Join("; ", errors), ServiceErrorType.Validation, errors);
         }
 
-        // Regla de negocio: nombre único por clínica
+        // Regla de negocio: nombre Ãºnico por clÃ­nica
         var nombreExiste = await _perfilRepository.ExistsByNameAsync(clinicaId, dto.Nombre);
         if (nombreExiste)
             return ServiceResult<PerfilResponseDto>.Failure(
-                $"Ya existe un perfil con el nombre '{dto.Nombre}' en esta clínica.",
+                $"Ya existe un perfil con el nombre '{dto.Nombre}' en esta clÃ­nica.",
                 ServiceErrorType.Conflict);
 
         try
@@ -96,7 +96,7 @@ public class PerfilService : IPerfilService
 
             var id = await _perfilRepository.CreateAsync(perfil);
 
-            // Retornar el perfil recién creado
+            // Retornar el perfil reciÃ©n creado
             var created = await _perfilRepository.GetByIdAsync(id, clinicaId);
             return ServiceResult<PerfilResponseDto>.Success(
                 MapToResponseDto(created!), "Perfil creado exitosamente.");
@@ -107,7 +107,7 @@ public class PerfilService : IPerfilService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al crear perfil en clínica {ClinicaId}", clinicaId);
+            _logger.LogError(ex, "Error al crear perfil en clÃ­nica {ClinicaId}", clinicaId);
             return ServiceResult<PerfilResponseDto>.Failure("Error interno al crear el perfil.");
         }
     }
@@ -117,9 +117,9 @@ public class PerfilService : IPerfilService
         var existente = await _perfilRepository.GetByIdAsync(id, clinicaId);
         if (existente == null)
             return ServiceResult<PerfilResponseDto>.Failure(
-                "Perfil no encontrado en esta clínica.", ServiceErrorType.NotFound);
+                "Perfil no encontrado en esta clÃ­nica.", ServiceErrorType.NotFound);
 
-        // Validación FluentValidation — reemplaza validación inline eliminada
+        // ValidaciÃ³n FluentValidation â€” reemplaza validaciÃ³n inline eliminada
         var validationResult = await _validator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
@@ -132,7 +132,7 @@ public class PerfilService : IPerfilService
         var nombreExiste = await _perfilRepository.ExistsByNameAsync(clinicaId, dto.Nombre, id);
         if (nombreExiste)
             return ServiceResult<PerfilResponseDto>.Failure(
-                $"Ya existe un perfil con el nombre '{dto.Nombre}' en esta clínica.",
+                $"Ya existe un perfil con el nombre '{dto.Nombre}' en esta clÃ­nica.",
                 ServiceErrorType.Conflict);
 
         try
@@ -163,7 +163,7 @@ public class PerfilService : IPerfilService
         var existente = await _perfilRepository.GetByIdAsync(id, clinicaId);
         if (existente == null)
             return ServiceResult<bool>.Failure(
-                "Perfil no encontrado en esta clínica.", ServiceErrorType.NotFound);
+                "Perfil no encontrado en esta clÃ­nica.", ServiceErrorType.NotFound);
 
         try
         {
@@ -204,7 +204,7 @@ public class PerfilService : IPerfilService
 
             if (existing.Activo)
             {
-                return ServiceResult<bool>.Failure("El perfil ya está activo.", ServiceErrorType.Validation);
+                return ServiceResult<bool>.Failure("El perfil ya estÃ¡ activo.", ServiceErrorType.Validation);
             }
 
             var reactivated = await _perfilRepository.ReactivateAsync(id, clinicaId);

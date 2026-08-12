@@ -3,7 +3,7 @@ using System;
 namespace Vittal.DTO.Permiso;
 
 /// <summary>
-/// Response DTO que representa un permiso individual de un perfil sobre un módulo.
+/// Response DTO que representa un permiso individual de un perfil sobre un mÃ³dulo.
 /// </summary>
 public class PermisoResponseDto
 {

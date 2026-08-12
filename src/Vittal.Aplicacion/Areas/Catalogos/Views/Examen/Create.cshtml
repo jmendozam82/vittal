@@ -4,7 +4,7 @@
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'><a href='/Catalogos/Examen'>Ex醡enes</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/Examen'>Ex谩menes</a></li>" +
 
                              "<li class='breadcrumb-item active'>Nuevo Examen</li>";
 
@@ -32,7 +32,7 @@
 
             <h6 class="text-primary border-bottom pb-2 mb-3">
 
-                <i class="bi bi-info-circle me-2"></i>Informaci髇 del Examen
+                <i class="bi bi-info-circle me-2"></i>Informaci贸n del Examen
 
             </h6>
 
@@ -60,11 +60,11 @@
 
                 <div class="col-md-12">
 
-                    <label for="descripcion" class="form-label fw-semibold">Descripci髇</label>
+                    <label for="descripcion" class="form-label fw-semibold">Descripci贸n</label>
 
                     <textarea class="form-control" id="descripcion" name="descripcion"
 
-                              rows="3" placeholder="Descripci髇 del examen (opcional)"></textarea>
+                              rows="3" placeholder="Descripci贸n del examen (opcional)"></textarea>
 
                 </div>
 
@@ -110,7 +110,7 @@
 
 
 
-        // Validaci髇 del lado cliente
+        // Validaci贸n del lado cliente
 
         const form = this;
 
@@ -184,7 +184,7 @@
 
         } catch (err) {
 
-            showToast('danger', 'Error de conexi髇 al guardar.');
+            showToast('danger', 'Error de conexi贸n al guardar.');
 
             btn.disabled = false;
 

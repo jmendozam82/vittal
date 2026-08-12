@@ -200,7 +200,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "La contraseña es obligatoria." });
+                return BadRequest(new { success = false, message = "La contraseÃ±a es obligatoria." });
 
             }
 
@@ -224,7 +224,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El nÃºmero de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 
@@ -338,7 +338,7 @@ namespace Vittal.Aplicacion.Areas.Administracion.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El número de documento es obligatorio y debe tener al menos 5 caracteres" });
+                return BadRequest(new { success = false, message = "El nÃºmero de documento es obligatorio y debe tener al menos 5 caracteres" });
 
             }
 

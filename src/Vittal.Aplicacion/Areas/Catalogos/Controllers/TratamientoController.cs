@@ -108,7 +108,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los tratamientos — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los tratamientos â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -136,7 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca tratamientos por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca tratamientos por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo tratamiento — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo tratamiento â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -218,7 +218,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Actualiza un tratamiento — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un tratamiento â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -264,7 +264,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Desactiva un tratamiento — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un tratamiento â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -290,7 +290,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Reactiva un tratamiento — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un tratamiento â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 

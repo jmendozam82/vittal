@@ -8,7 +8,7 @@ namespace Vittal.DTO.Paciente;
 
 /// Incluye nombre del doctor y nombre completo calculado.
 
-/// Historia de Usuario: HU07 — Gestión de Pacientes
+/// Historia de Usuario: HU07 â€” GestiÃ³n de Pacientes
 
 /// </summary>
 

@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Gestión de Clínicas";
+    ViewData["Title"] = "GestiÃ³n de ClÃ­nicas";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'>Catálogos</li>" +
+                             "<li class='breadcrumb-item'>CatÃ¡logos</li>" +
 
-                             "<li class='breadcrumb-item active'>Clínicas</li>";
+                             "<li class='breadcrumb-item active'>ClÃ­nicas</li>";
 
     var jsonClinicasUrl = Url.Action("JsonClinicas");
 
@@ -19,7 +19,7 @@
 
     <a asp-action="Create" class="btn btn-primary btn-sm">
 
-        <i class="bi bi-plus-lg me-1"></i> Nueva Clínica
+        <i class="bi bi-plus-lg me-1"></i> Nueva ClÃ­nica
 
     </a>
 
@@ -50,7 +50,7 @@
 
                            class="form-control"
 
-                           placeholder="Buscar por nombre, email o teléfono..."
+                           placeholder="Buscar por nombre, email o telÃ©fono..."
 
                            autocomplete="off" />
 
@@ -62,7 +62,7 @@
 
                             style="display: none;"
 
-                            title="Limpiar búsqueda">
+                            title="Limpiar bÃºsqueda">
 
                         <i class="bi bi-x-lg"></i>
 
@@ -114,7 +114,7 @@
 </div>
 
 
-<!-- Modal de confirmación de desactivar -->
+<!-- Modal de confirmaciÃ³n de desactivar -->
 
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
 
@@ -128,7 +128,7 @@
 
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
 
-                    Confirmar desactivación
+                    Confirmar desactivaciÃ³n
 
                 </h5>
 
@@ -140,15 +140,15 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea desactivar la clínica
+                    Â¿EstÃ¡ seguro que desea desactivar la clÃ­nica
 
                     <strong id="nombreClinicaDesactivar"></strong>?
 
                     <br><small class="text-muted">
 
-                        Los usuarios de esta clínica no podrán iniciar sesión.
+                        Los usuarios de esta clÃ­nica no podrÃ¡n iniciar sesiÃ³n.
 
-                        El registro no será eliminado, solo quedará inactivo.
+                        El registro no serÃ¡ eliminado, solo quedarÃ¡ inactivo.
 
                     </small>
 
@@ -179,7 +179,7 @@
 </div>
 
 
-<!-- Modal de confirmación de reactivar -->
+<!-- Modal de confirmaciÃ³n de reactivar -->
 
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
 
@@ -193,7 +193,7 @@
 
                     <i class="bi bi-check-circle text-success me-2"></i>
 
-                    Confirmar reactivación
+                    Confirmar reactivaciÃ³n
 
                 </h5>
 
@@ -205,7 +205,7 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea reactivar la clínica
+                    Â¿EstÃ¡ seguro que desea reactivar la clÃ­nica
 
                     <strong id="nombreClinicaReactivar"></strong>?
 
@@ -381,11 +381,11 @@
 
         if (esBusqueda && terminoBusqueda) {
 
-            el.textContent = mostrados + ' de ' + total + ' clínicas encontradas';
+            el.textContent = mostrados + ' de ' + total + ' clÃ­nicas encontradas';
 
         } else {
 
-            el.textContent = total + ' clínica' + (total !== 1 ? 's' : '');
+            el.textContent = total + ' clÃ­nica' + (total !== 1 ? 's' : '');
 
         }
 
@@ -419,7 +419,7 @@
 
             if (!json.success) {
 
-                mostrarError(json.message || 'Error al cargar las clínicas.');
+                mostrarError(json.message || 'Error al cargar las clÃ­nicas.');
 
                 return;
 
@@ -434,7 +434,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexiÃ³n. Verifique su red e intente nuevamente.');
 
         }
 
@@ -474,15 +474,15 @@
 
             const mensaje = hayDatos
 
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la bÃºsqueda.'
 
-                : '<i class="bi bi-building fs-1 d-block mb-2"></i>No se encontraron clínicas registradas.';
+                : '<i class="bi bi-building fs-1 d-block mb-2"></i>No se encontraron clÃ­nicas registradas.';
 
             const accion = hayDatos
 
                 ? ''
 
-                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera clínica</a>';
+                : '<br><a href="' + URLS.crear + '" class="btn btn-sm btn-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Crear primera clÃ­nica</a>';
 
 
             document.getElementById('tablaContainer').innerHTML = `
@@ -591,7 +591,7 @@
 
                             <th>Email</th>
 
-                            <th>Teléfono</th>
+                            <th>TelÃ©fono</th>
 
                             <th class="text-center">T. Espera</th>
 
@@ -662,19 +662,19 @@
 
             if (res.ok && json.success) {
 
-                showToast(json.message || 'Clínica desactivada exitosamente.', 'success');
+                showToast(json.message || 'ClÃ­nica desactivada exitosamente.', 'success');
 
                 await cargarClinicas();
 
             } else {
 
-                showToast(json.message || 'Error al desactivar la clínica.', 'danger');
+                showToast(json.message || 'Error al desactivar la clÃ­nica.', 'danger');
 
             }
 
         } catch (err) {
 
-            showToast('Error de conexión al desactivar.', 'danger');
+            showToast('Error de conexiÃ³n al desactivar.', 'danger');
 
         } finally {
 
@@ -719,19 +719,19 @@
 
             if (res.ok && json.success) {
 
-                showToast(json.message || 'Clínica reactivada exitosamente.', 'success');
+                showToast(json.message || 'ClÃ­nica reactivada exitosamente.', 'success');
 
                 await cargarClinicas();
 
             } else {
 
-                showToast(json.message || 'Error al reactivar la clínica.', 'danger');
+                showToast(json.message || 'Error al reactivar la clÃ­nica.', 'danger');
 
             }
 
         } catch (err) {
 
-            showToast('Error de conexión al reactivar.', 'danger');
+            showToast('Error de conexiÃ³n al reactivar.', 'danger');
 
         } finally {
 

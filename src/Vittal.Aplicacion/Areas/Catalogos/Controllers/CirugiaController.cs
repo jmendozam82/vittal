@@ -12,7 +12,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de cirugías desde el cliente.
+    /// DTO interno para recibir datos del formulario de cirugÃ­as desde el cliente.
 
     /// </summary>
 
@@ -96,7 +96,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                TempData["Error"] = "Cirugía no encontrada.";
+                TempData["Error"] = "CirugÃ­a no encontrada.";
 
                 return RedirectToAction("Index");
 
@@ -110,7 +110,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todas las cirugías — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todas las cirugÃ­as â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -128,7 +128,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonListar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar cirugías" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar cirugÃ­as" });
 
             }
 
@@ -138,7 +138,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca cirugías por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca cirugÃ­as por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -162,7 +162,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar cirugías" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar cirugÃ­as" });
 
             }
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Obtiene tipos de cirugía para el dropdown — para fetch() desde Create/Edit</summary>
+        /// <summary>Obtiene tipos de cirugÃ­a para el dropdown â€” para fetch() desde Create/Edit</summary>
 
         [HttpGet]
 
@@ -198,7 +198,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea una nueva cirugía — para fetch() desde la vista Create</summary>
+        /// <summary>Crea una nueva cirugÃ­a â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -210,7 +210,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la cirugía es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la cirugÃ­a es obligatorio." });
 
             }
 
@@ -218,7 +218,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugía." });
+                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugÃ­a." });
 
             }
 
@@ -246,17 +246,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear cirugÃ­a" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Cirugía creada exitosamente" });
+            return Ok(new { success = true, data = data, message = "CirugÃ­a creada exitosamente" });
 
         }
 
-        /// <summary>Actualiza una cirugía — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza una cirugÃ­a â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -268,7 +268,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la cirugía es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la cirugÃ­a es obligatorio." });
 
             }
 
@@ -276,7 +276,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugía." });
+                return BadRequest(new { success = false, message = "Debe seleccionar un tipo de cirugÃ­a." });
 
             }
 
@@ -302,17 +302,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar cirugÃ­a" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Cirugía actualizada exitosamente" });
+            return Ok(new { success = true, data = data, message = "CirugÃ­a actualizada exitosamente" });
 
         }
 
-        /// <summary>Desactiva una cirugía — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva una cirugÃ­a â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -330,15 +330,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar cirugÃ­a" });
 
             }
 
-            return Ok(new { success = true, message = "Cirugía desactivada exitosamente" });
+            return Ok(new { success = true, message = "CirugÃ­a desactivada exitosamente" });
 
         }
 
-        /// <summary>Reactiva una cirugía — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva una cirugÃ­a â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -352,11 +352,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar cirugÃ­a" });
 
             }
 
-            return Ok(new { success = true, message = "Cirugía reactivada exitosamente" });
+            return Ok(new { success = true, message = "CirugÃ­a reactivada exitosamente" });
 
         }
 

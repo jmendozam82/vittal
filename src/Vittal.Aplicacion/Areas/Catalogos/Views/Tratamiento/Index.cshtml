@@ -1,10 +1,10 @@
 @{
 
-    ViewData["Title"] = "Gestión de Tratamientos";
+    ViewData["Title"] = "GestiÃ³n de Tratamientos";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'>Catálogos</li>" +
+                             "<li class='breadcrumb-item'>CatÃ¡logos</li>" +
 
                              "<li class='breadcrumb-item active'>Tratamientos</li>";
 
@@ -52,7 +52,7 @@
 
                            class="form-control"
 
-                           placeholder="Buscar por nombre o descripción..."
+                           placeholder="Buscar por nombre o descripciÃ³n..."
 
                            autocomplete="off" />
 
@@ -64,7 +64,7 @@
 
                             style="display: none;"
 
-                            title="Limpiar búsqueda">
+                            title="Limpiar bÃºsqueda">
 
                         <i class="bi bi-x-lg"></i>
 
@@ -116,7 +116,7 @@
 </div>
 
 
-<!-- Modal de confirmación de desactivar -->
+<!-- Modal de confirmaciÃ³n de desactivar -->
 
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
 
@@ -130,7 +130,7 @@
 
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
 
-                    Confirmar desactivación
+                    Confirmar desactivaciÃ³n
 
                 </h5>
 
@@ -142,13 +142,13 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea desactivar el tratamiento
+                    Â¿EstÃ¡ seguro que desea desactivar el tratamiento
 
                     <strong id="nombreTratamientoDesactivar"></strong>?
 
                     <br><small class="text-muted">
 
-                        El registro no será eliminado, solo quedará inactivo.
+                        El registro no serÃ¡ eliminado, solo quedarÃ¡ inactivo.
 
                     </small>
 
@@ -179,7 +179,7 @@
 </div>
 
 
-<!-- Modal de confirmación de reactivar -->
+<!-- Modal de confirmaciÃ³n de reactivar -->
 
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
 
@@ -193,7 +193,7 @@
 
                     <i class="bi bi-check-circle text-success me-2"></i>
 
-                    Confirmar reactivación
+                    Confirmar reactivaciÃ³n
 
                 </h5>
 
@@ -205,7 +205,7 @@
 
                 <p class="mb-0">
 
-                    ¿Está seguro que desea reactivar el tratamiento
+                    Â¿EstÃ¡ seguro que desea reactivar el tratamiento
 
                     <strong id="nombreTratamientoReactivar"></strong>?
 
@@ -381,7 +381,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexión.');
+            mostrarError('Error de conexiÃ³n.');
 
         }
 
@@ -448,7 +448,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexión. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexiÃ³n. Verifique su red e intente nuevamente.');
 
         }
 
@@ -488,7 +488,7 @@
 
             const mensaje = hayDatos
 
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la búsqueda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la bÃºsqueda.'
 
                 : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron tratamientos registrados.';
 
@@ -518,7 +518,7 @@
 
             const nombre = m.nombre || '';
 
-            const descripcion = m.descripcion || '—';
+            const descripcion = m.descripcion || 'â€”';
 
             const estadoBadge = m.activo
 
@@ -594,7 +594,7 @@
 
                             <th>Nombre</th>
 
-                            <th>Descripción</th>
+                            <th>DescripciÃ³n</th>
 
                             <th class="text-center">Estado</th>
 
@@ -675,7 +675,7 @@
 
         } catch (err) {
 
-            showToast('Error de conexión al desactivar.', 'danger');
+            showToast('Error de conexiÃ³n al desactivar.', 'danger');
 
         } finally {
 
@@ -732,7 +732,7 @@
 
         } catch (err) {
 
-            showToast('Error de conexión al reactivar.', 'danger');
+            showToast('Error de conexiÃ³n al reactivar.', 'danger');
 
         } finally {
 

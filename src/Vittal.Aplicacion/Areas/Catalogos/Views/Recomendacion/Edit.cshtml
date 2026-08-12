@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Editar Recomendaci髇";
+    ViewData["Title"] = "Editar Recomendaci贸n";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
                              "<li class='breadcrumb-item'><a href='/Catalogos/Recomendacion'>Recomendaciones</a></li>" +
 
-                             "<li class='breadcrumb-item active'>Editar Recomendaci髇</li>";
+                             "<li class='breadcrumb-item active'>Editar Recomendaci贸n</li>";
 
 }
 
@@ -18,7 +18,7 @@
 
         <h5 class="mb-0">
 
-            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Recomendaci髇
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Recomendaci贸n
 
         </h5>
 
@@ -32,11 +32,11 @@
 
 
 
-            <!-- Datos de la recomendaci髇 -->
+            <!-- Datos de la recomendaci贸n -->
 
             <h6 class="text-primary border-bottom pb-2 mb-3">
 
-                <i class="bi bi-info-circle me-2"></i>Informaci髇 de la Recomendaci髇
+                <i class="bi bi-info-circle me-2"></i>Informaci贸n de la Recomendaci贸n
 
             </h6>
 
@@ -50,9 +50,9 @@
 
                     <input type="text" class="form-control" id="nombre" name="nombre"
 
-                           required maxlength="255" placeholder="Ingrese el nombre de la recomendaci髇">
+                           required maxlength="255" placeholder="Ingrese el nombre de la recomendaci贸n">
 
-                    <div class="invalid-feedback">El nombre de la recomendaci髇 es obligatorio.</div>
+                    <div class="invalid-feedback">El nombre de la recomendaci贸n es obligatorio.</div>
 
                 </div>
 
@@ -64,11 +64,11 @@
 
                 <div class="col-md-12">
 
-                    <label for="descripcion" class="form-label fw-semibold">Descripci髇</label>
+                    <label for="descripcion" class="form-label fw-semibold">Descripci贸n</label>
 
                     <textarea class="form-control" id="descripcion" name="descripcion"
 
-                              rows="3" placeholder="Descripci髇 de la recomendaci髇 (opcional)"></textarea>
+                              rows="3" placeholder="Descripci贸n de la recomendaci贸n (opcional)"></textarea>
 
                 </div>
 
@@ -88,7 +88,7 @@
 
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
 
-                    <i class="bi bi-floppy me-1"></i> Actualizar Recomendaci髇
+                    <i class="bi bi-floppy me-1"></i> Actualizar Recomendaci贸n
 
                 </button>
 
@@ -106,7 +106,7 @@
 
 <script>
 
-    // Cargar datos de la recomendaci髇 al iniciar
+    // Cargar datos de la recomendaci贸n al iniciar
 
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -126,7 +126,7 @@
 
         if (!m) {
 
-            showToast('danger', 'Error: No se encontraron datos de la recomendaci髇.');
+            showToast('danger', 'Error: No se encontraron datos de la recomendaci贸n.');
 
             return;
 
@@ -142,7 +142,7 @@
 
 
 
-        // Nombre en el t韙ulo
+        // Nombre en el t铆tulo
 
         const nombre = m.nombre || '';
 
@@ -216,7 +216,7 @@
 
             if (res.ok && json.success) {
 
-                showToast('success', json.message || 'Recomendaci髇 actualizada exitosamente.');
+                showToast('success', json.message || 'Recomendaci贸n actualizada exitosamente.');
 
                 setTimeout(() => {
 
@@ -226,7 +226,7 @@
 
             } else {
 
-                showToast('danger', json.message || 'Error al actualizar la recomendaci髇.');
+                showToast('danger', json.message || 'Error al actualizar la recomendaci贸n.');
 
                 btn.disabled = false;
 
@@ -236,7 +236,7 @@
 
         } catch (err) {
 
-            showToast('danger', 'Error de conexi髇 al guardar.');
+            showToast('danger', 'Error de conexi贸n al guardar.');
 
             btn.disabled = false;
 

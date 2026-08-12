@@ -12,7 +12,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de exámenes desde el cliente.
+    /// DTO interno para recibir datos del formulario de exÃ¡menes desde el cliente.
 
     /// </summary>
 
@@ -108,7 +108,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los exámenes — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los exÃ¡menes â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -126,7 +126,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonExamenes API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar exámenes" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar exÃ¡menes" });
 
             }
 
@@ -136,7 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca exámenes por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca exÃ¡menes por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -162,7 +162,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar exámenes" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar exÃ¡menes" });
 
             }
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo examen — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo examen â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -218,7 +218,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Actualiza un examen — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un examen â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -264,7 +264,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Desactiva un examen — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un examen â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -290,7 +290,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Reactiva un examen — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un examen â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 

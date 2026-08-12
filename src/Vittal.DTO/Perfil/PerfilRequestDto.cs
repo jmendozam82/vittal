@@ -6,7 +6,7 @@ namespace Vittal.DTO.Perfil;
 
 /// Request DTO para crear o editar un perfil.
 
-/// No expone campos de auditor�a � el servidor los maneja autom�ticamente.
+/// No expone campos de auditoría — el servidor los maneja automáticamente.
 
 /// </summary>
 
@@ -22,7 +22,7 @@ public class PerfilRequestDto
 
     /// <summary>
 
-    /// Si true, el perfil tiene acceso total sin verificar permisos espec�ficos.
+    /// Si true, el perfil tiene acceso total sin verificar permisos específicos.
 
     /// </summary>
 

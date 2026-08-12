@@ -4,9 +4,9 @@ namespace Vittal.DTO.Sala;
 
 /// <summary>
 
-/// Request DTO para crear o editar una sala/área.
+/// Request DTO para crear o editar una sala/Ã¡rea.
 
-/// No expone campos de auditoría — el servidor los maneja automáticamente.
+/// No expone campos de auditorÃ­a â€” el servidor los maneja automÃ¡ticamente.
 
 /// </summary>
 

@@ -12,7 +12,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de tipos de cirugía desde el cliente.
+    /// DTO interno para recibir datos del formulario de tipos de cirugÃ­a desde el cliente.
 
     /// </summary>
 
@@ -94,7 +94,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                TempData["Error"] = "Tipo de cirugía no encontrado.";
+                TempData["Error"] = "Tipo de cirugÃ­a no encontrado.";
 
                 return RedirectToAction("Index");
 
@@ -108,7 +108,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los tipos de cirugía — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los tipos de cirugÃ­a â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -126,7 +126,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonListar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de cirugía" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de cirugÃ­a" });
 
             }
 
@@ -136,7 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca tipos de cirugía por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca tipos de cirugÃ­a por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -162,7 +162,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de cirugía" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de cirugÃ­a" });
 
             }
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo tipo de cirugía — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo tipo de cirugÃ­a â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -184,7 +184,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de cirugía es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de cirugÃ­a es obligatorio." });
 
             }
 
@@ -208,17 +208,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de cirugÃ­a" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de cirugía creado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de cirugÃ­a creado exitosamente" });
 
         }
 
-        /// <summary>Actualiza un tipo de cirugía — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un tipo de cirugÃ­a â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -230,7 +230,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de cirugía es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de cirugÃ­a es obligatorio." });
 
             }
 
@@ -254,17 +254,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de cirugÃ­a" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de cirugía actualizado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de cirugÃ­a actualizado exitosamente" });
 
         }
 
-        /// <summary>Desactiva un tipo de cirugía — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un tipo de cirugÃ­a â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -282,15 +282,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de cirugÃ­a" });
 
             }
 
-            return Ok(new { success = true, message = "Tipo de cirugía desactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de cirugÃ­a desactivado exitosamente" });
 
         }
 
-        /// <summary>Reactiva un tipo de cirugía — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un tipo de cirugÃ­a â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -304,11 +304,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de cirugía" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de cirugÃ­a" });
 
             }
 
-            return Ok(new { success = true, message = "Tipo de cirugía reactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de cirugÃ­a reactivado exitosamente" });
 
         }
 

@@ -12,7 +12,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de clínicas desde el cliente.
+    /// DTO interno para recibir datos del formulario de clÃ­nicas desde el cliente.
 
     /// </summary>
 
@@ -112,7 +112,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                TempData["Error"] = "Clínica no encontrada.";
+                TempData["Error"] = "ClÃ­nica no encontrada.";
 
                 return RedirectToAction("Index");
 
@@ -126,7 +126,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todas las clínicas — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todas las clÃ­nicas â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -144,7 +144,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonClinicas API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar clínicas" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar clÃ­nicas" });
 
             }
 
@@ -154,7 +154,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Obtiene la clínica actual del usuario — para fetch()</summary>
+        /// <summary>Obtiene la clÃ­nica actual del usuario â€” para fetch()</summary>
 
         [HttpGet]
 
@@ -162,7 +162,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         {
 
-            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/mi-clínica");
+            var (success, response, errorMessage) = await _apiClient.GetAsync<JsonElement>("api/Clinicas/mi-clÃ­nica");
 
             if (!success)
 
@@ -170,7 +170,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonMiClinica API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar datos de la clínica" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar datos de la clÃ­nica" });
 
             }
 
@@ -180,7 +180,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea una nueva clínica — para fetch() desde la vista Create</summary>
+        /// <summary>Crea una nueva clÃ­nica â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -192,7 +192,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la clínica es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la clÃ­nica es obligatorio." });
 
             }
 
@@ -242,17 +242,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear clínica" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear clÃ­nica" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Clínica creada exitosamente" });
+            return Ok(new { success = true, data = data, message = "ClÃ­nica creada exitosamente" });
 
         }
 
-        /// <summary>Actualiza una clínica — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza una clÃ­nica â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -264,7 +264,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre de la clínica es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre de la clÃ­nica es obligatorio." });
 
             }
 
@@ -308,17 +308,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar clínica" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar clÃ­nica" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Clínica actualizada exitosamente" });
+            return Ok(new { success = true, data = data, message = "ClÃ­nica actualizada exitosamente" });
 
         }
 
-        /// <summary>Desactiva una clínica — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva una clÃ­nica â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -336,15 +336,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar clínica" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar clÃ­nica" });
 
             }
 
-            return Ok(new { success = true, message = "Clínica desactivada exitosamente" });
+            return Ok(new { success = true, message = "ClÃ­nica desactivada exitosamente" });
 
         }
 
-        /// <summary>Reactiva una clínica — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva una clÃ­nica â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -358,19 +358,19 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar clínica" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar clÃ­nica" });
 
             }
 
-            return Ok(new { success = true, message = "Clínica reactivada exitosamente" });
+            return Ok(new { success = true, message = "ClÃ­nica reactivada exitosamente" });
 
         }
 
         // ----------------------------------------------------------------
-        // LOGO — Subir logo de la clínica (proxy multipart)
+        // LOGO â€” Subir logo de la clÃ­nica (proxy multipart)
         // ----------------------------------------------------------------
 
-        /// <summary>Sube el logo de la clínica — para fetch() desde Create/Edit</summary>
+        /// <summary>Sube el logo de la clÃ­nica â€” para fetch() desde Create/Edit</summary>
 
         [HttpPost]
 
@@ -382,7 +382,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "No se proporcionó ningún archivo." });
+                return BadRequest(new { success = false, message = "No se proporcionÃ³ ningÃºn archivo." });
 
             }
 

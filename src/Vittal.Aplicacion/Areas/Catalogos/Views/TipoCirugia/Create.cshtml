@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "Nuevo Tipo de Cirugía";
+    ViewData["Title"] = "Nuevo Tipo de CirugÃ­a";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoCirugia'>Tipos de Cirugía</a></li>" +
+                             "<li class='breadcrumb-item'><a href='/Catalogos/TipoCirugia'>Tipos de CirugÃ­a</a></li>" +
 
-                             "<li class='breadcrumb-item active'>Nuevo Tipo de Cirugía</li>";
+                             "<li class='breadcrumb-item active'>Nuevo Tipo de CirugÃ­a</li>";
 
 }
 
@@ -18,7 +18,7 @@
 
         <h5 class="mb-0">
 
-            <i class="bi bi-scissors me-2 text-primary"></i>Registrar Nuevo Tipo de Cirugía
+            <i class="bi bi-scissors me-2 text-primary"></i>Registrar Nuevo Tipo de CirugÃ­a
 
         </h5>
 
@@ -28,11 +28,11 @@
 
         <form id="formTipoCirugia" novalidate>
 
-            <!-- Datos del tipo de cirugía -->
+            <!-- Datos del tipo de cirugÃ­a -->
 
             <h6 class="text-primary border-bottom pb-2 mb-3">
 
-                <i class="bi bi-info-circle me-2"></i>Información del Tipo de Cirugía
+                <i class="bi bi-info-circle me-2"></i>InformaciÃ³n del Tipo de CirugÃ­a
 
             </h6>
 
@@ -46,9 +46,9 @@
 
                     <input type="text" class="form-control" id="nombre" name="nombre"
 
-                           required maxlength="255" placeholder="Ingrese el nombre del tipo de cirugía">
+                           required maxlength="255" placeholder="Ingrese el nombre del tipo de cirugÃ­a">
 
-                    <div class="invalid-feedback">El nombre del tipo de cirugía es obligatorio.</div>
+                    <div class="invalid-feedback">El nombre del tipo de cirugÃ­a es obligatorio.</div>
 
                 </div>
 
@@ -60,11 +60,11 @@
 
                 <div class="col-md-12">
 
-                    <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                    <label for="descripcion" class="form-label fw-semibold">DescripciÃ³n</label>
 
                     <textarea class="form-control" id="descripcion" name="descripcion"
 
-                              rows="3" placeholder="Descripción del tipo de cirugía (opcional)"></textarea>
+                              rows="3" placeholder="DescripciÃ³n del tipo de cirugÃ­a (opcional)"></textarea>
 
                 </div>
 
@@ -84,7 +84,7 @@
 
                 <button type="submit" class="btn btn-primary" id="btnGuardar">
 
-                    <i class="bi bi-floppy me-1"></i> Guardar Tipo de Cirugía
+                    <i class="bi bi-floppy me-1"></i> Guardar Tipo de CirugÃ­a
 
                 </button>
 
@@ -110,7 +110,7 @@
 
 
 
-        // Validación del lado cliente
+        // ValidaciÃ³n del lado cliente
 
         const form = this;
 
@@ -164,7 +164,7 @@
 
             if (res.ok && json.success) {
 
-                showToast('success', json.message || 'Tipo de cirugía creado exitosamente.');
+                showToast('success', json.message || 'Tipo de cirugÃ­a creado exitosamente.');
 
                 setTimeout(() => {
 
@@ -174,7 +174,7 @@
 
             } else {
 
-                showToast('danger', json.message || 'Error al crear el tipo de cirugía.');
+                showToast('danger', json.message || 'Error al crear el tipo de cirugÃ­a.');
 
                 btn.disabled = false;
 
@@ -184,7 +184,7 @@
 
         } catch (err) {
 
-            showToast('danger', 'Error de conexión al guardar.');
+            showToast('danger', 'Error de conexiÃ³n al guardar.');
 
             btn.disabled = false;
 

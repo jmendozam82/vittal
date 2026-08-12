@@ -1,12 +1,12 @@
 @{
 
-    ViewData["Title"] = "GestiÛn de Ex·menes";
+    ViewData["Title"] = "Gesti√≥n de Ex√°menes";
 
     ViewData["Breadcrumb"] = "<li class='breadcrumb-item'><a href='/'>Inicio</a></li>" +
 
-                             "<li class='breadcrumb-item'>Cat·logos</li>" +
+                             "<li class='breadcrumb-item'>Cat√°logos</li>" +
 
-                             "<li class='breadcrumb-item active'>Ex·menes</li>";
+                             "<li class='breadcrumb-item active'>Ex√°menes</li>";
 
     var jsonExamenesUrl = Url.Action("JsonExamenes");
 
@@ -52,7 +52,7 @@
 
                            class="form-control"
 
-                           placeholder="Buscar por nombre o descripciÛn..."
+                           placeholder="Buscar por nombre o descripci√≥n..."
 
                            autocomplete="off" />
 
@@ -64,7 +64,7 @@
 
                             style="display: none;"
 
-                            title="Limpiar b˙squeda">
+                            title="Limpiar b√∫squeda">
 
                         <i class="bi bi-x-lg"></i>
 
@@ -116,7 +116,7 @@
 </div>
 
 
-<!-- Modal de confirmaciÛn de desactivar -->
+<!-- Modal de confirmaci√≥n de desactivar -->
 
 <div class="modal fade" id="modalDesactivar" tabindex="-1" aria-hidden="true">
 
@@ -130,7 +130,7 @@
 
                     <i class="bi bi-exclamation-triangle text-warning me-2"></i>
 
-                    Confirmar desactivaciÛn
+                    Confirmar desactivaci√≥n
 
                 </h5>
 
@@ -142,13 +142,13 @@
 
                 <p class="mb-0">
 
-                    øEst· seguro que desea desactivar el examen
+                    ¬øEst√° seguro que desea desactivar el examen
 
                     <strong id="nombreExamenDesactivar"></strong>?
 
                     <br><small class="text-muted">
 
-                        El registro no ser· eliminado, solo quedar· inactivo.
+                        El registro no ser√° eliminado, solo quedar√° inactivo.
 
                     </small>
 
@@ -179,7 +179,7 @@
 </div>
 
 
-<!-- Modal de confirmaciÛn de reactivar -->
+<!-- Modal de confirmaci√≥n de reactivar -->
 
 <div class="modal fade" id="modalReactivar" tabindex="-1" aria-hidden="true">
 
@@ -193,7 +193,7 @@
 
                     <i class="bi bi-check-circle text-success me-2"></i>
 
-                    Confirmar reactivaciÛn
+                    Confirmar reactivaci√≥n
 
                 </h5>
 
@@ -205,7 +205,7 @@
 
                 <p class="mb-0">
 
-                    øEst· seguro que desea reactivar el examen
+                    ¬øEst√° seguro que desea reactivar el examen
 
                     <strong id="nombreExamenReactivar"></strong>?
 
@@ -354,7 +354,7 @@
 
             if (!res.ok) {
 
-                mostrarError('Error al buscar ex·menes.');
+                mostrarError('Error al buscar ex√°menes.');
 
                 return;
 
@@ -381,7 +381,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexiÛn.');
+            mostrarError('Error de conexi√≥n.');
 
         }
 
@@ -397,7 +397,7 @@
 
         if (esBusqueda && terminoBusqueda) {
 
-            el.textContent = mostrados + ' de ' + total + ' ex·menes encontrados';
+            el.textContent = mostrados + ' de ' + total + ' ex√°menes encontrados';
 
         } else {
 
@@ -435,7 +435,7 @@
 
             if (!json.success) {
 
-                mostrarError(json.message || 'Error al cargar los ex·menes.');
+                mostrarError(json.message || 'Error al cargar los ex√°menes.');
 
                 return;
 
@@ -448,7 +448,7 @@
 
         } catch (err) {
 
-            mostrarError('Error de conexiÛn. Verifique su red e intente nuevamente.');
+            mostrarError('Error de conexi√≥n. Verifique su red e intente nuevamente.');
 
         }
 
@@ -488,9 +488,9 @@
 
             const mensaje = hayDatos
 
-                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b˙squeda.'
+                ? '<i class="bi bi-search fs-1 d-block mb-2"></i>No se encontraron resultados para la b√∫squeda.'
 
-                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron ex·menes registrados.';
+                : '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No se encontraron ex√°menes registrados.';
 
             const accion = hayDatos
 
@@ -518,7 +518,7 @@
 
             const nombre = m.nombre || '';
 
-            const descripcion = m.descripcion || 'ó';
+            const descripcion = m.descripcion || '‚Äî';
 
             const estadoBadge = m.activo
 
@@ -594,7 +594,7 @@
 
                             <th>Nombre</th>
 
-                            <th>DescripciÛn</th>
+                            <th>Descripci√≥n</th>
 
                             <th class="text-center">Estado</th>
 
@@ -675,7 +675,7 @@
 
         } catch (err) {
 
-            showToast('Error de conexiÛn al desactivar.', 'danger');
+            showToast('Error de conexi√≥n al desactivar.', 'danger');
 
         } finally {
 
@@ -732,7 +732,7 @@
 
         } catch (err) {
 
-            showToast('Error de conexiÛn al reactivar.', 'danger');
+            showToast('Error de conexi√≥n al reactivar.', 'danger');
 
         } finally {
 

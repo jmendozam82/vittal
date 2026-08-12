@@ -12,7 +12,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
     /// <summary>
 
-    /// DTO interno para recibir datos del formulario de tipos de diagnóstico desde el cliente.
+    /// DTO interno para recibir datos del formulario de tipos de diagnÃ³stico desde el cliente.
 
     /// </summary>
 
@@ -94,7 +94,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                TempData["Error"] = "Tipo de diagnóstico no encontrado.";
+                TempData["Error"] = "Tipo de diagnÃ³stico no encontrado.";
 
                 return RedirectToAction("Index");
 
@@ -108,7 +108,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         // ===================== JSON PROXY ENDPOINTS (para JavaScript) =====================
 
-        /// <summary>Lista todos los tipos de diagnóstico — para fetch() desde la vista Index</summary>
+        /// <summary>Lista todos los tipos de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -126,7 +126,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonListar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de diagnóstico" });
+                return Json(new { success = false, message = errorMessage ?? "Error al cargar tipos de diagnÃ³stico" });
 
             }
 
@@ -136,7 +136,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Busca tipos de diagnóstico por término — para fetch() desde la vista Index</summary>
+        /// <summary>Busca tipos de diagnÃ³stico por tÃ©rmino â€” para fetch() desde la vista Index</summary>
 
         [HttpGet]
 
@@ -162,7 +162,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonBuscar API call failed: {Error}", errorMessage);
 
-                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de diagnóstico" });
+                return Json(new { success = false, message = errorMessage ?? "Error al buscar tipos de diagnÃ³stico" });
 
             }
 
@@ -172,7 +172,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
         }
 
-        /// <summary>Crea un nuevo tipo de diagnóstico — para fetch() desde la vista Create</summary>
+        /// <summary>Crea un nuevo tipo de diagnÃ³stico â€” para fetch() desde la vista Create</summary>
 
         [HttpPost]
 
@@ -184,7 +184,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de diagnóstico es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de diagnÃ³stico es obligatorio." });
 
             }
 
@@ -208,17 +208,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonCrear API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de diagnóstico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al crear tipo de diagnÃ³stico" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de diagnóstico creado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de diagnÃ³stico creado exitosamente" });
 
         }
 
-        /// <summary>Actualiza un tipo de diagnóstico — para fetch() desde la vista Edit</summary>
+        /// <summary>Actualiza un tipo de diagnÃ³stico â€” para fetch() desde la vista Edit</summary>
 
         [HttpPut]
 
@@ -230,7 +230,7 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = "El nombre del tipo de diagnóstico es obligatorio." });
+                return BadRequest(new { success = false, message = "El nombre del tipo de diagnÃ³stico es obligatorio." });
 
             }
 
@@ -254,17 +254,17 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonActualizar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de diagnóstico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al actualizar tipo de diagnÃ³stico" });
 
             }
 
             var data = ExtractDataObject(response);
 
-            return Ok(new { success = true, data = data, message = "Tipo de diagnóstico actualizado exitosamente" });
+            return Ok(new { success = true, data = data, message = "Tipo de diagnÃ³stico actualizado exitosamente" });
 
         }
 
-        /// <summary>Desactiva un tipo de diagnóstico — para fetch() desde la vista Index</summary>
+        /// <summary>Desactiva un tipo de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -282,15 +282,15 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
                 _logger.LogWarning("JsonDesactivar API call failed: {Error}", errorMessage);
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de diagnóstico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al desactivar tipo de diagnÃ³stico" });
 
             }
 
-            return Ok(new { success = true, message = "Tipo de diagnóstico desactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de diagnÃ³stico desactivado exitosamente" });
 
         }
 
-        /// <summary>Reactiva un tipo de diagnóstico — para fetch() desde la vista Index</summary>
+        /// <summary>Reactiva un tipo de diagnÃ³stico â€” para fetch() desde la vista Index</summary>
 
         [HttpPatch]
 
@@ -304,11 +304,11 @@ namespace Vittal.Aplicacion.Areas.Catalogos.Controllers
 
             {
 
-                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de diagnóstico" });
+                return BadRequest(new { success = false, message = errorMessage ?? "Error al reactivar tipo de diagnÃ³stico" });
 
             }
 
-            return Ok(new { success = true, message = "Tipo de diagnóstico reactivado exitosamente" });
+            return Ok(new { success = true, message = "Tipo de diagnÃ³stico reactivado exitosamente" });
 
         }
 
