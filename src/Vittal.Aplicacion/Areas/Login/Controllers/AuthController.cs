@@ -95,7 +95,10 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                     var authProperties = new AuthenticationProperties
                     {
                         IsPersistent = model.RememberMe,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                        // Expiración por inactividad: 60 min deslizantes (SlidingExpiration en Program.cs).
+                        // Se renueva con cada request mientras el usuario haga gestiones.
+                        AllowRefresh = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60)
                     };
 
                     await HttpContext.SignInAsync(
@@ -104,12 +107,15 @@ namespace Vittal.Aplicacion.Areas.Login.Controllers
                         authProperties);
 
                     // Guardar JWT en cookie HttpOnly separada (evita limite de 4KB de la cookie de auth)
+                    // Expira a 1 día para alinearse con jwt_expiry de Supabase (24h). La cookie de
+                    // autenticación MVC (60 min deslizantes) es la que controla el cierre por inactividad,
+                    // y el Logout limpia esta cookie al cerrar sesión.
                     var cookieOptions = new CookieOptions
                     {
                         HttpOnly = true,
                         Secure = false, // Development; en Production usar CookieSecurePolicy.Always
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddHours(8),
+                        Expires = DateTimeOffset.UtcNow.AddDays(1),
                         Path = "/"
                     };
                     Response.Cookies.Append("vittal_jwt", user.AccessToken, cookieOptions);

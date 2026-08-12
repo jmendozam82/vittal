@@ -20,7 +20,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(8);
+    // Sesión expira tras 60 min de inactividad (sliding: se renueva con cada request).
+    // Alineado con la cookie de autenticación y el watchdog del navegador (vittal-session.js).
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.IsEssential = true;
@@ -37,7 +39,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ? CookieSecurePolicy.None
             : CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.ExpireTimeSpan = TimeSpan.FromHours(8); // Matches token expiry initially
+        // Expiración por INACTIVIDAD: 60 min sin requests → sesión cerrada → redirect al Login.
+        // SlidingExpiration renueva la cookie con cada request mientras el usuario está activo.
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+        options.SlidingExpiration = true;
     });
 
 builder.Services.AddHttpContextAccessor();

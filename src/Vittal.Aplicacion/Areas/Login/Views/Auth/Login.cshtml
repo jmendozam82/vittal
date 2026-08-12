@@ -16,6 +16,12 @@
     </p>
 
     <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+        @if (Context.Request.Query["expired"].ToString() == "1")
+        {
+            <div class="alert alert-warning py-2 small mb-3" role="alert">
+                <i class="bi bi-hourglass-split me-1"></i> Su sesión expiró por inactividad, ingrese nuevamente.
+            </div>
+        }
         @if (ViewData["LoginError"] is string errorMsg && !string.IsNullOrEmpty(errorMsg))
         {
             <div class="alert alert-danger py-2 small mb-3" role="alert">
