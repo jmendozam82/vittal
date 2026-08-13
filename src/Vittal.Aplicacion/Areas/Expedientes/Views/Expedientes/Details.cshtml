@@ -507,6 +507,12 @@
     const EXPEDIENTE_ID = '@expedienteId';
     let hojasCita = [];
 
+    // Control de reversa de cola (fix hallazgo Cola de Espera): si el medico cierra
+    // el modal "Nueva Hoja de Cita" sin guardar, la cita vuelve a "en_espera" para
+    // poder pulsar "Atender" de nuevo. Guard: NO revertir si la hoja ya fue creada.
+    let hojaCitaCreada = false;
+    let revertEnviado = false;
+
     // URLs seguras desde el servidor
     const URLS = {
         expediente: '@Url.Action("JsonExpediente")',
@@ -528,6 +534,9 @@
         crearRecomendacion: '@Url.Action("JsonCrearRecomendacion")',
         doctores: '@Url.Action("JsonDoctores")',
         cita: '@Url.Action("JsonCita")',
+        // Reversa de cola: si el medico cierra el modal de hoja de cita sin guardar,
+        // la cita vuelve a la cola de espera (en_espera) para poder "Atender" de nuevo.
+        regresarEnEspera: '@Url.Action("JsonRegresarEnEspera", "ColaEspera", new { area = "ColaEspera" })',
         // Catálogos para dropdowns (proxy MVC con JWT)
         // El endpoint unificado api/expedientes/catalogos (hallazgo #26) exige solo
         // expedientes:Read y alimenta todos los selects de la hoja de cita en una llamada.
@@ -564,9 +573,64 @@
             if (modalEl) {
                 const modal = new bootstrap.Modal(modalEl);
                 modal.show();
+                // Si el medico cierra el modal sin crear la hoja, la cita vuelve a la
+                // cola de espera (en_atencion -> en_espera) para poder "Atender" de nuevo.
+                configurarReversaHojaCita(citaIdParam, modalEl);
             }
         }
     });
+
+    // ========== REVERSA DE COLA: HOJA DE CITA NO CREADA ==========
+    // Cuando el medico cierra el modal "Nueva Hoja de Cita" sin guardar (o cambia de
+    // pantalla con el modal abierto), la cita quedaba atascada en "en_atencion" sin
+    // boton "Atender". Con esta reversa la cita regresa a "en_espera" y el paso
+    // "Consulta" de la linea de tiempo vuelve a "pendiente" (fix hallazgo cola).
+    function configurarReversaHojaCita(citaId, modalEl) {
+        if (!citaId || !modalEl) return;
+
+        let modalAbierto = false;
+        modalEl.addEventListener('shown.bs.modal', function () { modalAbierto = true; });
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            modalAbierto = false;
+            // Solo se revierte si el modal se cerro SIN crear la hoja de cita.
+            if (hojaCitaCreada || revertEnviado) return;
+            revertirCitaACola(citaId);
+        });
+
+        // Cubre "cambiar de pantalla con el modal abierto": hidden.bs.modal NO se
+        // dispara al navegar; sendBeacon garantiza el envio incluso en pagehide.
+        window.addEventListener('pagehide', function () {
+            if (modalAbierto && !hojaCitaCreada && !revertEnviado) {
+                revertirCitaACola(citaId, true);
+            }
+        });
+    }
+
+    async function revertirCitaACola(citaId, esBeacon) {
+        if (revertEnviado) return;
+        revertEnviado = true;
+        const url = URLS.regresarEnEspera + '?id=' + encodeURIComponent(citaId);
+
+        if (esBeacon) {
+            // pagehide: fetch() puede abortarse; sendBeacon es mas fiable.
+            navigator.sendBeacon(url, new Blob([], { type: 'application/json' }));
+            return;
+        }
+
+        try {
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const json = await res.json();
+            if (res.ok && json.success) {
+                showToast('warning', json.message || 'La cita volvio a la cola de espera. Pulse "Atender" para retomarla.');
+            } else {
+                revertEnviado = false; // permitir reintento en un siguiente cierre
+                showToast('danger', json.message || 'No se pudo regresar la cita a la cola.');
+            }
+        } catch (err) {
+            revertEnviado = false;
+            showToast('danger', 'Error de conexion al regresar la cita a la cola.');
+        }
+    }
 
     // ========== CARGAR DATOS DEL EXPEDIENTE ==========
     async function cargarExpediente() {
@@ -1166,6 +1230,7 @@
             const json = await res.json();
             if (res.ok && json.success) {
                 showToast('success', json.message || 'Hoja de cita creada.');
+                hojaCitaCreada = true; // evita que hidden.bs.modal revierta la cita a la cola
                 bootstrap.Modal.getInstance(document.getElementById('modalNuevaHojaCita')).hide();
                 await cargarHojasCita();
                 document.getElementById('formHojaCita').reset();

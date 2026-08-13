@@ -533,6 +533,117 @@ public class ColaEsperaController : Controller
         return Ok(new { success = true, message = "Cita cancelada" });
     }
 
+    /// <summary>
+    /// Regresa una cita en atencion a la cola de espera (en_atencion -> en_espera).
+    /// Se usa cuando el medico cierra el modal de hoja de cita sin crearla:
+    /// la cita vuelve a "en_espera" (boton "Atender" disponible de nuevo) y el paso
+    /// "Consulta" de la linea de tiempo regresa a "pendiente".
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> JsonRegresarEnEspera([FromQuery] Guid id)
+    {
+        _logger.LogInformation("JsonRegresarEnEspera: cita={Id}", id);
+
+        var (getSuccess, getResponse, getError) = await _apiClient.GetAsync<JsonElement>($"api/Citas/{id}");
+        if (!getSuccess)
+        {
+            return BadRequest(new { success = false, message = "Cita no encontrada." });
+        }
+
+        var citaActual = ExtractDataObject(getResponse);
+        if (citaActual is not Dictionary<string, object?> dict)
+        {
+            return BadRequest(new { success = false, message = "Error al leer datos de la cita." });
+        }
+
+        // Solo el personal asistencial (medico/admin/superadmin) puede revertir la atencion.
+        if (!PuedeGestionarAtencion())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "Solo el personal medico puede regresar la cita a la cola." });
+        }
+
+        // Regla 6: el doctor solo puede revertir sus propias citas
+        if (!PuedeOperarCita(dict))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "No puede modificar citas de otro doctor." });
+        }
+
+        // Solo tiene sentido revertir una cita que esta en atencion.
+        var estado = GetValue<string>(dict, "estado");
+        if (!string.Equals(estado, "en_atencion", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { success = false, message = "La cita no esta en atencion; no se puede regresar a la cola." });
+        }
+
+        // Seguridad: si ya existe una hoja de cita vinculada, NO revertir.
+        // El frontend bloquea el cierre tras guardar, pero esta validacion protege
+        // contra cierres de pestana muerta o reintentos (una hoja por cita: UNIQUE cita_id).
+        var pacienteId = GetNullableGuidValue(dict, "pacienteId");
+        if (pacienteId.HasValue)
+        {
+            Guid? expedienteId = null;
+            var (expSuccess, expResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/Expedientes/paciente/{pacienteId.Value}");
+            if (expSuccess)
+            {
+                var expData = ExtractDataObject(expResponse);
+                if (expData is Dictionary<string, object?> expDict)
+                {
+                    expedienteId = GetNullableGuidValue(expDict, "id");
+                }
+            }
+
+            if (expedienteId.HasValue)
+            {
+                var (hojasSuccess, hojasResponse, _) = await _apiClient.GetAsync<JsonElement>($"api/HojasCita/expediente/{expedienteId.Value}");
+                if (hojasSuccess)
+                {
+                    var hojas = ExtractDataArray(hojasResponse);
+                    foreach (var hoja in hojas)
+                    {
+                        if (hoja is Dictionary<string, object?> hojaDict)
+                        {
+                            var hojaCitaId = GetValue<string>(hojaDict, "citaId");
+                            if (Guid.TryParse(hojaCitaId, out var hcGuid) && hcGuid == id)
+                            {
+                                return BadRequest(new { success = false, message = "La hoja de cita ya fue creada; la cita no se regreso a la cola." });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var payload = new
+        {
+            pacienteId = GetGuidValue(dict, "pacienteId"),
+            doctorId = GetGuidValue(dict, "doctorId"),
+            salaId = GetNullableGuidValue(dict, "salaId"),
+            fechaCita = dict.TryGetValue("fechaCita", out var fc) && fc is string fcStr ? fcStr[..10] : null,
+            horaCita = dict.TryGetValue("horaCita", out var hc) && hc is string hcStr ? hcStr : null,
+            horaFin = dict.TryGetValue("horaFin", out var hf) && hf is string hfStr ? hfStr : null,
+            horaLlegada = dict.TryGetValue("horaLlegada", out var hl) && hl is string hlStr ? hlStr : null,
+            lugar = dict.TryGetValue("lugar", out var l) && l is string lStr ? lStr : null,
+            motivo = dict.TryGetValue("motivo", out var m) && m is string mStr ? mStr : null,
+            estado = "en_espera",
+            notas = dict.TryGetValue("notas", out var n) && n is string nStr ? nStr : null
+        };
+
+        var (success, _, errorMessage) = await _apiClient.PutAsync<JsonElement>($"api/Citas/{id}", payload);
+
+        if (!success)
+        {
+            return BadRequest(new { success = false, message = errorMessage ?? "Error al regresar la cita a la cola" });
+        }
+
+        // Linea de tiempo: "Consulta" vuelve a "pendiente" para que un nuevo
+        // "Atender" reinicie el flujo sin indicadores falsos de atencion.
+        await ResetearPasoTimelineAsync(id, "Consulta");
+
+        return Ok(new { success = true, message = "Cita regresada a la cola de espera" });
+    }
+
     // ── Helper para extraer GUIDs desde diccionarios JSON ─────────
     // Los valores JSON se deserializan como strings, NO como Guid.
     // GetValue<Guid> falla (return Guid.Empty). Este helper parsea correctamente.
@@ -624,6 +735,27 @@ public class ColaEsperaController : Controller
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "No se pudo finalizar paso {Paso} de cita {CitaId}", nombrePaso, citaId);
+        }
+    }
+
+    /// <summary>
+    /// Resetea un paso de la linea de tiempo por nombre (estado "pendiente").
+    /// Se usa cuando el modal de hoja de cita se cierra sin crear la hoja:
+    /// la cita vuelve a "en_espera" y la Consulta regresa a pendiente.
+    /// No bloquea la transicion de la cola si falla (solo se loguea).
+    /// </summary>
+    private async Task ResetearPasoTimelineAsync(Guid citaId, string nombrePaso)
+    {
+        try
+        {
+            var pasoId = await GetPasoIdByNombreAsync(citaId, nombrePaso);
+            if (!pasoId.HasValue) return;
+
+            await _apiClient.PostAsync<JsonElement>($"api/LineaTiempo/{pasoId.Value}/resetear", new { });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo resetear paso {Paso} de cita {CitaId}", nombrePaso, citaId);
         }
     }
 

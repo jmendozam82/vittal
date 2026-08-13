@@ -20,6 +20,12 @@ public interface ILineaTiempoRepository
     /// <summary>Actualiza el estado de un paso y su hora correspondiente.</summary>
     Task<bool> UpdateEstadoAsync(Guid clinicaId, Guid id, string estado, TimeSpan? hora);
 
+    /// <summary>
+    /// Resetea un paso a estado "pendiente" limpiando las horas de llegada/salida.
+    /// Se usa cuando la hoja de cita no se crea y la cita vuelve a la cola (en_espera).
+    /// </summary>
+    Task<bool> ResetearEstadoAsync(Guid clinicaId, Guid id);
+
     /// <summary>Obtiene un paso de línea de tiempo por ID.</summary>
     Task<LineaTiempo?> GetByIdAsync(Guid clinicaId, Guid id);
 
