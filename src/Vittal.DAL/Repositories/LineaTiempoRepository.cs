@@ -182,6 +182,36 @@ public class LineaTiempoRepository : ILineaTiempoRepository
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // 5.1 ResetearEstadoAsync - Resetea un paso a "pendiente" y limpia horas
+    // ────────────────────────────────────────────────────────────────────
+    public async Task<bool> ResetearEstadoAsync(Guid clinicaId, Guid id)
+    {
+        const string sql = @"
+            UPDATE public.linea_tiempo
+            SET
+                estado = 'pendiente',
+                hora_llegada = NULL,
+                hora_salida = NULL,
+                fecha_modificacion = NOW()
+            WHERE id = @Id
+              AND clinica_id = @ClinicaId
+              AND activo = true";
+
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(sql,
+                new { Id = id, ClinicaId = clinicaId });
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al resetear paso {Id} a pendiente", id);
+            throw;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // 5. GetByIdAsync — Obtiene un paso por ID
     // ────────────────────────────────────────────────────────────────────
     public async Task<LineaTiempo?> GetByIdAsync(Guid clinicaId, Guid id)

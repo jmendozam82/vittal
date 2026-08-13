@@ -201,6 +201,59 @@ public class LineaTiempoService : ILineaTiempoService
     }
 
     /// <summary>
+    /// Resetea un paso de la línea de tiempo a "pendiente" y limpia sus horas.
+    /// Se usa cuando la hoja de cita no se crea y la cita vuelve a la cola (en_espera):
+    /// la cita pasa de en_atencion a en_espera y el paso "Consulta" regresa a pendiente,
+    /// para que un nuevo "Atender" reinicie el flujo sin indicadores falsos de atención.
+    /// </summary>
+    public async Task<ServiceResult<LineaTiempoResponseDto>> ResetearPasoAsync(Guid clinicaId, Guid pasoId)
+    {
+        try
+        {
+            _logger.LogInformation("Reseteando paso {PasoId} a pendiente", pasoId);
+
+            var paso = await _repository.GetByIdAsync(clinicaId, pasoId);
+            if (paso == null)
+            {
+                return ServiceResult<LineaTiempoResponseDto>.Failure("Paso no encontrado.", ServiceErrorType.NotFound);
+            }
+
+            // Idempotente: si ya está pendiente, no se hace nada.
+            if (paso.Estado == "pendiente")
+            {
+                return ServiceResult<LineaTiempoResponseDto>.Success(MapToDto(paso), "El paso ya estaba pendiente.");
+            }
+
+            // Solo se resetean pasos en curso (en_sala). Un paso completado/saltado
+            // representa un avance real y NO debe revertirse.
+            if (paso.Estado != "en_sala")
+            {
+                return ServiceResult<LineaTiempoResponseDto>.Failure(
+                    $"El paso está en estado '{paso.Estado}'. Solo se pueden resetear pasos en atención (en_sala).",
+                    ServiceErrorType.Validation);
+            }
+
+            var updated = await _repository.ResetearEstadoAsync(clinicaId, pasoId);
+            if (!updated)
+            {
+                return ServiceResult<LineaTiempoResponseDto>.Failure("No se pudo resetear el paso.", ServiceErrorType.InternalError);
+            }
+
+            paso.Estado = "pendiente";
+            paso.HoraLlegada = null;
+            paso.HoraSalida = null;
+            paso.FechaModificacion = DateTime.UtcNow;
+
+            return ServiceResult<LineaTiempoResponseDto>.Success(MapToDto(paso), "Paso resetado a pendiente exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al resetear paso {PasoId}", pasoId);
+            return ServiceResult<LineaTiempoResponseDto>.Failure($"Error al resetear el paso: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Genera los pasos predeterminados de línea de tiempo para una cita.
     /// Pasos por defecto: Llegada → Consulta → Salida.
     /// Se consolidaron Sala y Diagnóstico dentro de Llegada y Consulta respectivamente

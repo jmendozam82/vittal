@@ -135,6 +135,25 @@ public class LineaTiempoController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>Resetea un paso de la línea de tiempo a "pendiente" (reversa de atender).</summary>
+    /// <param name="pasoId">ID del paso a resetear.</param>
+    [HttpPost("{pasoId:guid}/resetear")]
+    [RequirePermission("linea_tiempo", PermissionType.Update)]
+    [ProducesResponseType(typeof(ApiResponse<LineaTiempoResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetearPaso(Guid pasoId)
+    {
+        var clinicaId = User.GetClinicaId();
+
+        var result = await _service.ResetearPasoAsync(clinicaId, pasoId);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            await NotifyTimelineChangedAsync(clinicaId, result.Data.CitaId);
+        }
+        return result.ToActionResult();
+    }
+
     /// <summary>
     /// Fuerza la verificación de una cita: si todos los pasos están finalizados, la marca como "atendida".
     /// Endpoint de reparación para citas atascadas.

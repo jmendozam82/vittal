@@ -28,6 +28,12 @@ public interface ILineaTiempoService
     /// <summary>Salta un paso de la línea de tiempo (cambia estado a "saltado" sin registrar tiempos).</summary>
     Task<ServiceResult<bool>> SaltarPasoAsync(Guid clinicaId, Guid pasoId);
 
+    /// <summary>
+    /// Resetea un paso de la línea de tiempo a "pendiente" y limpia sus horas.
+    /// Se usa cuando la hoja de cita no se crea y la cita vuelve a la cola (en_espera).
+    /// </summary>
+    Task<ServiceResult<LineaTiempoResponseDto>> ResetearPasoAsync(Guid clinicaId, Guid pasoId);
+
     /// <summary>Genera los pasos predeterminados de línea de tiempo para una cita basados en la sala/asignación.</summary>
     Task<ServiceResult<List<LineaTiempoResponseDto>>> GenerarPasosParaCitaAsync(Guid clinicaId, Guid citaId);
 
